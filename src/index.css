@@ -54,6 +54,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4 {
+  text-wrap: balance;
+  letter-spacing: -0.015em;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -80,11 +89,11 @@ input, textarea, select {
   color: var(--text-primary);
   padding: 0.6rem 0.85rem;
   outline: none;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
@@ -100,7 +109,12 @@ button {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 button:active {
@@ -156,6 +170,7 @@ button:active {
   border-radius: var(--radius-sm);
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .badge-critical {
@@ -190,11 +205,17 @@ button:active {
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .glass-card:hover {
   border-color: rgba(59, 130, 246, 0.3);
   box-shadow: var(--shadow-sm);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 /* Animations */

@@ -105,7 +105,7 @@ export const NotesView: React.FC = () => {
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+        <div style={{ position: 'relative', flex: '1 1 280px' }}>
           <Search
             size={16}
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
@@ -119,18 +119,23 @@ export const NotesView: React.FC = () => {
           />
         </div>
 
-        <select
-          value={selectedCaseFilter}
-          onChange={(e) => setSelectedCaseFilter(e.target.value)}
-          style={{ minWidth: '200px' }}
-        >
-          <option value="">Todos los casos</option>
-          {cases.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 1 auto' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            FILTRAR POR CASO:
+          </span>
+          <select
+            value={selectedCaseFilter}
+            onChange={(e) => setSelectedCaseFilter(e.target.value)}
+            style={{ minWidth: '220px', maxWidth: '320px' }}
+          >
+            <option value="">-- Todos los casos --</option>
+            {cases.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Notes Feed */}
