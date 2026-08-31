@@ -541,6 +541,7 @@ struct GraphRecipient {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GraphEmailAddress {
     pub name: Option<String>,
     pub address: Option<String>,
