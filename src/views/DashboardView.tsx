@@ -61,7 +61,7 @@ function KpiCard({ label, value, sub, icon, accentColor, glowColor, urgent }: Kp
     >
       {/* Background icon */}
       <div className="kpi-icon-bg">
-        {React.cloneElement(icon as React.ReactElement, { size: 52 })}
+        {React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 52 })}
       </div>
 
       {/* Label */}
