@@ -48,4 +48,17 @@ export const api = {
 
   // Dashboard
   getDashboardSummary: () => invoke<DashboardSummary>('get_dashboard_summary'),
+
+  // Email Accounts & Synchronization
+  getEmailAccounts: () => invoke<import('../types').EmailAccount[]>('get_email_accounts'),
+  saveEmailAccount: (input: import('../types').SaveEmailAccountInput) =>
+    invoke<import('../types').EmailAccount>('save_email_account', { input }),
+  deleteEmailAccount: (id: string) => invoke<void>('delete_email_account', { id }),
+  testEmailConnection: (input: import('../types').SaveEmailAccountInput) =>
+    invoke<import('../types').TestConnectionResponse>('test_email_connection', { input }),
+  sendEmailDirect: (input: import('../types').SendEmailInput) =>
+    invoke<import('../types').SendEmailResponse>('send_email_direct', { input }),
+  getCaseEmails: (caseId: string) =>
+    invoke<import('../types').CaseEmail[]>('get_case_emails', { caseId }),
+  syncInboxEmails: () => invoke<import('../types').SyncEmailsResult>('sync_inbox_emails'),
 };

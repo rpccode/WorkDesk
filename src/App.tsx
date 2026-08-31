@@ -20,6 +20,7 @@ import { NotesView } from './views/NotesView';
 import { EmailBuilderView } from './views/EmailBuilderView';
 import { ReportsView } from './views/ReportsView';
 import { QuickCaptureModal } from './components/QuickCaptureModal';
+import { EmailAccountsModal } from './components/EmailAccountsModal';
 import type { ActiveTab } from './types';
 
 export function App() {
@@ -33,6 +34,7 @@ export function App() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('');
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   useEffect(() => {
     refreshAll();
@@ -244,7 +246,7 @@ export function App() {
             </span>
           </button>
 
-          {/* Sync row */}
+          {/* Sync & Settings row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <button
               className="btn-ghost"
@@ -262,6 +264,20 @@ export function App() {
               />
               Sincronizar
             </button>
+
+            <button
+              className="btn-ghost"
+              style={{
+                fontSize: '0.73rem',
+                padding: '0.35rem 0.5rem',
+                color: 'var(--text-muted)',
+              }}
+              onClick={() => setIsEmailModalOpen(true)}
+              title="Configuración de cuentas de correo"
+            >
+              <Mail size={12} />
+            </button>
+
             {lastSync && (
               <span style={{
                 fontSize: '0.65rem',
@@ -298,8 +314,12 @@ export function App() {
         </div>
       </main>
 
-      {/* Global Quick Capture Modal */}
+      {/* Global Modals */}
       <QuickCaptureModal />
+      <EmailAccountsModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+      />
     </div>
   );
 }

@@ -8,17 +8,31 @@ import {
   Send,
   CheckCircle2,
   Settings2,
+  AlertCircle,
 } from 'lucide-react';
 import { EMAIL_TEMPLATES, buildEmail } from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
+import { EmailAccountsModal } from '../components/EmailAccountsModal';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
 
 export const EmailBuilderView: React.FC = () => {
-  const { cases, caseForEmail, commitments, fetchCommitments, clients, fetchClients, createFollowup } = useStore();
+  const {
+    cases,
+    caseForEmail,
+    commitments,
+    fetchCommitments,
+    clients,
+    fetchClients,
+    createFollowup,
+    emailAccounts,
+    fetchEmailAccounts,
+    sendEmailDirect,
+  } = useStore();
 
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseForEmail?.id || (cases[0]?.id || ''));
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(EMAIL_TEMPLATES[0].id);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [extraNotes, setExtraNotes] = useState('');
@@ -27,10 +41,12 @@ export const EmailBuilderView: React.FC = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [copied, setCopied] = useState(false);
-  const [launchedMessage, setLaunchedMessage] = useState<string | null>(null);
+  const [isSendingDirect, setIsSendingDirect] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ success: boolean; text: string } | null>(null);
   const [autoLogFollowup, setAutoLogFollowup] = useState(true);
+  const [isAccountsModalOpen, setIsAccountsModalOpen] = useState(false);
 
-  // Email provider preference
+  // Email provider preference for app/webmail fallback
   const [emailProvider, setEmailProvider] = useState<EmailProvider>(() => {
     return (localStorage.getItem(EMAIL_PROVIDER_KEY) as EmailProvider) || 'default';
   });
@@ -39,10 +55,16 @@ export const EmailBuilderView: React.FC = () => {
   const currentClient = clients.find((cl) => cl.id === currentCase?.client_id);
 
   useEffect(() => {
-    if (clients.length === 0) {
-      fetchClients();
+    if (clients.length === 0) fetchClients();
+    if (emailAccounts.length === 0) fetchEmailAccounts();
+  }, [clients.length, emailAccounts.length, fetchClients, fetchEmailAccounts]);
+
+  useEffect(() => {
+    if (emailAccounts.length > 0 && !selectedAccountId) {
+      const defaultAcc = emailAccounts.find((a) => a.is_default) || emailAccounts[0];
+      setSelectedAccountId(defaultAcc.id);
     }
-  }, [clients.length, fetchClients]);
+  }, [emailAccounts, selectedAccountId]);
 
   useEffect(() => {
     if (caseForEmail) {
@@ -102,17 +124,45 @@ export const EmailBuilderView: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleLaunchEmail = async (overrideProvider?: EmailProvider) => {
+  // Direct Send via background SMTP/API
+  const handleDirectSend = async () => {
+    if (!currentCase) return;
+    if (!recipientEmail.trim()) {
+      setFeedbackMessage({ success: false, text: 'Por favor especifica el correo del destinatario.' });
+      return;
+    }
+
+    setIsSendingDirect(true);
+    setFeedbackMessage(null);
+    try {
+      const res = await sendEmailDirect({
+        account_id: selectedAccountId || undefined,
+        case_id: currentCase.id,
+        recipient: recipientEmail.trim(),
+        subject,
+        body,
+        auto_log_followup: autoLogFollowup,
+      });
+
+      setFeedbackMessage({ success: true, text: `✓ ${res.message}` });
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    } catch (err: any) {
+      setFeedbackMessage({ success: false, text: `Error al enviar correo: ${err?.toString() || 'Fallo de conexión'}` });
+    } finally {
+      setIsSendingDirect(false);
+    }
+  };
+
+  // Fallback: Open in external client/webmail
+  const handleLaunchExternal = async (overrideProvider?: EmailProvider) => {
     const providerToUse = overrideProvider || emailProvider;
     
-    // 1. Launch in client
     launchEmailClient(providerToUse, {
       to: recipientEmail,
       subject,
       body,
     });
 
-    // 2. Automatically log to case followup if active
     let logNotice = '';
     if (autoLogFollowup && currentCase) {
       try {
@@ -135,8 +185,8 @@ export const EmailBuilderView: React.FC = () => {
       outlook: 'Outlook 365 Web',
     };
 
-    setLaunchedMessage(`✓ Abierto en ${providerNames[providerToUse]}${logNotice}`);
-    setTimeout(() => setLaunchedMessage(null), 4000);
+    setFeedbackMessage({ success: true, text: `✓ Abierto en ${providerNames[providerToUse]}${logNotice}` });
+    setTimeout(() => setFeedbackMessage(null), 4000);
   };
 
   return (
@@ -145,12 +195,23 @@ export const EmailBuilderView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Generador de Correos & Minutas
+            Generador & Envío de Correos
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.2rem' }}>
-            Redacta, abre en tu cliente de correo favorito y registra el seguimiento con 1 clic
+            Envía directo en segundo plano, abre en webmail y sincroniza el seguimiento con tus clientes
           </p>
         </div>
+
+        <button
+          className="btn-secondary"
+          style={{ fontSize: '0.83rem', gap: '0.45rem' }}
+          onClick={() => setIsAccountsModalOpen(true)}
+        >
+          <Settings2 size={15} color="var(--accent-primary)" />
+          {emailAccounts.length > 0
+            ? `Cuentas Vinculadas (${emailAccounts.length})`
+            : 'Vincular Cuenta de Correo'}
+        </button>
       </div>
 
       {/* Grid: Left Settings, Right Live Preview */}
@@ -228,6 +289,26 @@ export const EmailBuilderView: React.FC = () => {
             </div>
           </div>
 
+          {/* Account Selector if configured */}
+          {emailAccounts.length > 0 && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', marginBottom: '0.35rem' }}>
+                Cuenta Remitente para Envío Directo
+              </label>
+              <select
+                value={selectedAccountId}
+                onChange={(e) => setSelectedAccountId(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                {emailAccounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name} &lt;{acc.email}&gt; {acc.is_default ? '(Principal)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Recipient Email & Name row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
@@ -302,101 +383,150 @@ export const EmailBuilderView: React.FC = () => {
                 {copied ? '¡Copiado!' : 'Copiar'}
               </button>
 
-              <button
-                className="btn-primary"
-                style={{ fontSize: '0.82rem', padding: '0.5rem 1rem', fontWeight: 600 }}
-                onClick={() => handleLaunchEmail()}
-              >
-                <Send size={14} />
-                {emailProvider === 'gmail'
-                  ? 'Abrir en Gmail'
-                  : emailProvider === 'outlook'
-                  ? 'Abrir en Outlook 365'
-                  : 'Abrir en Mi Correo (App)'}
-              </button>
+              {emailAccounts.length > 0 ? (
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: '0.82rem', padding: '0.5rem 1rem', fontWeight: 600 }}
+                  onClick={handleDirectSend}
+                  disabled={isSendingDirect}
+                >
+                  <Send size={14} />
+                  {isSendingDirect ? 'Enviando directo...' : 'Enviar Ahora (Directo)'}
+                </button>
+              ) : (
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: '0.82rem', padding: '0.5rem 1rem', fontWeight: 600 }}
+                  onClick={() => handleLaunchExternal()}
+                >
+                  <Send size={14} />
+                  {emailProvider === 'gmail'
+                    ? 'Abrir en Gmail'
+                    : emailProvider === 'outlook'
+                    ? 'Abrir en Outlook 365'
+                    : 'Abrir en Mi Correo (App)'}
+                </button>
+              )}
             </div>
           </div>
 
           {/* Feedback banner */}
-          {launchedMessage && (
+          {feedbackMessage && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              padding: '0.6rem 0.9rem',
+              padding: '0.65rem 0.9rem',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--status-low-bg)',
-              color: 'var(--status-low)',
-              fontSize: '0.8rem',
+              backgroundColor: feedbackMessage.success ? 'var(--status-low-bg)' : 'var(--status-critical-bg)',
+              color: feedbackMessage.success ? 'var(--status-low)' : 'var(--status-critical)',
+              fontSize: '0.82rem',
               fontWeight: 600,
-              border: '1px solid var(--status-low-border)',
+              border: `1px solid ${feedbackMessage.success ? 'var(--status-low-border)' : 'var(--status-critical-border)'}`,
             }}>
-              <CheckCircle2 size={16} />
-              {launchedMessage}
+              {feedbackMessage.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              {feedbackMessage.text}
             </div>
           )}
 
-          {/* Email Client Provider Picker */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.6rem 0.85rem',
-            backgroundColor: 'var(--bg-surface-elevated)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
-            fontSize: '0.78rem',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-              <Settings2 size={14} color="var(--accent-primary)" />
-              <span style={{ fontWeight: 600 }}>Integración:</span>
+          {/* Fallback external buttons row */}
+          {emailAccounts.length > 0 ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.55rem 0.85rem',
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.76rem',
+            }}>
+              <span style={{ color: 'var(--text-muted)' }}>O abrir en cliente externo:</span>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  onClick={() => handleLaunchExternal('default')}
+                >
+                  App Outlook/Mail
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  onClick={() => handleLaunchExternal('gmail')}
+                >
+                  Gmail Web
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  onClick={() => handleLaunchExternal('outlook')}
+                >
+                  Outlook 365
+                </button>
+              </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              <button
-                type="button"
-                onClick={() => handleProviderChange('default')}
-                style={{
-                  fontSize: '0.74rem',
-                  padding: '0.25rem 0.55rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: emailProvider === 'default' ? 'var(--accent-primary)' : 'transparent',
-                  color: emailProvider === 'default' ? 'white' : 'var(--text-secondary)',
-                  border: `1px solid ${emailProvider === 'default' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                }}
-              >
-                Outlook / App Sistema
-              </button>
-              <button
-                type="button"
-                onClick={() => handleProviderChange('gmail')}
-                style={{
-                  fontSize: '0.74rem',
-                  padding: '0.25rem 0.55rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: emailProvider === 'gmail' ? 'var(--accent-primary)' : 'transparent',
-                  color: emailProvider === 'gmail' ? 'white' : 'var(--text-secondary)',
-                  border: `1px solid ${emailProvider === 'gmail' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                }}
-              >
-                Gmail Web
-              </button>
-              <button
-                type="button"
-                onClick={() => handleProviderChange('outlook')}
-                style={{
-                  fontSize: '0.74rem',
-                  padding: '0.25rem 0.55rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: emailProvider === 'outlook' ? 'var(--accent-primary)' : 'transparent',
-                  color: emailProvider === 'outlook' ? 'white' : 'var(--text-secondary)',
-                  border: `1px solid ${emailProvider === 'outlook' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                }}
-              >
-                Outlook 365 Web
-              </button>
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.6rem 0.85rem',
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.78rem',
+            }}>
+              <span style={{ color: 'var(--text-muted)' }}>Abrir preferentemente en:</span>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleProviderChange('default')}
+                  style={{
+                    fontSize: '0.73rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: emailProvider === 'default' ? 'var(--accent-primary)' : 'transparent',
+                    color: emailProvider === 'default' ? 'white' : 'var(--text-secondary)',
+                    border: `1px solid ${emailProvider === 'default' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  Outlook / App Sistema
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleProviderChange('gmail')}
+                  style={{
+                    fontSize: '0.73rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: emailProvider === 'gmail' ? 'var(--accent-primary)' : 'transparent',
+                    color: emailProvider === 'gmail' ? 'white' : 'var(--text-secondary)',
+                    border: `1px solid ${emailProvider === 'gmail' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  Gmail Web
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleProviderChange('outlook')}
+                  style={{
+                    fontSize: '0.73rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: emailProvider === 'outlook' ? 'var(--accent-primary)' : 'transparent',
+                    color: emailProvider === 'outlook' ? 'white' : 'var(--text-secondary)',
+                    border: `1px solid ${emailProvider === 'outlook' ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  Outlook 365
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Auto-log checkbox */}
           <label style={{
@@ -413,7 +543,7 @@ export const EmailBuilderView: React.FC = () => {
               onChange={(e) => setAutoLogFollowup(e.target.checked)}
               style={{ width: 'auto', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
             />
-            Registrar automáticamente como seguimiento en la bitácora del caso al abrir/enviar
+            Registrar automáticamente como seguimiento en la bitácora del caso al enviar
           </label>
 
           {/* Subject line */}
@@ -440,7 +570,7 @@ export const EmailBuilderView: React.FC = () => {
               style={{
                 width: '100%',
                 flex: 1,
-                minHeight: '290px',
+                minHeight: '280px',
                 fontFamily: 'inherit',
                 fontSize: '0.88rem',
                 lineHeight: 1.6,
@@ -450,7 +580,14 @@ export const EmailBuilderView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Email Accounts Setup Modal */}
+      <EmailAccountsModal
+        isOpen={isAccountsModalOpen}
+        onClose={() => setIsAccountsModalOpen(false)}
+      />
     </div>
   );
 };
+
 

@@ -37,6 +37,14 @@ pub fn run() {
             commands::notes::delete_note,
             // Dashboard
             commands::dashboard::get_dashboard_summary,
+            // Emails
+            commands::emails::get_email_accounts,
+            commands::emails::save_email_account,
+            commands::emails::delete_email_account,
+            commands::emails::test_email_connection,
+            commands::emails::send_email_direct,
+            commands::emails::get_case_emails,
+            commands::emails::sync_inbox_emails,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

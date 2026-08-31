@@ -66,6 +66,18 @@ interface WorkDeskState {
   isLoadingDashboard: boolean;
   fetchDashboardSummary: () => Promise<void>;
 
+  // Email Accounts & Synchronization
+  emailAccounts: import('../types').EmailAccount[];
+  isLoadingEmailAccounts: boolean;
+  fetchEmailAccounts: () => Promise<void>;
+  saveEmailAccount: (input: import('../types').SaveEmailAccountInput) => Promise<import('../types').EmailAccount>;
+  deleteEmailAccount: (id: string) => Promise<void>;
+  testEmailConnection: (input: import('../types').SaveEmailAccountInput) => Promise<import('../types').TestConnectionResponse>;
+  sendEmailDirect: (input: import('../types').SendEmailInput) => Promise<import('../types').SendEmailResponse>;
+  caseEmails: import('../types').CaseEmail[];
+  fetchCaseEmails: (caseId: string) => Promise<void>;
+  syncInboxEmails: () => Promise<import('../types').SyncEmailsResult>;
+
   // Master refresh
   refreshAll: () => Promise<void>;
 }
@@ -251,6 +263,55 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     }
   },
 
+  // Email Accounts & Synchronization
+  emailAccounts: [],
+  isLoadingEmailAccounts: false,
+  fetchEmailAccounts: async () => {
+    set({ isLoadingEmailAccounts: true });
+    try {
+      const data = await api.getEmailAccounts();
+      set({ emailAccounts: data });
+    } catch (err) {
+      console.error('Error fetching email accounts:', err);
+    } finally {
+      set({ isLoadingEmailAccounts: false });
+    }
+  },
+  saveEmailAccount: async (input) => {
+    const saved = await api.saveEmailAccount(input);
+    await get().fetchEmailAccounts();
+    return saved;
+  },
+  deleteEmailAccount: async (id) => {
+    await api.deleteEmailAccount(id);
+    set((state) => ({ emailAccounts: state.emailAccounts.filter((a) => a.id !== id) }));
+  },
+  testEmailConnection: async (input) => {
+    return await api.testEmailConnection(input);
+  },
+  sendEmailDirect: async (input) => {
+    const res = await api.sendEmailDirect(input);
+    get().fetchDashboardSummary();
+    get().fetchFollowups(input.case_id);
+    get().fetchCaseEmails(input.case_id);
+    return res;
+  },
+  caseEmails: [],
+  fetchCaseEmails: async (caseId) => {
+    try {
+      const data = await api.getCaseEmails(caseId);
+      set({ caseEmails: data });
+    } catch (err) {
+      console.error('Error fetching case emails:', err);
+    }
+  },
+  syncInboxEmails: async () => {
+    const res = await api.syncInboxEmails();
+    get().fetchDashboardSummary();
+    get().fetchEmailAccounts();
+    return res;
+  },
+
   // Master refresh
   refreshAll: async () => {
     await Promise.all([
@@ -259,6 +320,7 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       get().fetchCases(),
       get().fetchCommitments(),
       get().fetchNotes(),
+      get().fetchEmailAccounts(),
     ]);
   },
 }));

@@ -4,3 +4,4 @@ pub mod commitments;
 pub mod followups;
 pub mod notes;
 pub mod dashboard;
+pub mod emails;

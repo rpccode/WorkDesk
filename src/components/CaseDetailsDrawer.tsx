@@ -24,9 +24,11 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
     commitments,
     followups,
     notes,
+    caseEmails,
     fetchCommitments,
     fetchFollowups,
     fetchNotes,
+    fetchCaseEmails,
     markCommitmentDone,
     closeCase,
     setCaseForEmail,
@@ -34,13 +36,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
 
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes'>('commitments');
+  const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes' | 'emails'>('commitments');
 
   useEffect(() => {
     if (c) {
       fetchCommitments(c.id);
       fetchFollowups(c.id);
       fetchNotes(c.id);
+      fetchCaseEmails(c.id);
     }
   }, [c?.id]);
 
@@ -211,10 +214,79 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
             >
               <FileText size={16} /> Notas ({caseNotes.length})
             </button>
+            <button
+              onClick={() => setActiveTab('emails')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                borderRadius: 0,
+                borderBottom: activeTab === 'emails' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                color: activeTab === 'emails' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                fontWeight: activeTab === 'emails' ? 700 : 500,
+                background: 'transparent',
+              }}
+            >
+              <Mail size={16} /> Correos ({caseEmails.length})
+            </button>
           </div>
 
           {/* Body Content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+            {activeTab === 'emails' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {caseEmails.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                    <Mail size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
+                    <p>No hay correos enviados o sincronizados en este caso.</p>
+                    <button
+                      className="btn-primary"
+                      style={{ marginTop: '0.8rem', fontSize: '0.8rem' }}
+                      onClick={() => {
+                        setCaseForEmail(c);
+                        onClose();
+                      }}
+                    >
+                      Redactar y Enviar Correo
+                    </button>
+                  </div>
+                ) : (
+                  caseEmails.map((email) => (
+                    <div
+                      key={email.id}
+                      className="glass-card"
+                      style={{
+                        padding: '1rem 1.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.4rem',
+                        borderLeft: email.direction === 'inbound' ? '4px solid var(--status-medium)' : '4px solid var(--accent-primary)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className={`badge ${email.direction === 'inbound' ? 'badge-medium' : 'badge-low'}`}>
+                            {email.direction === 'inbound' ? 'Entrante' : 'Enviado'}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {email.direction === 'inbound' ? `De: ${email.sender}` : `Para: ${email.recipient}`}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {formatDate(email.date)}
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 700, marginTop: '0.2rem' }}>
+                        {email.subject}
+                      </h4>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                        {email.body_text}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
             {activeTab === 'commitments' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {caseCommitments.length === 0 ? (

@@ -76,3 +76,84 @@ export interface DashboardSummary {
 }
 
 export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'clients' | 'notes' | 'emails' | 'reports';
+
+export type EmailAccountProvider = 'smtp_imap' | 'microsoft_graph' | 'gmail_api';
+
+export interface EmailAccount {
+  id: string;
+  name: string;
+  email: string;
+  provider: EmailAccountProvider;
+  smtp_host?: string | null;
+  smtp_port?: number | null;
+  smtp_user?: string | null;
+  smtp_password?: string | null;
+  imap_host?: string | null;
+  imap_port?: number | null;
+  imap_user?: string | null;
+  imap_password?: string | null;
+  oauth_access_token?: string | null;
+  oauth_refresh_token?: string | null;
+  is_default: boolean;
+  created_at: string;
+  last_synced_at?: string | null;
+}
+
+export interface SaveEmailAccountInput {
+  id?: string;
+  name: string;
+  email: string;
+  provider: EmailAccountProvider;
+  smtp_host?: string;
+  smtp_port?: number;
+  smtp_user?: string;
+  smtp_password?: string;
+  imap_host?: string;
+  imap_port?: number;
+  imap_user?: string;
+  imap_password?: string;
+  oauth_access_token?: string;
+  oauth_refresh_token?: string;
+  is_default?: boolean;
+}
+
+export interface CaseEmail {
+  id: string;
+  case_id: string;
+  account_id?: string | null;
+  direction: 'inbound' | 'outbound';
+  sender: string;
+  recipient: string;
+  subject: string;
+  body_text: string;
+  body_html?: string | null;
+  message_id?: string | null;
+  date: string;
+  created_at: string;
+}
+
+export interface SendEmailInput {
+  account_id?: string;
+  case_id: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  auto_log_followup?: boolean;
+}
+
+export interface SendEmailResponse {
+  success: boolean;
+  email_id: string;
+  message: string;
+}
+
+export interface TestConnectionResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface SyncEmailsResult {
+  new_emails_count: number;
+  updated_cases_count: number;
+  message: string;
+}

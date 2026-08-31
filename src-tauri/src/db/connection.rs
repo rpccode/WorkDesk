@@ -19,6 +19,7 @@ pub struct DbState(pub Mutex<Connection>);
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_initial", include_str!("migrations/001_initial.sql")),
+    ("002_email_integration", include_str!("migrations/002_email_integration.sql")),
 ];
 
 pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, DbError> {
@@ -122,6 +123,8 @@ mod tests {
         assert!(tables.contains(&"commitments".to_string()));
         assert!(tables.contains(&"followups".to_string()));
         assert!(tables.contains(&"notes".to_string()));
+        assert!(tables.contains(&"email_accounts".to_string()));
+        assert!(tables.contains(&"case_emails".to_string()));
     }
 }
 
