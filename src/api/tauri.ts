@@ -61,4 +61,6 @@ export const api = {
   getCaseEmails: (caseId: string) =>
     invoke<import('../types').CaseEmail[]>('get_case_emails', { caseId }),
   syncInboxEmails: () => invoke<import('../types').SyncEmailsResult>('sync_inbox_emails'),
+  startOAuthLogin: (input: import('../types').StartOAuthInput) =>
+    invoke<import('../types').OAuthLoginResult>('start_oauth_login', { input }),
 };

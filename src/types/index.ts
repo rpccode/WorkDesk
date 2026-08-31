@@ -157,3 +157,18 @@ export interface SyncEmailsResult {
   updated_cases_count: number;
   message: string;
 }
+
+export interface StartOAuthInput {
+  provider: string; // 'microsoft' | 'google'
+  custom_client_id?: string;
+  custom_tenant_id?: string;
+}
+
+export interface OAuthLoginResult {
+  success: boolean;
+  account_id: string;
+  name: string;
+  email: string;
+  provider: string;
+  message: string;
+}

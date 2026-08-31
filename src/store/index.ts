@@ -77,6 +77,7 @@ interface WorkDeskState {
   caseEmails: import('../types').CaseEmail[];
   fetchCaseEmails: (caseId: string) => Promise<void>;
   syncInboxEmails: () => Promise<import('../types').SyncEmailsResult>;
+  startOAuthLogin: (input: import('../types').StartOAuthInput) => Promise<import('../types').OAuthLoginResult>;
 
   // Master refresh
   refreshAll: () => Promise<void>;
@@ -309,6 +310,11 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     const res = await api.syncInboxEmails();
     get().fetchDashboardSummary();
     get().fetchEmailAccounts();
+    return res;
+  },
+  startOAuthLogin: async (input) => {
+    const res = await api.startOAuthLogin(input);
+    await get().fetchEmailAccounts();
     return res;
   },
 
