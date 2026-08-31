@@ -3,42 +3,42 @@
 /* ─── TOKENS ─────────────────────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-main:              #080c15;
-  --bg-surface:           #0f1623;
-  --bg-surface-elevated:  #182030;
-  --bg-surface-hover:     #1e2a40;
-  --bg-overlay:           rgba(8, 12, 21, 0.85);
+  --bg-main:              #f0f4f8;
+  --bg-surface:           #ffffff;
+  --bg-surface-elevated:  #f8fafc;
+  --bg-surface-hover:     #eef2f7;
+  --bg-overlay:           rgba(15, 23, 42, 0.45);
 
   /* Borders */
-  --border-subtle:        #1c2940;
-  --border-medium:        #243350;
+  --border-subtle:        #e2e8f0;
+  --border-medium:        #cbd5e1;
   --border-focus:         #3b82f6;
 
   /* Text */
-  --text-primary:         #f1f5f9;
-  --text-secondary:       #8da3bf;
-  --text-muted:           #4f6280;
-  --text-disabled:        #2d3f58;
+  --text-primary:         #0f172a;
+  --text-secondary:       #475569;
+  --text-muted:           #94a3b8;
+  --text-disabled:        #cbd5e1;
 
   /* Accent — Cobalt Blue */
-  --accent-primary:       #3b82f6;
-  --accent-primary-hover: #2563eb;
-  --accent-glow:          rgba(59, 130, 246, 0.18);
-  --accent-glow-strong:   rgba(59, 130, 246, 0.35);
+  --accent-primary:       #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --accent-glow:          rgba(37, 99, 235, 0.12);
+  --accent-glow-strong:   rgba(37, 99, 235, 0.22);
 
   /* Status */
-  --status-critical:      #f43f5e;
-  --status-critical-bg:   rgba(244, 63, 94, 0.12);
-  --status-critical-border: rgba(244, 63, 94, 0.28);
-  --status-high:          #fb923c;
-  --status-high-bg:       rgba(251, 146, 60, 0.12);
-  --status-high-border:   rgba(251, 146, 60, 0.28);
-  --status-medium:        #fbbf24;
-  --status-medium-bg:     rgba(251, 191, 36, 0.12);
-  --status-medium-border: rgba(251, 191, 36, 0.28);
-  --status-low:           #34d399;
-  --status-low-bg:        rgba(52, 211, 153, 0.12);
-  --status-low-border:    rgba(52, 211, 153, 0.28);
+  --status-critical:      #dc2626;
+  --status-critical-bg:   rgba(220, 38, 38, 0.08);
+  --status-critical-border: rgba(220, 38, 38, 0.2);
+  --status-high:          #ea580c;
+  --status-high-bg:       rgba(234, 88, 12, 0.08);
+  --status-high-border:   rgba(234, 88, 12, 0.2);
+  --status-medium:        #d97706;
+  --status-medium-bg:     rgba(217, 119, 6, 0.08);
+  --status-medium-border: rgba(217, 119, 6, 0.2);
+  --status-low:           #059669;
+  --status-low-bg:        rgba(5, 150, 105, 0.08);
+  --status-low-border:    rgba(5, 150, 105, 0.2);
 
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -61,24 +61,24 @@
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-xs:   0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg:   0 16px 48px rgba(0, 0, 0, 0.55);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.25);
-  --shadow-glow-strong: 0 0 32px rgba(59, 130, 246, 0.4);
+  /* Shadows — más suaves para modo claro */
+  --shadow-xs:   0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-sm:   0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-md:   0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-lg:   0 16px 48px rgba(15, 23, 42, 0.14);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
+  --shadow-glow-strong: 0 0 32px rgba(37, 99, 235, 0.25);
 
   /* Transitions */
   --transition-fast:   all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base:   all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-slow:   all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Glassmorphism */
-  --glass-bg:       rgba(15, 22, 35, 0.75);
-  --glass-bg-light: rgba(24, 32, 48, 0.6);
+  /* Glassmorphism — versión clara */
+  --glass-bg:       rgba(255, 255, 255, 0.75);
+  --glass-bg-light: rgba(248, 250, 252, 0.8);
   --glass-blur:     12px;
-  --glass-border:   rgba(255, 255, 255, 0.06);
+  --glass-border:   rgba(15, 23, 42, 0.07);
 }
 
 /* ─── RESET ──────────────────────────────────────────────────────────── */
@@ -420,14 +420,14 @@ button:active {
 }
 
 .nav-item:hover {
-  background: rgba(30, 42, 64, 0.7);
+  background: rgba(226, 232, 240, 0.7);
   color: var(--text-primary);
   border-color: var(--border-subtle);
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
-  border-color: rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+  border-color: rgba(37, 99, 235, 0.2);
   color: var(--text-primary);
   font-weight: 600;
 }

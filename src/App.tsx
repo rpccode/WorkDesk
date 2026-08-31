@@ -118,7 +118,7 @@ export function App() {
         style={{
           width: '252px',
           height: '100%',
-          background: 'linear-gradient(180deg, #0f1623 0%, #080c15 100%)',
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
           borderRight: '1px solid var(--border-subtle)',
           display: 'flex',
           flexDirection: 'column',
@@ -133,7 +133,7 @@ export function App() {
           right: 0,
           width: '1px',
           height: '100%',
-          background: 'linear-gradient(180deg, transparent, rgba(59,130,246,0.15) 30%, rgba(59,130,246,0.08) 70%, transparent)',
+          background: 'linear-gradient(180deg, transparent, rgba(37,99,235,0.08) 30%, rgba(37,99,235,0.04) 70%, transparent)',
           pointerEvents: 'none',
           zIndex: 1,
         }} />
@@ -163,16 +163,13 @@ export function App() {
               fontSize: '1.1rem',
               fontWeight: 800,
               letterSpacing: '-0.025em',
-              background: 'linear-gradient(90deg, #f1f5f9 0%, #8da3bf 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: '#0f172a',
             }}>
-              WorkDesk
+              Work<span style={{ color: 'var(--accent-primary)' }}>Desk</span>
             </div>
             <div style={{
               fontSize: '0.62rem',
-              color: 'var(--text-muted)',
+              color: '#94a3b8',
               fontWeight: 600,
               letterSpacing: '0.1em',
             }}>
@@ -256,7 +253,6 @@ export function App() {
                 fontSize: '0.73rem',
                 padding: '0.35rem 0.5rem',
                 color: 'var(--text-muted)',
-                gap: '0.35rem',
               }}
               onClick={handleRefresh}
             >
@@ -288,7 +284,7 @@ export function App() {
           overflowY: 'auto',
           padding: '2rem 2.25rem',
           backgroundColor: 'var(--bg-main)',
-          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.07) 0%, transparent 60%), var(--bg-main)',
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
         }}
       >
         <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
