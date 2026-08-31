@@ -9,7 +9,8 @@ use tauri::State;
 use uuid::Uuid;
 
 // Default public client IDs for desktop app integrations
-pub const DEFAULT_MICROSOFT_CLIENT_ID: &str = "04b07795-8ddb-461a-bbee-02f9e1bf7b46"; // Azure CLI / Standard Public Multi-tenant Client ID
+// d3590ed6-52b3-4102-aeff-aad2292ab01c: Microsoft Office Standard Desktop Client ID
+pub const DEFAULT_MICROSOFT_CLIENT_ID: &str = "d3590ed6-52b3-4102-aeff-aad2292ab01c";
 pub const DEFAULT_GOOGLE_CLIENT_ID: &str = "907094034444-j4s968lcv4q89u5l5q2s8sodg402tqub.apps.googleusercontent.com";
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -95,7 +96,7 @@ pub async fn start_oauth_login(
 
     // 2. Build Authorization URL
     let auth_url = if provider == "microsoft" || provider == "microsoft_graph" {
-        let scope = urlencoding::encode("offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read");
+        let scope = urlencoding::encode("offline_access User.Read Mail.Read Mail.Send");
 
         format!(
             "https://login.microsoftonline.com/{}/oauth2/v2.0/authorize?client_id={}&response_type=code&redirect_uri={}&response_mode=query&scope={}&state=workdesk_oauth",

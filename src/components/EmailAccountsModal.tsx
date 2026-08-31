@@ -447,38 +447,49 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  style={{ fontSize: '0.78rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 600 }}
                   onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
                 >
                   {showAdvancedOAuth ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  Opciones avanzadas de App Corporativa (Client ID / Tenant Azure opcional)
+                  ¿Tu empresa requiere un App Client ID de Azure o Tenant específico? (Haz clic aquí)
                 </button>
 
                 {showAdvancedOAuth && (
-                  <div style={{ marginTop: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                        Custom Client / App ID
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Opcional: ID de Azure / Google"
-                        value={customClientId}
-                        onChange={(e) => setCustomClientId(e.target.value)}
-                        style={{ fontSize: '0.78rem' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                        Tenant ID (Microsoft)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="common (por defecto)"
-                        value={customTenantId}
-                        onChange={(e) => setCustomTenantId(e.target.value)}
-                        style={{ fontSize: '0.78rem' }}
-                      />
+                  <div style={{ marginTop: '0.75rem', padding: '0.9rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Si tu organización bloquea aplicaciones de terceros multi-inquilino (error <code>AADSTS65002</code> o <code>AADSTS700016</code>), puedes registrar tu propia aplicación en 1 minuto:
+                    </p>
+                    <ol style={{ fontSize: '0.74rem', color: 'var(--text-muted)', paddingLeft: '1.2rem', margin: 0, lineHeight: 1.6 }}>
+                      <li>Entra a <strong>portal.azure.com</strong> &gt; <em>Registros de aplicaciones</em> &gt; <em>Nuevo registro</em>.</li>
+                      <li>En <strong>URI de redirección</strong>, elige <em>Móvil y escritorio</em> y escribe: <code style={{ color: 'var(--accent-primary)' }}>http://127.0.0.1:8989/callback</code></li>
+                      <li>Copia el <strong>Id. de aplicación (cliente)</strong> y pégalo abajo:</li>
+                    </ol>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginTop: '0.25rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
+                          Client / Application ID (Azure / Google)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: a1b2c3d4-e5f6-7890-..."
+                          value={customClientId}
+                          onChange={(e) => setCustomClientId(e.target.value)}
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
+                          Tenant ID (Opcional, por defecto "common")
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="common o ID de tu directorio"
+                          value={customTenantId}
+                          onChange={(e) => setCustomTenantId(e.target.value)}
+                          style={{ fontSize: '0.78rem' }}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
