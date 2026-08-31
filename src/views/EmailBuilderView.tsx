@@ -109,18 +109,46 @@ export const EmailBuilderView: React.FC = () => {
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               2. Tipo de Plantilla
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              {EMAIL_TEMPLATES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setSelectedTemplateId(t.id)}
-                  className={selectedTemplateId === t.id ? 'btn-primary' : 'btn-secondary'}
-                  style={{ fontSize: '0.78rem', padding: '0.6rem 0.5rem', textAlign: 'center', justifyContent: 'center' }}
-                >
-                  {t.name}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {EMAIL_TEMPLATES.map((t) => {
+                const isActive = selectedTemplateId === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedTemplateId(t.id)}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      justifyContent: 'flex-start',
+                      fontSize: '0.82rem',
+                      padding: '0.55rem 0.85rem',
+                      fontWeight: isActive ? 600 : 500,
+                      background: isActive
+                        ? 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05))'
+                        : 'transparent',
+                      border: `1px solid ${isActive ? 'rgba(37,99,235,0.3)' : 'var(--border-subtle)'}`,
+                      borderRadius: 'var(--radius-md)',
+                      color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      transition: 'var(--transition-fast)',
+                      gap: '0.6rem',
+                      whiteSpace: 'normal',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    <span style={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: isActive ? 'var(--accent-primary)' : 'var(--border-medium)',
+                      flexShrink: 0,
+                      display: 'inline-block',
+                      marginRight: '0.1rem',
+                    }} />
+                    {t.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
