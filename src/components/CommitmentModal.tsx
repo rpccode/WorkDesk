@@ -7,20 +7,29 @@ interface CommitmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultCaseId?: string;
+  initialDueDate?: string;
 }
 
 export const CommitmentModal: React.FC<CommitmentModalProps> = ({
   isOpen,
   onClose,
   defaultCaseId,
+  initialDueDate,
 }) => {
   const { cases, createCommitment } = useStore();
   const [caseId, setCaseId] = useState(defaultCaseId || (cases[0]?.id || ''));
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState<CommitmentOwner>('me');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(initialDueDate || '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (defaultCaseId) setCaseId(defaultCaseId);
+      if (initialDueDate) setDueDate(initialDueDate);
+    }
+  }, [isOpen, defaultCaseId, initialDueDate]);
 
   if (!isOpen) return null;
 

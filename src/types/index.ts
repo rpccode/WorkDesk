@@ -75,7 +75,7 @@ export interface DashboardSummary {
   critical_cases: Case[];
 }
 
-export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'clients' | 'notes' | 'emails' | 'reports';
+export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports';
 
 export type EmailAccountProvider = 'smtp_imap' | 'microsoft_graph' | 'gmail_api';
 

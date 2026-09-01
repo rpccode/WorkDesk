@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Briefcase,
   CheckSquare,
+  Calendar,
   Users,
   FileText,
   Mail,
@@ -16,6 +17,7 @@ import {
 import { DashboardView } from './views/DashboardView';
 import { CasesView } from './views/CasesView';
 import { CommitmentsView } from './views/CommitmentsView';
+import { CalendarView } from './views/CalendarView';
 import { ClientsView } from './views/ClientsView';
 import { NotesView } from './views/NotesView';
 import { EmailBuilderView } from './views/EmailBuilderView';
@@ -108,6 +110,11 @@ export function App() {
         ? dashboardSummary.overdue_commitments_count
         : dashboardSummary?.pending_commitments_count,
       badgeCritical: !!(dashboardSummary?.overdue_commitments_count),
+    },
+    {
+      id: 'calendar',
+      label: 'Calendario',
+      icon: <Calendar size={17} />,
     },
     {
       id: 'clients',
@@ -371,6 +378,7 @@ export function App() {
           {activeTab === 'dashboard'    && <DashboardView />}
           {activeTab === 'cases'        && <CasesView />}
           {activeTab === 'commitments'  && <CommitmentsView />}
+          {activeTab === 'calendar'     && <CalendarView />}
           {activeTab === 'clients'      && <ClientsView />}
           {activeTab === 'notes'        && <NotesView />}
           {activeTab === 'emails'       && <EmailBuilderView />}
