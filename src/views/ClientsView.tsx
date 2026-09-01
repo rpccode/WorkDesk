@@ -14,14 +14,16 @@ import {
   ShieldAlert,
   Building2,
   Cpu,
+  Trash2,
 } from 'lucide-react';
 import { ClientModal } from '../components/ClientModal';
 import { CaseModal } from '../components/CaseModal';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
+import { playNotificationSound } from '../utils/live-alerts';
 import type { Client, ClientComplexity } from '../types';
 
 export const ClientsView: React.FC = () => {
-  const { clients, cases, fetchClients, fetchCases } = useStore();
+  const { clients, cases, fetchClients, fetchCases, deleteAllClients, addNotification } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
@@ -123,6 +125,28 @@ export const ClientsView: React.FC = () => {
     );
   };
 
+  const handleDeleteAll = async () => {
+    if (
+      !confirm(
+        `¿Estás seguro de que deseas eliminar permanentemente los ${clients.length} clientes de la cartera?\n\nEsta acción vaciará la lista y te permitirá realizar una carga masiva limpia desde Excel o CSV.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteAllClients();
+      playNotificationSound('info');
+      addNotification({
+        title: 'Cartera de Clientes Vaciada',
+        message: 'Se han eliminado todos los clientes de la base de datos.',
+        type: 'info',
+      });
+    } catch (err: any) {
+      alert('Error al vaciar clientes: ' + err.message);
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
@@ -136,7 +160,17 @@ export const ClientsView: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          {clients.length > 0 && (
+            <button
+              className="btn-ghost"
+              style={{ fontSize: '0.82rem', color: 'var(--status-critical)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              onClick={handleDeleteAll}
+              title="Borrar todos los clientes para cargarlos de nuevo"
+            >
+              <Trash2 size={15} /> Vaciar Cartera ({clients.length})
+            </button>
+          )}
           <button
             className="btn-secondary"
             style={{ fontSize: '0.82rem', fontWeight: 600 }}

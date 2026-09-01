@@ -42,6 +42,8 @@ export const api = {
     systems_count?: number;
     has_it_department?: boolean;
   }) => invoke<Client>('update_client', { input }),
+  deleteClient: (id: string) => invoke<boolean>('delete_client', { id }),
+  deleteAllClients: () => invoke<number>('delete_all_clients'),
 
   // Cases
   getCases: (statusFilter?: string) =>

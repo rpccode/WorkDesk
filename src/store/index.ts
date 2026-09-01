@@ -111,6 +111,8 @@ interface WorkDeskState {
     systems_count?: number;
     has_it_department?: boolean;
   }) => Promise<Client>;
+  deleteClient: (id: string) => Promise<void>;
+  deleteAllClients: () => Promise<void>;
 
   // Cases
   cases: Case[];
@@ -246,6 +248,32 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       clients: state.clients.map((c) => (c.id === input.id ? fullClient : c)),
     }));
     return fullClient;
+  },
+  deleteClient: async (id: string) => {
+    try {
+      await api.deleteClient(id);
+    } catch (_) {}
+    const meta = getStoredClientsMetadata();
+    delete meta[id];
+    localStorage.setItem(CLIENTS_METADATA_KEY, JSON.stringify(meta));
+    set((state) => ({ clients: state.clients.filter((c) => c.id !== id) }));
+    get().fetchDashboardSummary();
+  },
+  deleteAllClients: async () => {
+    try {
+      await api.deleteAllClients();
+    } catch (err) {
+      console.warn('Fallback deleting clients one by one:', err);
+      const current = get().clients;
+      for (const c of current) {
+        try {
+          await api.deleteClient(c.id);
+        } catch (_) {}
+      }
+    }
+    localStorage.removeItem(CLIENTS_METADATA_KEY);
+    set({ clients: [] });
+    get().fetchDashboardSummary();
   },
 
   // Cases

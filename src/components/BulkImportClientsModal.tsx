@@ -10,6 +10,7 @@ import {
   X,
   Sparkles,
   Layers,
+  Trash2,
 } from 'lucide-react';
 import {
   parseClientSpreadsheet,
@@ -31,10 +32,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { clients, createClient, updateClient, fetchClients, addNotification } = useStore();
+  const { clients, createClient, updateClient, deleteAllClients, fetchClients, addNotification } = useStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [_selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [parseResult, setParseResult] = useState<ImportValidationResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   };
 
   const processFile = async (file: File) => {
-    setSelectedFile(file);
+    setUploadedFile(file);
     setIsLoading(true);
     setErrorMessage(null);
     setParseResult(null);
@@ -134,6 +135,38 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Error al leer el archivo Excel/CSV.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAllClients = async () => {
+    if (
+      !confirm(
+        '¿Estás seguro de que deseas eliminar TODOS los clientes existentes de la base de datos?\n\nEsta acción te permitirá importar tu archivo limpio desde cero sin detectar duplicados.'
+      )
+    ) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await deleteAllClients();
+      playNotificationSound('info');
+      addNotification({
+        title: 'Clientes Eliminados',
+        message: 'Se han eliminado todos los clientes actuales de la base de datos.',
+        type: 'info',
+      });
+
+      // If file was already loaded, re-evaluate it against empty client list
+      if (uploadedFile) {
+        const result = await parseClientSpreadsheet(uploadedFile, []);
+        setParseResult(result);
+        setImportDuplicates(false);
+      }
+    } catch (err: any) {
+      setErrorMessage('Error al vaciar clientes: ' + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -224,7 +257,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   };
 
   const resetModal = () => {
-    setSelectedFile(null);
+    setUploadedFile(null);
     setParseResult(null);
     setErrorMessage(null);
     setImportedCount(null);
@@ -539,6 +572,48 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                       <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-critical)' }}>{parseResult.invalidCount}</p>
                     </div>
                   </div>
+
+                  {/* Reset/Clean Database Action if clients exist */}
+                  {clients.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.65rem 0.95rem',
+                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.78rem',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <div>
+                        <span style={{ color: 'var(--status-critical)', fontWeight: 700, display: 'block' }}>
+                          ¿Deseas reiniciar la base de datos de clientes?
+                        </span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                          Existen {clients.length} clientes registrados. Puedes eliminarlos todos para importar este archivo limpio desde cero.
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{
+                          color: 'var(--status-critical)',
+                          borderColor: 'rgba(239, 68, 68, 0.4)',
+                          fontSize: '0.74rem',
+                          padding: '0.35rem 0.75rem',
+                        }}
+                        onClick={handleDeleteAllClients}
+                        disabled={isLoading || isImporting}
+                      >
+                        <Trash2 size={13} /> Borrar todos los clientes actuales
+                      </button>
+                    </div>
+                  )}
 
                   {/* Duplicate Option */}
                   {parseResult.duplicateCount > 0 && (

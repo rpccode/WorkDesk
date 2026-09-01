@@ -18,6 +18,8 @@ pub fn run() {
             commands::clients::get_clients,
             commands::clients::create_client,
             commands::clients::update_client,
+            commands::clients::delete_client,
+            commands::clients::delete_all_clients,
             // Cases
             commands::cases::get_cases,
             commands::cases::create_case,

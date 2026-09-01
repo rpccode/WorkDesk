@@ -109,3 +109,20 @@ pub fn update_client(state: State<'_, DbState>, input: UpdateClientInput) -> Res
         updated_at: Some(now),
     })
 }
+
+#[tauri::command]
+pub fn delete_client(state: State<'_, DbState>, id: String) -> Result<bool, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM clients WHERE id = ?1", rusqlite::params![id])
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn delete_all_clients(state: State<'_, DbState>) -> Result<usize, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let deleted = conn.execute("DELETE FROM clients", [])
+        .map_err(|e| e.to_string())?;
+    Ok(deleted)
+}
+
