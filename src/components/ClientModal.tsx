@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import { Users, X, Check } from 'lucide-react';
 import type { Client } from '../types';
@@ -18,6 +19,25 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
   const [status, setStatus] = useState(clientToEdit?.status || 'active');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (clientToEdit) {
+        setName(clientToEdit.name);
+        setCompany(clientToEdit.company || '');
+        setEmail(clientToEdit.email || '');
+        setPhone(clientToEdit.phone || '');
+        setStatus(clientToEdit.status);
+      } else {
+        setName('');
+        setCompany('');
+        setEmail('');
+        setPhone('');
+        setStatus('active');
+      }
+      setError(null);
+    }
+  }, [isOpen, clientToEdit]);
 
   if (!isOpen) return null;
 
@@ -57,18 +77,18 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 9990,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99990,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.5rem',
       }}
       onClick={onClose}
     >
@@ -80,7 +100,8 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -89,7 +110,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Users size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
               {clientToEdit ? 'Editar Cliente' : 'Nuevo Cliente'}
             </h3>
           </div>
@@ -184,4 +205,6 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

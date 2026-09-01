@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import {
   Mail,
@@ -224,7 +225,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
     }
   };
 
-  return (
+  const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-panel"
@@ -710,4 +711,6 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

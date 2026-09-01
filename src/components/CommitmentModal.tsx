@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import { CheckSquare, X, Check } from 'lucide-react';
 import type { CommitmentOwner } from '../types';
@@ -28,6 +29,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
     if (isOpen) {
       if (defaultCaseId) setCaseId(defaultCaseId);
       if (initialDueDate) setDueDate(initialDueDate);
+      setError(null);
     }
   }, [isOpen, defaultCaseId, initialDueDate]);
 
@@ -62,18 +64,18 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 9990,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99990,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.5rem',
       }}
       onClick={onClose}
     >
@@ -85,7 +87,8 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -94,7 +97,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <CheckSquare size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Nuevo Compromiso / Entrega</h3>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Nuevo Compromiso / Entrega</h3>
           </div>
           <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
             <X size={18} />
@@ -182,4 +185,6 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

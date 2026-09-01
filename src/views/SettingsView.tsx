@@ -11,12 +11,14 @@ import {
   Check,
   Bell,
   Volume2,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   ACCENT_PALETTES,
   formatSignature,
 } from '../utils/theme-manager';
 import { playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
+import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import type { AccentColor, ConsultantProfile, ConsultantPreferences } from '../types';
 
 interface SettingsViewProps {
@@ -41,6 +43,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   const [preferencesForm, setPreferencesForm] = useState<ConsultantPreferences>(consultantPreferences);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [backupSuccess, setBackupSuccess] = useState<boolean>(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState<boolean>(false);
 
   const handleProfileChange = (field: keyof ConsultantProfile, value: string) => {
     const updated = { ...profileForm, [field]: value };
@@ -529,14 +532,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn-primary"
               style={{ fontSize: '0.82rem', padding: '0.6rem 1rem' }}
               onClick={handleExportBackup}
             >
-              <Download size={14} /> Exportar Backup Completo (JSON)
+              <Download size={14} /> Exportar Backup (JSON)
+            </button>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '0.6rem 1rem' }}
+              onClick={() => setIsBulkImportOpen(true)}
+            >
+              <FileSpreadsheet size={14} /> Importar Clientes (Excel / CSV)
             </button>
 
             {backupSuccess && (
@@ -548,6 +560,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
         </div>
 
       </div>
+
+      <BulkImportClientsModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
 
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import {
   X,
@@ -45,7 +46,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
       fetchNotes(c.id);
       fetchCaseEmails(c.id);
     }
-  }, [c?.id]);
+  }, [c]);
 
   if (!c) return null;
 
@@ -77,14 +78,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
     }
   };
 
-  return (
+  const drawerContent = (
     <>
       <div
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(8px)',
           zIndex: 9980,
           display: 'flex',
           justifyContent: 'flex-end',
@@ -92,161 +93,301 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
         onClick={onClose}
       >
         <div
-          className="animate-fade-in"
+          className="glass-card animate-fade-in"
           style={{
             width: '100%',
-            maxWidth: '680px',
+            maxWidth: '620px',
             height: '100%',
             backgroundColor: 'var(--bg-surface)',
             borderLeft: '1px solid var(--border-subtle)',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: 'var(--shadow-md)',
+            boxShadow: 'var(--shadow-lg)',
+            borderRadius: 0,
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
-                    {c.client_name || 'Cliente sin nombre'}
-                  </span>
-                  {getPriorityBadge(c.priority)}
-                  <span className={`badge ${c.status === 'closed' ? 'badge-neutral' : 'badge-low'}`}>
-                    {c.status === 'closed' ? 'Cerrado' : 'Activo'}
-                  </span>
-                </div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>{c.title}</h2>
-              </div>
-              <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
-                <X size={20} />
-              </button>
-            </div>
-
-            {c.description && (
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', whiteSpace: 'pre-line' }}>
-                {c.description}
-              </p>
-            )}
-
-            {/* Actions Bar */}
-            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
-              <button
-                className="btn-primary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-                onClick={() => setIsCommitmentModalOpen(true)}
-              >
-                <Plus size={15} /> Compromiso
-              </button>
-              <button
-                className="btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-                onClick={() => setIsFollowupModalOpen(true)}
-              >
-                <Plus size={15} /> Bitácora
-              </button>
-              <button
-                className="btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-                onClick={() => {
-                  setCaseForEmail(c);
-                  onClose();
+          <div
+            style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              backgroundColor: 'var(--bg-surface-elevated)',
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: 'var(--accent-primary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                 }}
               >
-                <Mail size={15} /> Redactar Correo
-              </button>
-
-              {c.status !== 'closed' && (
-                <button
-                  className="btn-danger"
-                  style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem', marginLeft: 'auto' }}
-                  onClick={handleCloseCase}
-                >
-                  <CheckCircle2 size={15} /> Cerrar Caso
-                </button>
-              )}
+                {c.client_name || 'Sin Cliente Asociado'}
+              </span>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.2rem' }}>{c.title}</h2>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                {getPriorityBadge(c.priority)}
+                <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>
+                  Estado: {c.status}
+                </span>
+              </div>
             </div>
+
+            <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
+              <X size={20} />
+            </button>
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-main)' }}>
+          {/* Action Bar */}
+          <div
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              gap: '0.5rem',
+              backgroundColor: 'var(--bg-surface)',
+              flexWrap: 'wrap',
+            }}
+          >
             <button
-              onClick={() => setActiveTab('commitments')}
+              className="btn-primary"
+              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              onClick={() => setIsCommitmentModalOpen(true)}
+            >
+              <Plus size={14} /> Nuevo Compromiso
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              onClick={() => setIsFollowupModalOpen(true)}
+            >
+              <Plus size={14} /> Registrar Actividad
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              onClick={() => {
+                setCaseForEmail(c);
+                onClose();
+              }}
+            >
+              <Mail size={14} /> Redactar Correo
+            </button>
+            {c.status !== 'closed' && (
+              <button
+                className="btn-secondary"
+                style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', color: 'var(--status-low)', marginLeft: 'auto' }}
+                onClick={handleCloseCase}
+              >
+                <CheckCircle2 size={14} /> Cerrar Caso
+              </button>
+            )}
+          </div>
+
+          {/* Navigation Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              borderBottom: '1px solid var(--border-subtle)',
+              padding: '0 1.5rem',
+              backgroundColor: 'var(--bg-surface-elevated)',
+            }}
+          >
+            <button
+              className={`btn-ghost ${activeTab === 'commitments' ? 'active' : ''}`}
               style={{
-                flex: 1,
-                padding: '0.75rem',
                 borderRadius: 0,
                 borderBottom: activeTab === 'commitments' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                color: activeTab === 'commitments' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                padding: '0.75rem 1rem',
+                fontSize: '0.82rem',
                 fontWeight: activeTab === 'commitments' ? 700 : 500,
-                background: 'transparent',
+                color: activeTab === 'commitments' ? 'var(--accent-primary)' : 'var(--text-secondary)',
               }}
+              onClick={() => setActiveTab('commitments')}
             >
-              <CheckSquare size={16} /> Compromisos ({caseCommitments.length})
+              <CheckSquare size={15} />
+              Compromisos ({caseCommitments.length})
             </button>
             <button
-              onClick={() => setActiveTab('followups')}
+              className={`btn-ghost ${activeTab === 'followups' ? 'active' : ''}`}
               style={{
-                flex: 1,
-                padding: '0.75rem',
                 borderRadius: 0,
                 borderBottom: activeTab === 'followups' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                color: activeTab === 'followups' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                padding: '0.75rem 1rem',
+                fontSize: '0.82rem',
                 fontWeight: activeTab === 'followups' ? 700 : 500,
-                background: 'transparent',
+                color: activeTab === 'followups' ? 'var(--accent-primary)' : 'var(--text-secondary)',
               }}
+              onClick={() => setActiveTab('followups')}
             >
-              <MessageSquare size={16} /> Bitácora ({followups.length})
+              <MessageSquare size={15} />
+              Bitácora ({followups.filter((f) => f.case_id === c.id).length})
             </button>
             <button
-              onClick={() => setActiveTab('notes')}
+              className={`btn-ghost ${activeTab === 'emails' ? 'active' : ''}`}
               style={{
-                flex: 1,
-                padding: '0.75rem',
-                borderRadius: 0,
-                borderBottom: activeTab === 'notes' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                color: activeTab === 'notes' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                fontWeight: activeTab === 'notes' ? 700 : 500,
-                background: 'transparent',
-              }}
-            >
-              <FileText size={16} /> Notas ({caseNotes.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('emails')}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
                 borderRadius: 0,
                 borderBottom: activeTab === 'emails' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                color: activeTab === 'emails' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                padding: '0.75rem 1rem',
+                fontSize: '0.82rem',
                 fontWeight: activeTab === 'emails' ? 700 : 500,
-                background: 'transparent',
+                color: activeTab === 'emails' ? 'var(--accent-primary)' : 'var(--text-secondary)',
               }}
+              onClick={() => setActiveTab('emails')}
             >
-              <Mail size={16} /> Correos ({caseEmails.length})
+              <Mail size={15} />
+              Correos ({caseEmails.length})
+            </button>
+            <button
+              className={`btn-ghost ${activeTab === 'notes' ? 'active' : ''}`}
+              style={{
+                borderRadius: 0,
+                borderBottom: activeTab === 'notes' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                padding: '0.75rem 1rem',
+                fontSize: '0.82rem',
+                fontWeight: activeTab === 'notes' ? 700 : 500,
+                color: activeTab === 'notes' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              }}
+              onClick={() => setActiveTab('notes')}
+            >
+              <FileText size={15} />
+              Notas ({caseNotes.length})
             </button>
           </div>
 
-          {/* Body Content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+          {/* Content Body */}
+          <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+            {/* Description card */}
+            {c.description && (
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  marginBottom: '1.25rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                  Contexto del Caso
+                </span>
+                {c.description}
+              </div>
+            )}
+
+            {/* TAB: COMMITMENTS */}
+            {activeTab === 'commitments' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {caseCommitments.length === 0 ? (
+                  <div className="empty-state">
+                    <CheckSquare size={32} />
+                    <p>No hay compromisos registrados en este caso.</p>
+                  </div>
+                ) : (
+                  caseCommitments.map((com) => {
+                    const isDone = com.status === 'done';
+                    const overdue = isOverdue(com.due_date) && !isDone;
+
+                    return (
+                      <div
+                        key={com.id}
+                        className="glass-card"
+                        style={{
+                          padding: '0.9rem 1.1rem',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'space-between',
+                          borderLeft: overdue ? '3px solid var(--status-critical)' : isDone ? '3px solid var(--status-low)' : '3px solid var(--border-subtle)',
+                          opacity: isDone ? 0.6 : 1,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={isDone}
+                            onChange={() => !isDone && markCommitmentDone(com.id)}
+                            disabled={isDone}
+                            style={{ marginTop: '0.2rem', accentColor: 'var(--accent-primary)', cursor: isDone ? 'default' : 'pointer' }}
+                          />
+                          <div>
+                            <p style={{ fontSize: '0.88rem', fontWeight: 600, textDecoration: isDone ? 'line-through' : 'none' }}>
+                              {com.description}
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.35rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              <span>Responsable: {com.owner === 'me' ? '🙋‍♂️ Consultor' : com.owner === 'client' ? '🏢 Cliente' : '👥 Tercero'}</span>
+                              {com.due_date && (
+                                <span style={{ color: overdue ? 'var(--status-critical)' : 'inherit', fontWeight: overdue ? 700 : 400 }}>
+                                  Vence: {formatDate(com.due_date)} ({formatRelativeDate(com.due_date)})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {isDone ? (
+                          <span className="badge badge-low" style={{ fontSize: '0.65rem' }}>Completado</span>
+                        ) : overdue ? (
+                          <span className="badge badge-critical" style={{ fontSize: '0.65rem' }}>Vencido</span>
+                        ) : (
+                          <span className="badge badge-medium" style={{ fontSize: '0.65rem' }}>Pendiente</span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* TAB: FOLLOWUPS */}
+            {activeTab === 'followups' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {followups.filter((f) => f.case_id === c.id).length === 0 ? (
+                  <div className="empty-state">
+                    <MessageSquare size={32} />
+                    <p>No hay llamadas, reuniones ni minutas registradas.</p>
+                  </div>
+                ) : (
+                  followups
+                    .filter((f) => f.case_id === c.id)
+                    .map((f) => (
+                      <div key={f.id} className="glass-card" style={{ padding: '0.9rem 1.1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <span className="badge badge-neutral" style={{ fontSize: '0.7rem' }}>
+                            {f.type.toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            {formatDate(f.date)}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{f.summary}</p>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+
+            {/* TAB: EMAILS */}
             {activeTab === 'emails' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {caseEmails.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <Mail size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-                    <p>No hay correos enviados o sincronizados en este caso.</p>
+                  <div className="empty-state">
+                    <Mail size={32} />
+                    <p>No hay correos vinculados automáticamente a este caso.</p>
                     <button
-                      className="btn-primary"
-                      style={{ marginTop: '0.8rem', fontSize: '0.8rem' }}
-                      onClick={() => {
-                        setCaseForEmail(c);
-                        onClose();
-                      }}
+                      className="btn-secondary"
+                      style={{ fontSize: '0.78rem', marginTop: '0.5rem' }}
+                      onClick={() => setCaseForEmail(c)}
                     >
-                      Redactar y Enviar Correo
+                      <Mail size={13} /> Redactar Correo
                     </button>
                   </div>
                 ) : (
@@ -256,30 +397,24 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
                       className="glass-card"
                       style={{
                         padding: '1rem 1.2rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.4rem',
-                        borderLeft: email.direction === 'inbound' ? '4px solid var(--status-medium)' : '4px solid var(--accent-primary)',
+                        borderLeft: email.direction === 'inbound' ? '3px solid var(--accent-primary)' : '3px solid var(--status-low)',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className={`badge ${email.direction === 'inbound' ? 'badge-medium' : 'badge-low'}`}>
-                            {email.direction === 'inbound' ? 'Entrante' : 'Enviado'}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {email.direction === 'inbound' ? `De: ${email.sender}` : `Para: ${email.recipient}`}
-                          </span>
-                        </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                        <span className="badge" style={{ backgroundColor: email.direction === 'inbound' ? 'var(--accent-glow)' : 'var(--status-low-bg)', color: email.direction === 'inbound' ? 'var(--accent-primary)' : 'var(--status-low)', fontSize: '0.68rem' }}>
+                          {email.direction === 'inbound' ? 'Entrante (Cliente)' : 'Enviado (Saliente)'}
+                        </span>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                           {formatDate(email.date)}
                         </span>
                       </div>
-
-                      <h4 style={{ fontSize: '0.92rem', fontWeight: 700, marginTop: '0.2rem' }}>
+                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                         {email.subject}
                       </h4>
-                      <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                        De: {email.sender} → Para: {email.recipient}
+                      </p>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
                         {email.body_text}
                       </p>
                     </div>
@@ -287,116 +422,13 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
                 )}
               </div>
             )}
-            {activeTab === 'commitments' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {caseCommitments.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <CheckSquare size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-                    <p>No hay compromisos registrados en este caso.</p>
-                    <button
-                      className="btn-secondary"
-                      style={{ marginTop: '0.8rem', fontSize: '0.8rem' }}
-                      onClick={() => setIsCommitmentModalOpen(true)}
-                    >
-                      + Añadir primer compromiso
-                    </button>
-                  </div>
-                ) : (
-                  caseCommitments.map((com) => {
-                    const isDone = com.status === 'done';
-                    const overdue = !isDone && isOverdue(com.due_date);
-                    return (
-                      <div
-                        key={com.id}
-                        className="glass-card"
-                        style={{
-                          padding: '0.9rem 1.1rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.85rem',
-                          borderLeft: overdue ? '4px solid var(--status-critical)' : isDone ? '4px solid var(--status-low)' : '4px solid var(--accent-primary)',
-                          opacity: isDone ? 0.65 : 1,
-                        }}
-                      >
-                        <button
-                          onClick={() => !isDone && markCommitmentDone(com.id)}
-                          style={{
-                            background: isDone ? 'var(--status-low-bg)' : 'transparent',
-                            color: isDone ? 'var(--status-low)' : 'var(--text-muted)',
-                            border: `1px solid ${isDone ? 'var(--status-low)' : 'var(--border-subtle)'}`,
-                            padding: '0.4rem',
-                            borderRadius: '50%',
-                            cursor: isDone ? 'default' : 'pointer',
-                          }}
-                          title={isDone ? 'Completado' : 'Marcar como completado'}
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
 
-                        <div style={{ flex: 1 }}>
-                          <p
-                            style={{
-                              fontSize: '0.92rem',
-                              fontWeight: 600,
-                              textDecoration: isDone ? 'line-through' : 'none',
-                              color: isDone ? 'var(--text-muted)' : 'var(--text-primary)',
-                            }}
-                          >
-                            {com.description}
-                          </p>
-                          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            <span>
-                              {com.owner === 'me' ? '🙋‍♂️ Mi entrega' : com.owner === 'client' ? '🏢 Cliente debe responder' : '👥 Tercero'}
-                            </span>
-                            {com.due_date && (
-                              <span style={{ color: overdue ? 'var(--status-critical)' : 'inherit', fontWeight: overdue ? 700 : 400 }}>
-                                • {formatRelativeDate(com.due_date)} ({formatDate(com.due_date)})
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {activeTab === 'followups' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {followups.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <MessageSquare size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-                    <p>No hay entradas de bitácora registradas.</p>
-                    <button
-                      className="btn-secondary"
-                      style={{ marginTop: '0.8rem', fontSize: '0.8rem' }}
-                      onClick={() => setIsFollowupModalOpen(true)}
-                    >
-                      + Registrar primera interacción
-                    </button>
-                  </div>
-                ) : (
-                  followups.map((f) => (
-                    <div key={f.id} className="glass-card" style={{ padding: '1rem 1.2rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        <span className="badge badge-neutral">
-                          {f.type === 'meeting' ? '🤝 Reunión' : f.type === 'call' ? '📞 Llamada' : f.type === 'email' ? '✉️ Correo' : '📝 Nota'}
-                        </span>
-                        <span>{formatDate(f.date)}</span>
-                      </div>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-line' }}>{f.summary}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
+            {/* TAB: NOTES */}
             {activeTab === 'notes' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {caseNotes.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    <FileText size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
+                  <div className="empty-state">
+                    <FileText size={32} />
                     <p>No hay notas vinculadas a este caso.</p>
                   </div>
                 ) : (
@@ -435,4 +467,6 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c, onClose
       />
     </>
   );
+
+  return ReactDOM.createPortal(drawerContent, document.body);
 };

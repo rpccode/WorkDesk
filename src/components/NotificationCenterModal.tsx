@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import {
   Bell,
@@ -41,7 +42,7 @@ export const NotificationCenterModal: React.FC = () => {
     return true;
   });
 
-  const getIcon = (type: NotificationType) => {
+  const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case 'critical':
         return <AlertCircle size={17} color="var(--status-critical)" />;
@@ -53,6 +54,21 @@ export const NotificationCenterModal: React.FC = () => {
         return <CheckCircle2 size={17} color="var(--status-low)" />;
       default:
         return <Info size={17} color="var(--text-secondary)" />;
+    }
+  };
+
+  const getNotificationBorderColor = (type: NotificationType) => {
+    switch (type) {
+      case 'critical':
+        return 'var(--status-critical)';
+      case 'warning':
+        return 'var(--status-medium)';
+      case 'email':
+        return 'var(--accent-primary)';
+      case 'success':
+        return 'var(--status-low)';
+      default:
+        return 'var(--border-subtle)';
     }
   };
 
@@ -69,220 +85,224 @@ export const NotificationCenterModal: React.FC = () => {
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9985,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99990,
         display: 'flex',
         justifyContent: 'flex-end',
       }}
       onClick={() => setNotificationCenterOpen(false)}
     >
       <div
-        className="animate-fade-in"
+        className="glass-card animate-fade-in"
         style={{
           width: '100%',
           maxWidth: '460px',
           height: '100%',
           backgroundColor: 'var(--bg-surface)',
           borderLeft: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: 'var(--shadow-md)',
+          borderRadius: 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           style={{
-            padding: '1.25rem 1.4rem',
+            padding: '1.25rem 1.5rem',
             borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            backgroundColor: 'var(--bg-surface-elevated)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div
-              style={{
-                padding: '0.4rem',
-                borderRadius: '8px',
-                backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
-              }}
-            >
+            <div style={{ padding: '0.45rem', borderRadius: '8px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Bell size={18} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>Centro de Alertas</h3>
-                {unreadCount > 0 && (
-                  <span className="nav-badge nav-badge-critical" style={{ fontSize: '0.65rem' }}>
-                    {unreadCount} nuevas
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
-                Monitoreo operativo y avisos en vivo
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Centro de Alertas</h3>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                {unreadCount > 0 ? `${unreadCount} alerta(s) sin leer` : 'Todo al día'}
               </p>
             </div>
           </div>
 
           <button
             className="btn-ghost"
-            style={{ padding: '0.35rem' }}
+            style={{ padding: '0.35rem', color: 'var(--text-muted)' }}
             onClick={() => setNotificationCenterOpen(false)}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Action controls & Filter bar */}
+        {/* Filter & Actions Bar */}
         <div
           style={{
-            padding: '0.75rem 1.25rem',
+            padding: '0.6rem 1.25rem',
             borderBottom: '1px solid var(--border-subtle)',
-            backgroundColor: 'var(--bg-main)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '0.6rem',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: 'var(--bg-surface-elevated)',
           }}
         >
-          {/* Quick actions row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '0.3rem' }}>
-              <button
-                type="button"
-                className={`btn-ghost ${filterType === 'all' ? 'active' : ''}`}
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                onClick={() => setFilterType('all')}
-              >
-                Todas ({notifications.length})
-              </button>
-              <button
-                type="button"
-                className={`btn-ghost ${filterType === 'unread' ? 'active' : ''}`}
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                onClick={() => setFilterType('unread')}
-              >
-                Sin leer ({unreadCount})
-              </button>
-              <button
-                type="button"
-                className={`btn-ghost ${filterType === 'critical' ? 'active' : ''}`}
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                onClick={() => setFilterType('critical')}
-              >
-                🚨 Críticas
-              </button>
-              <button
-                type="button"
-                className={`btn-ghost ${filterType === 'email' ? 'active' : ''}`}
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                onClick={() => setFilterType('email')}
-              >
-                ✉️ Correos
-              </button>
-            </div>
+          <div style={{ display: 'flex', gap: '0.3rem' }}>
+            <button
+              type="button"
+              className={`btn-ghost ${filterType === 'all' ? 'active' : ''}`}
+              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              onClick={() => setFilterType('all')}
+            >
+              Todas ({notifications.length})
+            </button>
+            <button
+              type="button"
+              className={`btn-ghost ${filterType === 'unread' ? 'active' : ''}`}
+              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              onClick={() => setFilterType('unread')}
+            >
+              Sin leer ({unreadCount})
+            </button>
+            <button
+              type="button"
+              className={`btn-ghost ${filterType === 'critical' ? 'active' : ''}`}
+              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              onClick={() => setFilterType('critical')}
+            >
+              🚨 Críticas
+            </button>
+            <button
+              type="button"
+              className={`btn-ghost ${filterType === 'email' ? 'active' : ''}`}
+              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              onClick={() => setFilterType('email')}
+            >
+              ✉️ Correos
+            </button>
+          </div>
 
-            <div style={{ display: 'flex', gap: '0.2rem' }}>
-              {unreadCount > 0 && (
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--accent-primary)' }}
-                  onClick={markAllNotificationsRead}
-                  title="Marcar todas como leídas"
-                >
-                  <CheckCheck size={13} />
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--status-critical)' }}
-                  onClick={clearAllNotifications}
-                  title="Limpiar todo el historial"
-                >
-                  <Trash2 size={13} />
-                </button>
-              )}
-            </div>
+          <div style={{ display: 'flex', gap: '0.2rem' }}>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--accent-primary)' }}
+                onClick={markAllNotificationsRead}
+                title="Marcar todas como leídas"
+              >
+                <CheckCheck size={13} />
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--text-muted)' }}
+                onClick={clearAllNotifications}
+                title="Limpiar todas"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Notifications Feed */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {filteredNotifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
-              <CheckCircle2 size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.35, color: 'var(--status-low)' }} />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                ¡Operación al Día!
-              </h4>
-              <p style={{ fontSize: '0.8rem', marginTop: '0.3rem' }}>
-                No tienes alertas pendientes en este filtro.
-              </p>
+            <div className="empty-state" style={{ padding: '3rem 1rem', textAlign: 'center' }}>
+              <CheckCircle2 size={36} color="var(--status-low)" style={{ margin: '0 auto 0.75rem' }} />
+              <p style={{ color: 'var(--text-muted)' }}>No hay notificaciones en esta categoría.</p>
             </div>
           ) : (
             filteredNotifications.map((n) => (
               <div
                 key={n.id}
                 style={{
-                  padding: '0.9rem 1rem',
+                  padding: '0.85rem 1rem',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: n.is_read ? 'var(--bg-surface-elevated)' : 'rgba(37,99,235,0.06)',
-                  border: `1px solid ${n.is_read ? 'var(--border-subtle)' : 'rgba(37,99,235,0.3)'}`,
+                  backgroundColor: n.is_read ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+                  borderLeft: `4px solid ${getNotificationBorderColor(n.type)}`,
+                  borderTop: '1px solid var(--border-subtle)',
+                  borderRight: '1px solid var(--border-subtle)',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  boxShadow: n.is_read ? 'none' : 'var(--shadow-xs)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.35rem',
+                  cursor: 'pointer',
                   position: 'relative',
-                  transition: 'background 0.2s',
                 }}
+                onClick={() => markNotificationRead(n.id)}
               >
-                {/* Header row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    {getIcon(n.type)}
-                    <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {n.title}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                    {formatRelativeDate(n.created_at)}
+                {!n.is_read && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-primary)',
+                    }}
+                  />
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  {getNotificationIcon(n.type)}
+                  <span style={{ fontSize: '0.84rem', fontWeight: n.is_read ? 600 : 800, color: 'var(--text-primary)' }}>
+                    {n.title}
                   </span>
                 </div>
 
-                {/* Message */}
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                   {n.message}
                 </p>
 
                 {/* Actions row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem' }}>
-                  {!n.is_read ? (
-                    <button
-                      className="btn-ghost"
-                      style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: 'var(--text-muted)' }}
-                      onClick={() => markNotificationRead(n.id)}
-                    >
-                      Marcar leída
-                    </button>
-                  ) : <div />}
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    {formatRelativeDate(n.created_at)}
+                  </span>
 
-                  {n.action_label && (
-                    <button
-                      className="btn-primary"
-                      style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
-                      onClick={() => handleAction(n)}
-                    >
-                      <ExternalLink size={12} /> {n.action_label}
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    {!n.is_read && (
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: 'var(--text-muted)' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markNotificationRead(n.id);
+                        }}
+                      >
+                        Marcar leída
+                      </button>
+                    )}
+
+                    {n.action_label && (
+                      <button
+                        className="btn-primary"
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(n);
+                        }}
+                      >
+                        <ExternalLink size={12} /> {n.action_label}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))
@@ -291,4 +311,6 @@ export const NotificationCenterModal: React.FC = () => {
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

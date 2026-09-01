@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import { MessageSquare, X, Check } from 'lucide-react';
 import { getTodayIso } from '../utils/date';
@@ -46,18 +47,18 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 9995,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99995,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.5rem',
       }}
       onClick={onClose}
     >
@@ -69,7 +70,8 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -79,7 +81,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
               <MessageSquare size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Registrar Seguimiento / Bitácora</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Registrar Seguimiento / Bitácora</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Caso: {caseTitle}</p>
             </div>
           </div>
@@ -137,4 +139,6 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

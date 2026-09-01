@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
-import { Briefcase, X, Check } from 'lucide-react';
+import { Briefcase, X, Check, UserPlus, FileSpreadsheet } from 'lucide-react';
 import type { Case, CasePriority } from '../types';
+import { ClientModal } from './ClientModal';
+import { BulkImportClientsModal } from './BulkImportClientsModal';
 
 interface CaseModalProps {
   isOpen: boolean;
@@ -18,6 +21,28 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
   const [status, setStatus] = useState(caseToEdit?.status || 'open');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (caseToEdit) {
+        setClientId(caseToEdit.client_id);
+        setTitle(caseToEdit.title);
+        setDescription(caseToEdit.description || '');
+        setPriority(caseToEdit.priority);
+        setStatus(caseToEdit.status);
+      } else {
+        setClientId(clients[0]?.id || '');
+        setTitle('');
+        setDescription('');
+        setPriority('medium');
+        setStatus('open');
+      }
+      setError(null);
+    }
+  }, [isOpen, caseToEdit, clients]);
 
   if (!isOpen) return null;
 
@@ -60,18 +85,18 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 9990,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99990,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.5rem',
       }}
       onClick={onClose}
     >
@@ -83,7 +108,8 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -92,7 +118,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Briefcase size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
               {caseToEdit ? 'Editar Caso / Proyecto' : 'Nuevo Caso / Proyecto'}
             </h3>
           </div>
@@ -110,12 +136,55 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {!caseToEdit && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                Cliente *
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  Cliente *
+                </label>
+                {clients.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem', color: 'var(--accent-primary)' }}
+                    onClick={() => setIsClientModalOpen(true)}
+                  >
+                    + Crear otro cliente
+                  </button>
+                )}
+              </div>
+
               {clients.length === 0 ? (
-                <div style={{ fontSize: '0.85rem', color: 'var(--status-critical)' }}>
-                  No tienes clientes registrados. Crea un cliente primero.
+                <div
+                  style={{
+                    padding: '1rem',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--accent-glow)',
+                    border: '1px solid rgba(37,99,235,0.2)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.6rem',
+                  }}
+                >
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                    Aún no tienes clientes registrados para vincular este caso.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
+                      onClick={() => setIsClientModalOpen(true)}
+                    >
+                      <UserPlus size={13} /> + Crear Cliente
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
+                      onClick={() => setIsBulkImportOpen(true)}
+                    >
+                      <FileSpreadsheet size={13} /> Importar Excel / CSV
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <select
@@ -201,13 +270,29 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button type="submit" className="btn-primary" disabled={isSaving || !title.trim()}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSaving || !title.trim() || (!caseToEdit && clients.length === 0)}
+            >
               <Check size={16} />
               {isSaving ? 'Guardando...' : caseToEdit ? 'Actualizar caso' : 'Crear caso'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Sub-modals if client is missing */}
+      <ClientModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+      />
+      <BulkImportClientsModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

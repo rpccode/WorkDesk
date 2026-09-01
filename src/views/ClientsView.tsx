@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { Users, Plus, Search, Mail, Phone, Building, Briefcase } from 'lucide-react';
+import { Users, Plus, Search, Mail, Phone, Building, Briefcase, FileSpreadsheet } from 'lucide-react';
 import { ClientModal } from '../components/ClientModal';
 import { CaseModal } from '../components/CaseModal';
+import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import type { Client } from '../types';
 
 export const ClientsView: React.FC = () => {
@@ -11,6 +12,7 @@ export const ClientsView: React.FC = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -27,7 +29,7 @@ export const ClientsView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
             Cartera de Clientes & Contactos
@@ -37,9 +39,18 @@ export const ClientsView: React.FC = () => {
           </p>
         </div>
 
-        <button className="btn-primary" onClick={() => setIsClientModalOpen(true)}>
-          <Plus size={16} /> Nuevo Cliente
-        </button>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: '0.82rem', fontWeight: 600 }}
+            onClick={() => setIsBulkImportOpen(true)}
+          >
+            <FileSpreadsheet size={16} /> Importar Excel / CSV
+          </button>
+          <button className="btn-primary" onClick={() => setIsClientModalOpen(true)}>
+            <Plus size={16} /> Nuevo Cliente
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -175,6 +186,10 @@ export const ClientsView: React.FC = () => {
         clientToEdit={clientToEdit}
       />
       <CaseModal isOpen={isCaseModalOpen} onClose={() => setIsCaseModalOpen(false)} />
+      <BulkImportClientsModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
     </div>
   );
 };

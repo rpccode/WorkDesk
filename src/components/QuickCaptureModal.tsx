@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import { Zap, X, Check } from 'lucide-react';
 
@@ -43,18 +44,18 @@ export const QuickCaptureModal: React.FC = () => {
     }
   };
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 9999,
+        zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.5rem',
       }}
       onClick={() => setQuickCaptureOpen(false)}
     >
@@ -63,27 +64,25 @@ export const QuickCaptureModal: React.FC = () => {
         style={{
           width: '100%',
           maxWidth: '560px',
-          padding: '1.5rem',
+          padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-focus)',
-          boxShadow: 'var(--shadow-glow), var(--shadow-md)',
+          boxShadow: 'var(--shadow-glow), var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
-              <Zap size={20} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+              <Zap size={18} />
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Captura Rápida</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Guarda notas, pendientes o ideas al instante</p>
-            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Captura Rápida</h3>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--bg-main)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+              Ctrl+N / Alt+N
+            </span>
           </div>
-          <button
-            onClick={() => setQuickCaptureOpen(false)}
-            style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}
-          >
+          <button onClick={() => setQuickCaptureOpen(false)} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
             <X size={18} />
           </button>
         </div>
@@ -91,27 +90,31 @@ export const QuickCaptureModal: React.FC = () => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <textarea
+              rows={3}
               autoFocus
-              rows={4}
+              placeholder="Escribe un compromiso, idea, nota de reunión o pendiente..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="¿Qué ocurrió? / ¿Qué pendiente surgió?..."
-              style={{ width: '100%', resize: 'none', fontSize: '0.95rem' }}
-              required
+              style={{ width: '100%', resize: 'none' }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  handleSubmit(e);
+                }
+              }}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
-                Vincular a caso (opcional)
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                Vincular a Caso (Opcional)
               </label>
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
                 style={{ width: '100%' }}
               >
-                <option value="">-- Sin caso específico --</option>
+                <option value="">(Sin caso específico / Nota general)</option>
                 {cases.map((c) => (
                   <option key={c.id} value={c.id}>
                     [{c.client_name || 'Cliente'}] {c.title}
@@ -120,44 +123,31 @@ export const QuickCaptureModal: React.FC = () => {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  color: isCommitment ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  padding: '0.5rem 0',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={isCommitment}
-                  onChange={(e) => setIsCommitment(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                Es un compromiso con fecha
-              </label>
-            </div>
+            {selectedCaseId && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isCommitment}
+                    onChange={(e) => setIsCommitment(e.target.checked)}
+                    style={{ accentColor: 'var(--accent-primary)' }}
+                  />
+                  <span>Registrar como Compromiso formal</span>
+                </label>
+
+                {isCommitment && (
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    style={{ flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
-          {isCommitment && (
-            <div className="animate-fade-in">
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
-                Fecha límite de entrega
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                style={{ width: '100%' }}
-              />
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
             <button
               type="button"
               className="btn-secondary"
@@ -171,11 +161,13 @@ export const QuickCaptureModal: React.FC = () => {
               disabled={isSaving || !content.trim()}
             >
               <Check size={16} />
-              {isSaving ? 'Guardando...' : 'Guardar captura'}
+              {isSaving ? 'Guardando...' : 'Guardar (Ctrl+Enter)'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };
