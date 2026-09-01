@@ -11,6 +11,7 @@ interface SearchableClientSelectProps {
   required?: boolean;
   label?: string;
   disabled?: boolean;
+  dropDirection?: 'auto' | 'down' | 'up';
 }
 
 export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
@@ -22,10 +23,12 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
   required = false,
   label,
   disabled = false,
+  dropDirection = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [isDropUp, setIsDropUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -45,16 +48,32 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
     return nameMatch || companyMatch || categoryMatch || complexityMatch;
   });
 
-  // Focus search input when opening dropdown
+  // Focus search input and calculate position when opening dropdown
   useEffect(() => {
     if (isOpen) {
       setSearchTerm('');
       setHighlightedIndex(0);
+
+      // Smart position calculation
+      if (dropDirection === 'up') {
+        setIsDropUp(true);
+      } else if (dropDirection === 'down') {
+        setIsDropUp(false);
+      } else if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 250 && rect.top > 250) {
+          setIsDropUp(true);
+        } else {
+          setIsDropUp(false);
+        }
+      }
+
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 50);
     }
-  }, [isOpen]);
+  }, [isOpen, dropDirection]);
 
   // Click outside listener
   useEffect(() => {
@@ -166,7 +185,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0.5rem 0.75rem',
+          padding: '0.55rem 0.75rem',
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'var(--bg-surface-elevated)',
           border: isOpen
@@ -176,12 +195,12 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.15s ease',
-          minHeight: '38px',
+          minHeight: '40px',
           userSelect: 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
-          <Building2 size={15} style={{ color: selectedClient ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+          <Building2 size={16} style={{ color: selectedClient ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
           {selectedClient ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -225,7 +244,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             style={{
               color: 'var(--text-muted)',
               transition: 'transform 0.2s',
-              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: isOpen ? (isDropUp ? 'rotate(0deg)' : 'rotate(180deg)') : (isDropUp ? 'rotate(180deg)' : 'rotate(0deg)'),
             }}
           />
         </div>
@@ -237,15 +256,17 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           className="glass-card animate-fade-in"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 4px)',
+            ...(isDropUp
+              ? { bottom: 'calc(100% + 6px)', top: 'auto' }
+              : { top: 'calc(100% + 6px)', bottom: 'auto' }),
             left: 0,
             width: '100%',
             minWidth: '300px',
             backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-medium)',
+            border: '1.5px solid var(--border-medium)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-xl)',
-            zIndex: 99999,
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
+            zIndex: 999999,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -254,7 +275,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           {/* Search Box Header */}
           <div
             style={{
-              padding: '0.6rem 0.75rem',
+              padding: '0.65rem 0.75rem',
               borderBottom: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-surface-elevated)',
               display: 'flex',
@@ -305,12 +326,12 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           <div
             ref={listRef}
             style={{
-              maxHeight: '230px',
+              maxHeight: '210px',
               overflowY: 'auto',
               padding: '0.35rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.15rem',
+              gap: '0.2rem',
             }}
           >
             {filteredClients.length === 0 ? (
@@ -338,18 +359,19 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '0.5rem 0.65rem',
+                      padding: '0.55rem 0.65rem',
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: isSelected
                         ? 'var(--accent-glow)'
                         : isHighlighted
                         ? 'var(--bg-surface-elevated)'
                         : 'transparent',
+                      border: isSelected ? '1px solid rgba(37, 99, 235, 0.25)' : '1px solid transparent',
                       cursor: 'pointer',
                       transition: 'background-color 0.1s',
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <span
                           style={{
@@ -391,7 +413,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             }}
           >
             <span>{filteredClients.length} de {clients.length} clientes</span>
-            <span>Usa ↑↓ y Enter para seleccionar</span>
+            <span>Usa ↑↓ y Enter</span>
           </div>
         </div>
       )}

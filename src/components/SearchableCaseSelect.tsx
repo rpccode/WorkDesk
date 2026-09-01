@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, ChevronDown, Check, X, Briefcase } from 'lucide-react';
+import { Search, ChevronDown, Check, X, Briefcase, Building2 } from 'lucide-react';
 import type { Case } from '../types';
 
 interface SearchableCaseSelectProps {
@@ -11,6 +11,7 @@ interface SearchableCaseSelectProps {
   required?: boolean;
   label?: string;
   disabled?: boolean;
+  dropDirection?: 'auto' | 'down' | 'up';
 }
 
 export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
@@ -22,10 +23,12 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
   required = false,
   label,
   disabled = false,
+  dropDirection = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [isDropUp, setIsDropUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -45,11 +48,28 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
     if (isOpen) {
       setSearchTerm('');
       setHighlightedIndex(0);
+
+      // Smart position detection
+      if (dropDirection === 'up') {
+        setIsDropUp(true);
+      } else if (dropDirection === 'down') {
+        setIsDropUp(false);
+      } else if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        // If less than 240px below and more space above, open upwards
+        if (spaceBelow < 240 && rect.top > 240) {
+          setIsDropUp(true);
+        } else {
+          setIsDropUp(false);
+        }
+      }
+
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 50);
     }
-  }, [isOpen]);
+  }, [isOpen, dropDirection]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -128,7 +148,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0.5rem 0.75rem',
+          padding: '0.55rem 0.75rem',
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'var(--bg-surface-elevated)',
           border: isOpen
@@ -138,20 +158,30 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.15s ease',
-          minHeight: '38px',
+          minHeight: '40px',
           userSelect: 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
-          <Briefcase size={15} style={{ color: selectedCase ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+          <Briefcase size={16} style={{ color: selectedCase ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
           {selectedCase ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {selectedCase.title}
               </span>
               {selectedCase.client_name && (
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  [{selectedCase.client_name}]
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '0.1rem 0.4rem',
+                    borderRadius: '4px',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    color: 'var(--accent-primary)',
+                    border: '1px solid rgba(37, 99, 235, 0.2)',
+                  }}
+                >
+                  {selectedCase.client_name}
                 </span>
               )}
             </div>
@@ -176,6 +206,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                 display: 'flex',
                 alignItems: 'center',
               }}
+              title="Quitar selección"
             >
               <X size={14} />
             </button>
@@ -185,7 +216,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
             style={{
               color: 'var(--text-muted)',
               transition: 'transform 0.2s',
-              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: isOpen ? (isDropUp ? 'rotate(0deg)' : 'rotate(180deg)') : (isDropUp ? 'rotate(180deg)' : 'rotate(0deg)'),
             }}
           />
         </div>
@@ -197,15 +228,17 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           className="glass-card animate-fade-in"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 4px)',
+            ...(isDropUp
+              ? { bottom: 'calc(100% + 6px)', top: 'auto' }
+              : { top: 'calc(100% + 6px)', bottom: 'auto' }),
             left: 0,
             width: '100%',
             minWidth: '280px',
             backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-medium)',
+            border: '1.5px solid var(--border-medium)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-xl)',
-            zIndex: 99999,
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
+            zIndex: 999999,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -214,7 +247,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           {/* Search Header */}
           <div
             style={{
-              padding: '0.6rem 0.75rem',
+              padding: '0.65rem 0.75rem',
               borderBottom: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-surface-elevated)',
               display: 'flex',
@@ -265,12 +298,12 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           <div
             ref={listRef}
             style={{
-              maxHeight: '210px',
+              maxHeight: '190px',
               overflowY: 'auto',
               padding: '0.35rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.15rem',
+              gap: '0.2rem',
             }}
           >
             {filteredCases.length === 0 ? (
@@ -298,17 +331,18 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '0.5rem 0.65rem',
+                      padding: '0.55rem 0.65rem',
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: isSelected
                         ? 'var(--accent-glow)'
                         : isHighlighted
                         ? 'var(--bg-surface-elevated)'
                         : 'transparent',
+                      border: isSelected ? '1px solid rgba(37, 99, 235, 0.25)' : '1px solid transparent',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', overflow: 'hidden' }}>
                       <span
                         style={{
                           fontSize: '0.84rem',
@@ -319,16 +353,33 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                         {cs.title}
                       </span>
                       {cs.client_name && (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          Cliente: {cs.client_name}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          <Building2 size={11} />
+                          <span>Cliente: <strong style={{ color: 'var(--text-secondary)' }}>{cs.client_name}</strong></span>
+                        </div>
                       )}
                     </div>
-                    {isSelected && <Check size={14} style={{ color: 'var(--accent-primary)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginLeft: '0.5rem' }} />}
                   </div>
                 );
               })
             )}
+          </div>
+
+          {/* Footer count indicator */}
+          <div
+            style={{
+              padding: '0.35rem 0.75rem',
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderTop: '1px solid var(--border-subtle)',
+              fontSize: '0.68rem',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>{filteredCases.length} casos disponibles</span>
+            <span>Usa ↑↓ y Enter</span>
           </div>
         </div>
       )}
