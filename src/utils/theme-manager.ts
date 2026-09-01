@@ -20,6 +20,7 @@ export const DEFAULT_CONSULTANT_PREFERENCES: ConsultantPreferences = {
   enable_background_email_sync: true,
   enable_auto_drafts: true,
   background_check_interval_seconds: 60,
+  close_to_tray: true,
 };
 
 export const ACCENT_PALETTES: Record<

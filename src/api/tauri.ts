@@ -106,4 +106,5 @@ export const api = {
   toggleMiniWidget: (enable: boolean) => invoke<void>('toggle_mini_widget', { enable }),
   hideToTray: () => invoke<void>('hide_to_tray'),
   showMainWindow: () => invoke<void>('show_main_window'),
+  exitApp: () => invoke<void>('exit_app'),
 };

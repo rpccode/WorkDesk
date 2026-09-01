@@ -201,6 +201,7 @@ interface WorkDeskState {
   createTicket: (input: CreateTicketInput) => Promise<Ticket>;
   updateTicket: (input: UpdateTicketInput) => Promise<Ticket>;
   deleteTicket: (id: string) => Promise<void>;
+  deleteAllTickets: () => Promise<number>;
   bulkCreateTickets: (inputs: CreateTicketInput[]) => Promise<Ticket[]>;
 
   // Commitments
@@ -532,6 +533,20 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       saveStoredTickets(filtered);
       return { tickets: filtered };
     });
+  },
+  deleteAllTickets: async () => {
+    const list = get().tickets;
+    const count = list.length;
+    for (const t of list) {
+      try {
+        await api.deleteTicket(t.id);
+      } catch (e) {
+        console.warn('Backend delete ticket fallback:', e);
+      }
+    }
+    set({ tickets: [] });
+    saveStoredTickets([]);
+    return count;
   },
   bulkCreateTickets: async (inputs) => {
     const clients = get().clients;

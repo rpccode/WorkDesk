@@ -15,7 +15,10 @@ import {
   Zap,
   HardDrive,
   Radio,
+  Power,
+  Layers,
 } from 'lucide-react';
+import { api } from '../api/tauri';
 import {
   ACCENT_PALETTES,
   formatSignature,
@@ -565,6 +568,48 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 onChange={(e) => handlePreferenceChange('enable_auto_drafts', e.target.checked)}
                 style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
               />
+            </div>
+
+            {/* Close to Tray / Background Execution */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: '1px solid var(--border-subtle)' }}>
+              <div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Layers size={15} color="var(--status-low)" /> Mantener en Bandeja del Sistema (System Tray)
+                </span>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                  Al cerrar la ventana ("X"), WorkDesk sigue activo en segundo plano para no interrumpir el seguimiento ni las notificaciones.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.close_to_tray !== false}
+                onChange={(e) => handlePreferenceChange('close_to_tray', e.target.checked)}
+                style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* Exit Completely Action */}
+            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+              <div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--status-critical)' }}>
+                  ¿Deseas cerrar WorkDesk por completo?
+                </span>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Detiene todos los servicios en segundo plano y finaliza el proceso de la aplicación.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-danger"
+                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                onClick={() => {
+                  if (window.confirm('¿Estás seguro de que deseas salir y detener todos los servicios de WorkDesk?')) {
+                    api.exitApp();
+                  }
+                }}
+              >
+                <Power size={13} /> Salir Completamente
+              </button>
             </div>
           </div>
 

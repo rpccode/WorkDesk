@@ -309,5 +309,6 @@ export interface ConsultantPreferences {
   enable_background_email_sync: boolean;
   enable_auto_drafts: boolean;
   background_check_interval_seconds: number;
+  close_to_tray: boolean;
 }
 

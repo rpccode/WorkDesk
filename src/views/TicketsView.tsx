@@ -47,7 +47,7 @@ interface BulkEditValues {
 }
 
 export const TicketsView: React.FC = () => {
-  const { tickets, clients, updateTicket, deleteTicket, addNotification } = useStore();
+  const { tickets, clients, updateTicket, deleteTicket, deleteAllTickets, addNotification } = useStore();
 
   // ── Filter State ────────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm]         = useState('');
@@ -310,6 +310,36 @@ export const TicketsView: React.FC = () => {
     setIsBulkSaving(false);
   }, [selectedIds, deleteTicket, addNotification]);
 
+  const handleDeleteAllTickets = useCallback(async () => {
+    if (tickets.length === 0) return;
+    const count = tickets.length;
+    const confirmMessage = `¿Estás completamente seguro de BORRAR TODOS los ${count} tickets registrados?\n\nEsta acción es irreversible y eliminará todos los registros y su historial.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setIsBulkSaving(true);
+    try {
+      await deleteAllTickets();
+      setSelectedIds(new Set());
+      setIsBulkEditing(false);
+      playNotificationSound('success');
+      addNotification({
+        type: 'success',
+        title: 'Tickets Eliminados',
+        message: `Se eliminaron correctamente todos los ${count} tickets.`,
+        show_toast: true,
+      });
+    } catch (err: any) {
+      addNotification({
+        type: 'critical',
+        title: 'Error al eliminar',
+        message: err?.message || 'No se pudieron eliminar los tickets.',
+        show_toast: true,
+      });
+    } finally {
+      setIsBulkSaving(false);
+    }
+  }, [tickets, deleteAllTickets, addNotification]);
+
   // ── Export ──────────────────────────────────────────────────────────────────
   const handleExportToExcel = () => {
     const exportSource = someSelected
@@ -431,9 +461,14 @@ export const TicketsView: React.FC = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           {someSelected && (
-            <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
-              <Layers size={15} /> Editar {selectedIds.size} seleccionados
-            </button>
+            <>
+              <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
+                <Layers size={15} /> Editar {selectedIds.size} seleccionados
+              </button>
+              <button type="button" className="btn-danger" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={handleBulkDelete} disabled={isBulkSaving}>
+                <Trash2 size={15} /> Eliminar ({selectedIds.size})
+              </button>
+            </>
           )}
           <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }} onClick={() => setIsBulkImportOpen(true)}>
             <FileSpreadsheet size={15} color="var(--status-low)" /> Carga Masiva (Excel / CSV)
@@ -441,6 +476,18 @@ export const TicketsView: React.FC = () => {
           <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }} onClick={handleExportToExcel}>
             <Download size={15} /> {someSelected ? `Exportar ${selectedIds.size}` : 'Exportar'}
           </button>
+          {tickets.length > 0 && !someSelected && (
+            <button
+              type="button"
+              className="btn-danger"
+              style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={handleDeleteAllTickets}
+              disabled={isBulkSaving}
+              title="Eliminar todos los tickets registrados"
+            >
+              <Trash2 size={15} /> Borrar Todo ({tickets.length})
+            </button>
+          )}
           <button type="button" className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.55rem 1.1rem' }} onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}>
             <Plus size={16} /> + Nuevo Ticket
           </button>
