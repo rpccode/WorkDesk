@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { Client, ClientStatus } from '../types';
+import type { Client, ClientStatus, ClientComplexity } from '../types';
 
 export interface ParsedClientRow {
   rowIndex: number;
@@ -8,6 +8,17 @@ export interface ParsedClientRow {
   email?: string;
   phone?: string;
   status: ClientStatus;
+
+  // Corporate Profile & Complexity Matrix fields
+  category?: string;
+  complexity_weighted?: ClientComplexity;
+  complexity_evaluated?: ClientComplexity;
+  ticket_avg?: number;
+  branches_count?: number;
+  employees_count?: number;
+  systems_count?: number;
+  has_it_department?: boolean;
+
   isValid: boolean;
   isDuplicate: boolean;
   errors: string[];
@@ -33,14 +44,92 @@ function normalizeHeader(header: string): string {
 }
 
 /**
+ * Normalizes complexity strings to 'Alta' | 'Media' | 'Baja'
+ */
+function parseComplexity(val: any): ClientComplexity | undefined {
+  if (!val) return undefined;
+  const str = String(val).toLowerCase().trim();
+  if (str.includes('alt') || str === 'high' || str === '3') return 'Alta';
+  if (str.includes('med') || str === 'medium' || str === '2') return 'Media';
+  if (str.includes('baj') || str === 'low' || str === '1') return 'Baja';
+  return undefined;
+}
+
+/**
+ * Normalizes boolean strings to boolean
+ */
+function parseBoolean(val: any): boolean | undefined {
+  if (val === undefined || val === null || val === '') return undefined;
+  const str = String(val).toLowerCase().trim();
+  if (str === 'si' || str === 'sí' || str === 'yes' || str === 'true' || str === '1') return true;
+  if (str === 'no' || str === 'false' || str === '0') return false;
+  return undefined;
+}
+
+/**
  * Detects the matching field for a given spreadsheet column header.
  */
 function matchColumnField(
   header: string
-): 'name' | 'company' | 'email' | 'phone' | 'status' | null {
+):
+  | 'name'
+  | 'company'
+  | 'email'
+  | 'phone'
+  | 'status'
+  | 'category'
+  | 'complexity_weighted'
+  | 'complexity_evaluated'
+  | 'ticket_avg'
+  | 'branches_count'
+  | 'employees_count'
+  | 'systems_count'
+  | 'has_it_department'
+  | null {
   const norm = normalizeHeader(header);
 
-  // Email matches (check before general names)
+  // Complexity Ponderada / Evaluada
+  if (norm.includes('ponderad')) {
+    return 'complexity_weighted';
+  }
+  if (norm.includes('evaluad')) {
+    return 'complexity_evaluated';
+  }
+  if (norm.includes('complejidad')) {
+    return 'complexity_evaluated';
+  }
+
+  // Ticket Promedio
+  if (norm.includes('ticket') || norm.includes('ticketpromedio') || norm.includes('promedioticket')) {
+    return 'ticket_avg';
+  }
+
+  // Categoría / Rubro / Sector
+  if (norm.includes('categoria') || norm.includes('rubro') || norm.includes('sector')) {
+    return 'category';
+  }
+
+  // Cantidad Sucursales
+  if (norm.includes('sucursal') || norm.includes('sucursales') || norm.includes('sedes') || norm.includes('plantas')) {
+    return 'branches_count';
+  }
+
+  // Empleados / Dotación / Personal
+  if (norm.includes('empleado') || norm.includes('empleados') || norm.includes('dotacion') || norm.includes('personal') || norm.includes('colaborador')) {
+    return 'employees_count';
+  }
+
+  // Cantidad de Sistemas
+  if (norm.includes('sistema') || norm.includes('sistemas') || norm.includes('softwares') || norm.includes('aplicaciones')) {
+    return 'systems_count';
+  }
+
+  // Depto TI
+  if (norm.includes('deptoti') || norm.includes('departamentoti') || norm.includes('ti') || norm.includes('it') || norm.includes('sistemasdepto')) {
+    return 'has_it_department';
+  }
+
+  // Email matches
   if (norm.includes('mail') || norm.includes('correo')) {
     return 'email';
   }
@@ -56,8 +145,17 @@ function matchColumnField(
   if (norm.includes('estad') || norm.includes('status') || norm.includes('activ')) {
     return 'status';
   }
-  // Name matches
-  if (norm.includes('nombre') || norm.includes('cliente') || norm.includes('name') || norm.includes('contacto') || norm.includes('titular') || norm.includes('razonsocial')) {
+  // Name matches (Cliente, Contacto, Titular, Razon Social, Rudy Header column)
+  if (
+    norm.includes('nombre') ||
+    norm.includes('cliente') ||
+    norm.includes('name') ||
+    norm.includes('contacto') ||
+    norm.includes('titular') ||
+    norm.includes('razonsocial') ||
+    norm === 'rudy' ||
+    norm === 'cuenta'
+  ) {
     return 'name';
   }
 
@@ -89,10 +187,10 @@ export async function parseClientSpreadsheet(
 
   // Detect column mapping from header row (first row)
   const headerRow = rawData[0];
-  const columnMap: { [colIndex: number]: 'name' | 'company' | 'email' | 'phone' | 'status' } = {};
+  const columnMap: { [colIndex: number]: string } = {};
 
   headerRow.forEach((colHeader: any, index: number) => {
-    if (typeof colHeader === 'string' || typeof colHeader === 'number') {
+    if (colHeader !== undefined && colHeader !== null && String(colHeader).trim().length > 0) {
       const field = matchColumnField(String(colHeader));
       if (field) {
         columnMap[index] = field;
@@ -115,16 +213,24 @@ export async function parseClientSpreadsheet(
   // Process data rows
   for (let r = 1; r < rawData.length; r++) {
     const row = rawData[r];
-    if (!row || row.length === 0 || row.every((val) => val === undefined || val === null || val === '')) {
+    if (!row || row.length === 0 || row.every((val) => val === undefined || val === null || String(val).trim() === '')) {
       continue; // Skip empty rows
     }
 
-    const rowData: { name: string; company?: string; email?: string; phone?: string; status: ClientStatus } = {
+    const rowData: Record<string, any> = {
       name: '',
       company: undefined,
       email: undefined,
       phone: undefined,
       status: 'active',
+      category: undefined,
+      complexity_weighted: undefined,
+      complexity_evaluated: undefined,
+      ticket_avg: undefined,
+      branches_count: undefined,
+      employees_count: undefined,
+      systems_count: undefined,
+      has_it_department: undefined,
     };
 
     row.forEach((cellValue: any, colIndex: number) => {
@@ -134,6 +240,13 @@ export async function parseClientSpreadsheet(
         if (field === 'status') {
           const lower = strVal.toLowerCase();
           rowData.status = lower.includes('inact') || lower === '0' || lower === 'false' ? 'inactive' : 'active';
+        } else if (field === 'complexity_weighted' || field === 'complexity_evaluated') {
+          rowData[field] = parseComplexity(strVal);
+        } else if (field === 'has_it_department') {
+          rowData[field] = parseBoolean(strVal);
+        } else if (['ticket_avg', 'branches_count', 'employees_count', 'systems_count'].includes(field)) {
+          const num = Number(strVal.replace(/[^0-9.-]+/g, ''));
+          rowData[field] = isNaN(num) ? undefined : num;
         } else {
           rowData[field] = strVal;
         }
@@ -144,8 +257,20 @@ export async function parseClientSpreadsheet(
     let isValid = true;
     let isDuplicate = false;
 
+    // Check if this row is a trailing summary/total row (e.g. Rudy's spreadsheet footer)
+    const rawName = String(rowData.name || '').trim();
+    const isSummaryRow =
+      r === rawData.length - 1 &&
+      !rowData.email &&
+      !rowData.phone &&
+      (!rawName || /^\d+$/.test(rawName) || rawName.toLowerCase().includes('total') || rawName.toLowerCase().includes('clientes'));
+
+    if (isSummaryRow && !rowData.company) {
+      continue;
+    }
+
     // Validate Name
-    if (!rowData.name || rowData.name.trim().length === 0) {
+    if (!rawName || /^\d+$/.test(rawName) || rawName.toLowerCase().includes('clientes complejos')) {
       errors.push('El nombre del cliente es obligatorio');
       isValid = false;
     }
@@ -156,27 +281,39 @@ export async function parseClientSpreadsheet(
     }
 
     // Check for Duplicates
-    const normName = rowData.name.toLowerCase().trim();
+    const normName = rawName.toLowerCase();
     const normEmail = rowData.email ? rowData.email.toLowerCase().trim() : null;
 
-    if (existingNames.has(normName) || sessionNames.has(normName)) {
-      isDuplicate = true;
-      errors.push('Posible duplicado (mismo nombre)');
-    } else if (normEmail && (existingEmails.has(normEmail) || sessionEmails.has(normEmail))) {
-      isDuplicate = true;
-      errors.push('Posible duplicado (mismo correo)');
+    if (normName) {
+      if (existingNames.has(normName) || sessionNames.has(normName)) {
+        isDuplicate = true;
+        errors.push('Posible duplicado (mismo nombre)');
+      }
+      sessionNames.add(normName);
     }
-
-    if (normName) sessionNames.add(normName);
-    if (normEmail) sessionEmails.add(normEmail);
+    if (normEmail) {
+      if (existingEmails.has(normEmail) || sessionEmails.has(normEmail)) {
+        isDuplicate = true;
+        errors.push('Posible duplicado (mismo correo)');
+      }
+      sessionEmails.add(normEmail);
+    }
 
     parsedRows.push({
       rowIndex: r + 1,
-      name: rowData.name,
+      name: rawName,
       company: rowData.company || undefined,
       email: rowData.email || undefined,
       phone: rowData.phone || undefined,
       status: rowData.status,
+      category: rowData.category || undefined,
+      complexity_weighted: rowData.complexity_weighted || undefined,
+      complexity_evaluated: rowData.complexity_evaluated || undefined,
+      ticket_avg: rowData.ticket_avg,
+      branches_count: rowData.branches_count,
+      employees_count: rowData.employees_count,
+      systems_count: rowData.systems_count,
+      has_it_department: rowData.has_it_department,
       isValid,
       isDuplicate,
       errors,
@@ -236,64 +373,237 @@ function triggerDownload(blobOrDataUrl: Blob | string, filename: string): void {
 }
 
 /**
- * Generates and downloads a sample Excel template for client import.
+ * Sample dataset containing the 17 clients from the consultant matrix.
+ */
+export const SAMPLE_CLIENTS_MATRIX = [
+  {
+    'Cliente': 'PREFIAUTO',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 9,
+    'Categoría': 'Financiera',
+    'Cantidad Sucursales': 5,
+    'Empleados': 100,
+    'Cantidad de sistemas': 2,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'OCHOA HERMANOS',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 16,
+    'Categoría': 'Financiera/Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 100,
+    'Cantidad de sistemas': 4,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'G5 (GRUPO JCM)',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 1,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 20,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'CAMARA DE COMERCIO (SANTIAGO)',
+    'Complejidad Ponderada': 'Media',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 3,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 10,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'COOP DENOR',
+    'Complejidad Ponderada': 'Media',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 4,
+    'Categoría': 'Cooperativa',
+    'Cantidad Sucursales': 2,
+    'Empleados': 50,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'FUNDAPEC',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Alta',
+    'Ticket Promedio': 20,
+    'Categoría': 'Educativo',
+    'Cantidad Sucursales': 3,
+    'Empleados': 300,
+    'Cantidad de sistemas': 3,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'OCHOA FINAUTO',
+    'Complejidad Ponderada': 'Media',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 3,
+    'Categoría': 'Financiera',
+    'Cantidad Sucursales': 1,
+    'Empleados': 15,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'COOP REALTY',
+    'Complejidad Ponderada': 'Media',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 1,
+    'Categoría': 'Cooperativa',
+    'Cantidad Sucursales': 1,
+    'Empleados': 30,
+    'Cantidad de sistemas': 2,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'JCM Agrícola',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 11,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 80,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'DIAS S.A.',
+    'Complejidad Ponderada': 'Media',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 4,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 10,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'COLEGIO DA VINCI',
+    'Complejidad Ponderada': 'Baja',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 2,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 5,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'BECG Comunicaciones (Inversiones Emma Collado)',
+    'Complejidad Ponderada': 'Baja',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 3,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 5,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'COOP. DEMON',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Media',
+    'Ticket Promedio': 6,
+    'Categoría': 'Cooperativa',
+    'Cantidad Sucursales': 1,
+    'Empleados': 30,
+    'Cantidad de sistemas': 2,
+    'Depto. TI': 'No',
+  },
+  {
+    'Cliente': 'TROQUEDOM',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Baja',
+    'Ticket Promedio': 4,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 10,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'AGROVISION',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Baja',
+    'Ticket Promedio': 1,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 20,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'PRO-SEMILLAS',
+    'Complejidad Ponderada': 'Alta',
+    'Complejidad Evaluada': 'Baja',
+    'Ticket Promedio': 1,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 20,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+  {
+    'Cliente': 'HACIENDA OCHOA',
+    'Complejidad Ponderada': 'Baja',
+    'Complejidad Evaluada': 'Baja',
+    'Ticket Promedio': 1,
+    'Categoría': 'Administrativo',
+    'Cantidad Sucursales': 1,
+    'Empleados': 5,
+    'Cantidad de sistemas': 1,
+    'Depto. TI': 'Si',
+  },
+];
+
+/**
+ * Generates and downloads the full sample Excel template for client import.
  */
 export function generateClientTemplateExcel(): void {
-  const sampleData = [
-    {
-      'Nombre del Cliente': 'Ing. Sofía Valenzuela',
-      'Empresa': 'Tech Solutions SpA',
-      'Correo Electrónico': 'sofia@techsolutions.cl',
-      'Teléfono / WhatsApp': '+56 9 8765 4321',
-      'Estado': 'Activo',
-    },
-    {
-      'Nombre del Cliente': 'Dr. Matías Morales',
-      'Empresa': 'Clínica Austral',
-      'Correo Electrónico': 'mmorales@austral.com',
-      'Teléfono / WhatsApp': '+56 9 1122 3344',
-      'Estado': 'Activo',
-    },
-    {
-      'Nombre del Cliente': 'Catalina Rivas',
-      'Empresa': 'Constructora Horizonte',
-      'Correo Electrónico': 'crivas@horizonte.cl',
-      'Teléfono / WhatsApp': '+56 9 9988 7766',
-      'Estado': 'Activo',
-    },
-  ];
-
-  const worksheet = XLSX.utils.json_to_sheet(sampleData);
+  const worksheet = XLSX.utils.json_to_sheet(SAMPLE_CLIENTS_MATRIX);
   // Auto-fit column widths
   worksheet['!cols'] = [
-    { wch: 28 }, // Nombre
-    { wch: 26 }, // Empresa
-    { wch: 28 }, // Email
-    { wch: 22 }, // Telefono
-    { wch: 12 }, // Estado
+    { wch: 36 }, // Cliente
+    { wch: 22 }, // Complejidad Ponderada
+    { wch: 22 }, // Complejidad Evaluada
+    { wch: 16 }, // Ticket Promedio
+    { wch: 26 }, // Categoría
+    { wch: 20 }, // Cantidad Sucursales
+    { wch: 14 }, // Empleados
+    { wch: 22 }, // Cantidad de sistemas
+    { wch: 12 }, // Depto. TI
   ];
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Matriz Clientes');
   
   const excelArrayBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelArrayBuffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
-  triggerDownload(blob, 'plantilla_clientes_workdesk.xlsx');
+  triggerDownload(blob, 'plantilla_matriz_clientes_workdesk.xlsx');
 }
 
 /**
  * Generates and downloads a sample CSV template for client import.
  */
 export function generateClientTemplateCsv(): void {
-  const csvContent =
-    '\uFEFF' + // UTF-8 BOM for Excel Spanish compatibility
-    'Nombre del Cliente;Empresa;Correo Electrónico;Teléfono;Estado\r\n' +
-    'Ing. Sofía Valenzuela;Tech Solutions SpA;sofia@techsolutions.cl;+56 9 8765 4321;Activo\r\n' +
-    'Dr. Matías Morales;Clínica Austral;mmorales@austral.com;+56 9 1122 3344;Activo\r\n' +
-    'Catalina Rivas;Constructora Horizonte;crivas@horizonte.cl;+56 9 9988 7766;Activo\r\n';
+  const headers = 'Cliente;Complejidad Ponderada;Complejidad Evaluada;Ticket Promedio;Categoría;Cantidad Sucursales;Empleados;Cantidad de sistemas;Depto. TI\r\n';
+  const lines = SAMPLE_CLIENTS_MATRIX.map(
+    (c) =>
+      `"${c.Cliente}";"${c['Complejidad Ponderada']}";"${c['Complejidad Evaluada']}";${c['Ticket Promedio']};"${c.Categoría}";${c['Cantidad Sucursales']};${c.Empleados};${c['Cantidad de sistemas']};"${c['Depto. TI']}"`
+  ).join('\r\n');
 
+  const csvContent = '\uFEFF' + headers + lines;
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  triggerDownload(blob, 'plantilla_clientes_workdesk.csv');
+  triggerDownload(blob, 'plantilla_matriz_clientes_workdesk.csv');
 }

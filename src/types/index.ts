@@ -1,6 +1,7 @@
 // Tipos TypeScript centrales para WorkDesk
 
 export type ClientStatus = 'active' | 'inactive';
+export type ClientComplexity = 'Alta' | 'Media' | 'Baja';
 
 export interface Client {
   id: string;
@@ -9,6 +10,17 @@ export interface Client {
   email?: string | null;
   phone?: string | null;
   status: ClientStatus;
+  
+  // Diagnóstico Corporativo / Matriz de Complejidad
+  category?: string | null;                // Financiera, Cooperativa, Educativo, Administrativo, etc.
+  complexity_weighted?: ClientComplexity | null; // Complejidad Ponderada
+  complexity_evaluated?: ClientComplexity | null; // Complejidad Evaluada
+  ticket_avg?: number | null;              // Ticket Promedio
+  branches_count?: number | null;          // Cantidad Sucursales
+  employees_count?: number | null;         // Dotación de Empleados
+  systems_count?: number | null;           // Cantidad de Sistemas
+  has_it_department?: boolean | null;      // Depto. TI (Sí / No)
+
   created_at: string;
   updated_at?: string | null;
 }

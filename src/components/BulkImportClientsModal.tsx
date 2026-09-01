@@ -9,11 +9,13 @@ import {
   AlertTriangle,
   X,
   Sparkles,
+  Layers,
 } from 'lucide-react';
 import {
   parseClientSpreadsheet,
   generateClientTemplateExcel,
   generateClientTemplateCsv,
+  SAMPLE_CLIENTS_MATRIX,
   type ImportValidationResult,
 } from '../utils/excel-importer';
 import { playNotificationSound } from '../utils/live-alerts';
@@ -32,7 +34,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   const { clients, createClient, fetchClients, addNotification } = useStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [_selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [parseResult, setParseResult] = useState<ImportValidationResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
       setDownloadFeedback('¡Plantilla Excel descargada! Búscala en tu carpeta de Descargas.');
       addNotification({
         title: 'Plantilla Excel Descargada',
-        message: 'Se descargó "plantilla_clientes_workdesk.xlsx". Ábrela, ingresa tus clientes y súbela aquí.',
+        message: 'Se descargó "plantilla_matriz_clientes_workdesk.xlsx". Ábrela, edita tus clientes y arrástrala aquí.',
         type: 'success',
       });
       setTimeout(() => setDownloadFeedback(null), 5000);
@@ -66,12 +68,47 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
       setDownloadFeedback('¡Plantilla CSV descargada! Búscala en tu carpeta de Descargas.');
       addNotification({
         title: 'Plantilla CSV Descargada',
-        message: 'Se descargó "plantilla_clientes_workdesk.csv". Ábrela, ingresa tus clientes y súbela aquí.',
+        message: 'Se descargó "plantilla_matriz_clientes_workdesk.csv". Ábrela, edita tus clientes y arrástrala aquí.',
         type: 'success',
       });
       setTimeout(() => setDownloadFeedback(null), 5000);
     } catch (err: any) {
       setErrorMessage('Error al generar plantilla CSV: ' + err.message);
+    }
+  };
+
+  const handleLoadDemoDataset = async () => {
+    setIsImporting(true);
+    setErrorMessage(null);
+    try {
+      let count = 0;
+      for (const c of SAMPLE_CLIENTS_MATRIX) {
+        await createClient({
+          name: c.Cliente,
+          complexity_weighted: c['Complejidad Ponderada'] as any,
+          complexity_evaluated: c['Complejidad Evaluada'] as any,
+          ticket_avg: c['Ticket Promedio'],
+          category: c['Categoría'],
+          branches_count: c['Cantidad Sucursales'],
+          employees_count: c['Empleados'],
+          systems_count: c['Cantidad de sistemas'],
+          has_it_department: c['Depto. TI'].toLowerCase() === 'si',
+        });
+        count++;
+      }
+      await fetchClients();
+      playNotificationSound('success');
+      setImportedCount(count);
+      addNotification({
+        title: 'Matriz de Clientes Importada',
+        message: `Se importaron ${count} cuentas corporativas con diagnóstico de complejidad.`,
+        type: 'success',
+      });
+      if (onSuccess) onSuccess(count);
+    } catch (err: any) {
+      setErrorMessage('Error al cargar clientes modelo: ' + err.message);
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -130,23 +167,29 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
           company: row.company,
           email: row.email,
           phone: row.phone,
+          category: row.category,
+          complexity_weighted: row.complexity_weighted,
+          complexity_evaluated: row.complexity_evaluated,
+          ticket_avg: row.ticket_avg,
+          branches_count: row.branches_count,
+          employees_count: row.employees_count,
+          systems_count: row.systems_count,
+          has_it_department: row.has_it_department,
         });
         successCount++;
       }
 
       await fetchClients();
-
-      addNotification({
-        type: 'success',
-        title: 'Carga Masiva Completada',
-        message: `Se han importado ${successCount} cliente(s) exitosamente desde ${selectedFile?.name}.`,
-        show_toast: true,
-      });
-
+      playNotificationSound('success');
       setImportedCount(successCount);
+      addNotification({
+        title: 'Carga Masiva Exitosa',
+        message: `Se importaron ${successCount} clientes correctamente a la cartera.`,
+        type: 'success',
+      });
       if (onSuccess) onSuccess(successCount);
     } catch (err: any) {
-      setErrorMessage(typeof err === 'string' ? err : 'Error al guardar clientes en la base de datos.');
+      setErrorMessage('Error durante la importación: ' + (err.message || String(err)));
     } finally {
       setIsImporting(false);
     }
@@ -157,6 +200,9 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
     setParseResult(null);
     setErrorMessage(null);
     setImportedCount(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const modalContent = (
@@ -178,7 +224,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
         className="glass-card animate-fade-in"
         style={{
           width: '100%',
-          maxWidth: '820px',
+          maxWidth: '920px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
@@ -214,10 +260,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
             </div>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Carga Masiva de Clientes
+                Carga Masiva de Clientes & Matriz de Complejidad
               </h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                Importa decenas o cientos de clientes desde una hoja de cálculo Excel (.xlsx, .xls) o CSV
+                Importa decenas o cientos de clientes con diagnóstico corporativo desde Excel (.xlsx, .xls) o CSV
               </p>
             </div>
           </div>
@@ -263,15 +309,15 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
                 ¡{importedCount} Clientes Importados con Éxito!
               </h4>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
-                Los registros ya están disponibles en tu agenda, listos para crear casos, proyectos y registrar compromisos.
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '460px' }}>
+                Los registros y su matriz de complejidad ya están disponibles en tu agenda, listos para crear casos, proyectos y compromisos.
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button className="btn-secondary" onClick={resetModal}>
                   Importar otro archivo
                 </button>
                 <button className="btn-primary" onClick={onClose}>
-                  Cerrar
+                  Ver Clientes
                 </button>
               </div>
             </div>
@@ -309,10 +355,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                 </div>
               )}
 
-              {/* Template Download Banner */}
+              {/* Template Download & Quick Load Banner */}
               <div
                 style={{
-                  padding: '0.9rem 1.25rem',
+                  padding: '1rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--accent-glow)',
                   border: '1px solid rgba(37,99,235,0.2)',
@@ -327,15 +373,25 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   <Sparkles size={18} color="var(--accent-primary)" />
                   <div>
                     <h5 style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      ¿Necesitas el formato modelo?
+                      Planilla Modelo & Carga Rápida
                     </h5>
                     <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                      Descarga nuestra plantilla con columnas pre-configuradas y datos de ejemplo.
+                      Descarga el formato con 9 columnas (Complejidad, Sucursales, Empleados, Depto TI, etc.) o carga los 17 clientes de prueba.
                     </p>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                    onClick={handleLoadDemoDataset}
+                    disabled={isImporting}
+                  >
+                    <Layers size={13} /> Cargar los 17 Clientes (Rudy)
+                  </button>
+
                   <button
                     type="button"
                     className="btn-secondary"
@@ -344,6 +400,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   >
                     <Download size={13} /> Plantilla Excel (.xlsx)
                   </button>
+
                   <button
                     type="button"
                     className="btn-secondary"
@@ -469,49 +526,96 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   )}
 
                   {/* Preview Rows Table */}
-                  <div style={{ maxHeight: '260px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
-                      <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem' }}>
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)', zIndex: 2 }}>
                         <tr>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>#</th>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>Nombre</th>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>Empresa</th>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>Email</th>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>Teléfono</th>
-                          <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 700 }}>Estado</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>#</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>Cliente</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>Categoría</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>Comp. Ponderada</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>Comp. Evaluada</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Tickets</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Sucursales</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Empleados</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Sistemas</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Depto TI</th>
+                          <th style={{ padding: '0.5rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>Validación</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {parseResult.rows.map((row) => (
-                          <tr
-                            key={row.rowIndex}
-                            style={{
-                              borderBottom: '1px solid var(--border-subtle)',
-                              backgroundColor: !row.isValid
-                                ? 'var(--status-critical-bg)'
-                                : row.isDuplicate
-                                ? 'var(--status-medium-bg)'
-                                : undefined,
-                            }}
-                          >
-                            <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-muted)' }}>{row.rowIndex}</td>
-                            <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>
-                              {row.name || <span style={{ color: 'var(--status-critical)', fontStyle: 'italic' }}>Sin nombre</span>}
-                            </td>
-                            <td style={{ padding: '0.5rem 0.75rem' }}>{row.company || '—'}</td>
-                            <td style={{ padding: '0.5rem 0.75rem' }}>{row.email || '—'}</td>
-                            <td style={{ padding: '0.5rem 0.75rem' }}>{row.phone || '—'}</td>
-                            <td style={{ padding: '0.5rem 0.75rem' }}>
-                              {!row.isValid ? (
-                                <span className="badge badge-critical" style={{ fontSize: '0.65rem' }}>Inválido</span>
-                              ) : row.isDuplicate ? (
-                                <span className="badge badge-medium" style={{ fontSize: '0.65rem' }}>Duplicado</span>
-                              ) : (
-                                <span className="badge badge-low" style={{ fontSize: '0.65rem' }}>Listo</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
+                        {parseResult.rows.map((row) => {
+                          const compW = row.complexity_weighted;
+                          const compE = row.complexity_evaluated;
+
+                          return (
+                            <tr
+                              key={row.rowIndex}
+                              style={{
+                                borderBottom: '1px solid var(--border-subtle)',
+                                backgroundColor: !row.isValid
+                                  ? 'var(--status-critical-bg)'
+                                  : row.isDuplicate
+                                  ? 'var(--status-medium-bg)'
+                                  : undefined,
+                              }}
+                            >
+                              <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)' }}>{row.rowIndex}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', fontWeight: 700 }}>
+                                {row.name || <span style={{ color: 'var(--status-critical)', fontStyle: 'italic' }}>Sin nombre</span>}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.6rem' }}>{row.category || '—'}</td>
+                              <td style={{ padding: '0.45rem 0.6rem' }}>
+                                {compW ? (
+                                  <span
+                                    style={{
+                                      padding: '0.15rem 0.4rem',
+                                      borderRadius: '4px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 700,
+                                      backgroundColor: compW === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compW === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                      color: compW === 'Alta' ? 'var(--status-critical)' : compW === 'Media' ? 'var(--status-medium)' : 'var(--status-low)',
+                                    }}
+                                  >
+                                    {compW}
+                                  </span>
+                                ) : '—'}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.6rem' }}>
+                                {compE ? (
+                                  <span
+                                    style={{
+                                      padding: '0.15rem 0.4rem',
+                                      borderRadius: '4px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 700,
+                                      backgroundColor: compE === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compE === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                      color: compE === 'Alta' ? 'var(--status-critical)' : compE === 'Media' ? 'var(--status-medium)' : 'var(--status-low)',
+                                    }}
+                                  >
+                                    {compE}
+                                  </span>
+                                ) : '—'}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center', fontWeight: 600 }}>{row.ticket_avg ?? '—'}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center' }}>{row.branches_count ?? '—'}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center' }}>{row.employees_count ?? '—'}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center' }}>{row.systems_count ?? '—'}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center', fontWeight: 700 }}>
+                                {row.has_it_department === true ? 'Sí' : row.has_it_department === false ? 'No' : '—'}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.6rem', textAlign: 'center' }}>
+                                {!row.isValid ? (
+                                  <span className="badge badge-critical" style={{ fontSize: '0.65rem' }}>Inválido</span>
+                                ) : row.isDuplicate ? (
+                                  <span className="badge badge-medium" style={{ fontSize: '0.65rem' }}>Duplicado</span>
+                                ) : (
+                                  <span className="badge badge-low" style={{ fontSize: '0.65rem' }}>Listo</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -519,7 +623,6 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               )}
             </>
           )}
-
         </div>
 
         {/* Modal Footer */}
@@ -534,29 +637,18 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               backgroundColor: 'var(--bg-surface-elevated)',
             }}
           >
-            {parseResult ? (
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{ fontSize: '0.78rem' }}
-                onClick={resetModal}
-              >
-                Cambiar Archivo
-              </button>
-            ) : (
-              <div />
-            )}
+            <div>
+              {parseResult && (
+                <button type="button" className="btn-ghost" style={{ fontSize: '0.78rem' }} onClick={resetModal}>
+                  Cambiar archivo
+                </button>
+              )}
+            </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={onClose}
-                disabled={isImporting}
-              >
+            <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <button type="button" className="btn-secondary" onClick={onClose} disabled={isImporting}>
                 Cancelar
               </button>
-
               {parseResult && (
                 <button
                   type="button"
@@ -564,7 +656,8 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   onClick={handleImport}
                   disabled={isImporting || parseResult.validCount === 0}
                 >
-                  {isImporting ? 'Importando...' : `Confirmar Importación (${parseResult.validCount + (importDuplicates ? parseResult.duplicateCount : 0)} Clientes)`}
+                  <CheckCircle2 size={16} />
+                  {isImporting ? 'Importando...' : `Confirmar e Importar (${parseResult.validCount + (importDuplicates ? parseResult.duplicateCount : 0)} clientes)`}
                 </button>
               )}
             </div>

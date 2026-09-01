@@ -60,8 +60,36 @@ interface WorkDeskState {
   clients: Client[];
   isLoadingClients: boolean;
   fetchClients: () => Promise<void>;
-  createClient: (input: { name: string; company?: string; email?: string; phone?: string }) => Promise<Client>;
-  updateClient: (input: { id: string; name: string; company?: string; email?: string; phone?: string; status: string }) => Promise<Client>;
+  createClient: (input: {
+    name: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    category?: string;
+    complexity_weighted?: import('../types').ClientComplexity;
+    complexity_evaluated?: import('../types').ClientComplexity;
+    ticket_avg?: number;
+    branches_count?: number;
+    employees_count?: number;
+    systems_count?: number;
+    has_it_department?: boolean;
+  }) => Promise<Client>;
+  updateClient: (input: {
+    id: string;
+    name: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    status: string;
+    category?: string;
+    complexity_weighted?: import('../types').ClientComplexity;
+    complexity_evaluated?: import('../types').ClientComplexity;
+    ticket_avg?: number;
+    branches_count?: number;
+    employees_count?: number;
+    systems_count?: number;
+    has_it_department?: boolean;
+  }) => Promise<Client>;
 
   // Cases
   cases: Case[];

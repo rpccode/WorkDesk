@@ -12,10 +12,36 @@ import type {
 export const api = {
   // Clients
   getClients: () => invoke<Client[]>('get_clients'),
-  createClient: (input: { name: string; company?: string; email?: string; phone?: string }) =>
-    invoke<Client>('create_client', { input }),
-  updateClient: (input: { id: string; name: string; company?: string; email?: string; phone?: string; status: string }) =>
-    invoke<Client>('update_client', { input }),
+  createClient: (input: {
+    name: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    category?: string;
+    complexity_weighted?: import('../types').ClientComplexity;
+    complexity_evaluated?: import('../types').ClientComplexity;
+    ticket_avg?: number;
+    branches_count?: number;
+    employees_count?: number;
+    systems_count?: number;
+    has_it_department?: boolean;
+  }) => invoke<Client>('create_client', { input }),
+  updateClient: (input: {
+    id: string;
+    name: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    status: string;
+    category?: string;
+    complexity_weighted?: import('../types').ClientComplexity;
+    complexity_evaluated?: import('../types').ClientComplexity;
+    ticket_avg?: number;
+    branches_count?: number;
+    employees_count?: number;
+    systems_count?: number;
+    has_it_department?: boolean;
+  }) => invoke<Client>('update_client', { input }),
 
   // Cases
   getCases: (statusFilter?: string) =>

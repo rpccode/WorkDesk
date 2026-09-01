@@ -1,14 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { Users, Plus, Search, Mail, Phone, Building, Briefcase, FileSpreadsheet } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Search,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  FileSpreadsheet,
+  LayoutGrid,
+  Table as TableIcon,
+  ShieldAlert,
+  Building2,
+  Cpu,
+} from 'lucide-react';
 import { ClientModal } from '../components/ClientModal';
 import { CaseModal } from '../components/CaseModal';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
-import type { Client } from '../types';
+import type { Client, ClientComplexity } from '../types';
 
 export const ClientsView: React.FC = () => {
   const { clients, cases, fetchClients, fetchCases } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('matrix');
+
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
@@ -19,12 +37,91 @@ export const ClientsView: React.FC = () => {
     fetchCases();
   }, []);
 
-  const filteredClients = clients.filter(
-    (c) =>
+  // Filter logic
+  const filteredClients = clients.filter((c) => {
+    const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (c.category && c.category.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesCategory =
+      selectedCategory === 'all' || (c.category && c.category.toLowerCase() === selectedCategory.toLowerCase());
+
+    const matchesComplexity =
+      selectedComplexity === 'all' ||
+      c.complexity_evaluated === selectedComplexity ||
+      c.complexity_weighted === selectedComplexity;
+
+    return matchesSearch && matchesCategory && matchesComplexity;
+  });
+
+  // Extract unique categories for filter
+  const uniqueCategories = Array.from(
+    new Set(clients.map((c) => c.category).filter(Boolean) as string[])
   );
+
+  // Executive Metrics (KPIs)
+  const totalClients = clients.length;
+  const complexClients = clients.filter(
+    (c) => c.complexity_evaluated === 'Alta' || c.complexity_weighted === 'Alta'
+  ).length;
+  const complexPercent = totalClients > 0 ? ((complexClients / totalClients) * 100).toFixed(1) : '0';
+  const totalBranches = clients.reduce((acc, c) => acc + (c.branches_count || 1), 0);
+  const totalEmployees = clients.reduce((acc, c) => acc + (c.employees_count || 0), 0);
+
+  const getComplexityBadge = (val?: ClientComplexity | null) => {
+    if (!val) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+    if (val === 'Alta') {
+      return (
+        <span
+          style={{
+            padding: '0.2rem 0.55rem',
+            borderRadius: '4px',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            color: 'var(--status-critical)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+          }}
+        >
+          Alta
+        </span>
+      );
+    }
+    if (val === 'Media') {
+      return (
+        <span
+          style={{
+            padding: '0.2rem 0.55rem',
+            borderRadius: '4px',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            color: 'var(--status-medium)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+          }}
+        >
+          Media
+        </span>
+      );
+    }
+    return (
+      <span
+        style={{
+          padding: '0.2rem 0.55rem',
+          borderRadius: '4px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          color: 'var(--status-low)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+        }}
+      >
+        Baja
+      </span>
+    );
+  };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -32,10 +129,10 @@ export const ClientsView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Cartera de Clientes & Contactos
+            Cartera de Clientes & Matriz de Complejidad
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Directorio de cuentas, organizaciones y proyectos asociados
+            Diagnóstico corporativo, dotación, sucursales y clasificación de cuentas consultivas
           </p>
         </div>
 
@@ -45,7 +142,7 @@ export const ClientsView: React.FC = () => {
             style={{ fontSize: '0.82rem', fontWeight: 600 }}
             onClick={() => setIsBulkImportOpen(true)}
           >
-            <FileSpreadsheet size={16} /> Importar Excel / CSV
+            <FileSpreadsheet size={16} /> Carga Masiva (Excel / CSV)
           </button>
           <button className="btn-primary" onClick={() => setIsClientModalOpen(true)}>
             <Plus size={16} /> Nuevo Cliente
@@ -53,47 +150,331 @@ export const ClientsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="glass-card" style={{ padding: '0.85rem 1.25rem' }}>
-        <div style={{ position: 'relative', width: '100%' }}>
-          <Search
-            size={16}
-            style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
-          />
-          <input
-            type="text"
-            placeholder="Buscar por cliente, empresa, correo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', paddingLeft: '2.4rem' }}
-          />
+      {/* KPI Ribbon */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+        <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <Users size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+              Total Clientes
+            </span>
+            <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalClients}</p>
+          </div>
+        </div>
+
+        <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: 'var(--status-critical)' }}>
+            <ShieldAlert size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+              Clientes Complejos
+            </span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+              <p style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--status-critical)' }}>{complexClients}</p>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                ({complexPercent}%)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-primary)' }}>
+            <Building2 size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+              Sucursales Atendidas
+            </span>
+            <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalBranches}</p>
+          </div>
+        </div>
+
+        <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-primary)' }}>
+            <Cpu size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+              Empleados Impactados
+            </span>
+            <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalEmployees.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
-      {/* Clients Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
-        {filteredClients.length === 0 ? (
-          <div
-            className="glass-card"
-            style={{
-              gridColumn: '1 / -1',
-              padding: '3.5rem 1rem',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-            }}
-          >
-            <Users size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No hay clientes registrados</p>
-            <button
-              className="btn-primary"
-              style={{ marginTop: '1rem' }}
-              onClick={() => setIsClientModalOpen(true)}
+      {/* Control Bar: Search + Category + Complexity + View Mode */}
+      <div className="glass-card" style={{ padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        {/* Search & Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '300px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+            <Search
+              size={16}
+              style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+            />
+            <input
+              type="text"
+              placeholder="Buscar cliente, empresa o rubro..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%', paddingLeft: '2.4rem', fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {uniqueCategories.length > 0 && (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
             >
-              <Plus size={16} /> Agregar cliente
+              <option value="all">Todas las Categorías ({clients.length})</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <select
+            value={selectedComplexity}
+            onChange={(e) => setSelectedComplexity(e.target.value)}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+          >
+            <option value="all">Toda Complejidad</option>
+            <option value="Alta">🔴 Alta</option>
+            <option value="Media">🟡 Media</option>
+            <option value="Baja">🟢 Baja</option>
+          </select>
+        </div>
+
+        {/* View Toggle */}
+        <div style={{ display: 'flex', backgroundColor: 'var(--bg-main)', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+          <button
+            type="button"
+            className={`btn-ghost ${viewMode === 'matrix' ? 'active' : ''}`}
+            style={{
+              padding: '0.35rem 0.75rem',
+              fontSize: '0.78rem',
+              fontWeight: viewMode === 'matrix' ? 700 : 500,
+              backgroundColor: viewMode === 'matrix' ? 'var(--bg-surface)' : 'transparent',
+              color: viewMode === 'matrix' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              borderRadius: 'var(--radius-xs)',
+            }}
+            onClick={() => setViewMode('matrix')}
+          >
+            <TableIcon size={14} /> Matriz Ejecutiva
+          </button>
+          <button
+            type="button"
+            className={`btn-ghost ${viewMode === 'cards' ? 'active' : ''}`}
+            style={{
+              padding: '0.35rem 0.75rem',
+              fontSize: '0.78rem',
+              fontWeight: viewMode === 'cards' ? 700 : 500,
+              backgroundColor: viewMode === 'cards' ? 'var(--bg-surface)' : 'transparent',
+              color: viewMode === 'cards' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              borderRadius: 'var(--radius-xs)',
+            }}
+            onClick={() => setViewMode('cards')}
+          >
+            <LayoutGrid size={14} /> Tarjetas
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      {filteredClients.length === 0 ? (
+        <div
+          className="glass-card"
+          style={{
+            padding: '4rem 1.5rem',
+            textAlign: 'center',
+            color: 'var(--text-muted)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
+          <Users size={48} style={{ opacity: 0.35 }} />
+          <div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              No se encontraron clientes
+            </h3>
+            <p style={{ fontSize: '0.84rem', marginTop: '0.25rem' }}>
+              {clients.length === 0
+                ? 'Comienza creando tu primer cliente o importa la matriz corporativa en Excel.'
+                : 'Ningún cliente coincide con los filtros aplicados.'}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="btn-secondary" onClick={() => setIsBulkImportOpen(true)}>
+              <FileSpreadsheet size={15} /> Cargar Matriz Excel
+            </button>
+            <button className="btn-primary" onClick={() => setIsClientModalOpen(true)}>
+              <Plus size={15} /> Crear Cliente
             </button>
           </div>
-        ) : (
-          filteredClients.map((c) => {
+        </div>
+      ) : viewMode === 'matrix' ? (
+        /* ─── VISTA MATRIZ DE COMPLEJIDAD (TABLA EJECUTIVA) ─── */
+        <div className="glass-card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#0f172a', color: '#f8fafc', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '0.85rem 1rem', textAlign: 'left', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Cliente / Cuenta
+                  </th>
+                  <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontWeight: 800 }}>
+                    Complejidad Ponderada
+                  </th>
+                  <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontWeight: 800 }}>
+                    Complejidad Evaluada
+                  </th>
+                  <th style={{ padding: '0.85rem 0.75rem', textAlign: 'center', fontWeight: 800 }}>
+                    Ticket Promedio
+                  </th>
+                  <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontWeight: 800 }}>
+                    Categoría
+                  </th>
+                  <th style={{ padding: '0.85rem 0.75rem', textAlign: 'center', fontWeight: 800 }}>
+                    Sucursales
+                  </th>
+                  <th style={{ padding: '0.85rem 0.75rem', textAlign: 'center', fontWeight: 800 }}>
+                    Empleados
+                  </th>
+                  <th style={{ padding: '0.85rem 0.75rem', textAlign: 'center', fontWeight: 800 }}>
+                    Sistemas
+                  </th>
+                  <th style={{ padding: '0.85rem 0.75rem', textAlign: 'center', fontWeight: 800 }}>
+                    Depto. TI
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', textAlign: 'right', fontWeight: 800 }}>
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClients.map((c, idx) => {
+                  const clientCases = cases.filter((item) => item.client_id === c.id);
+                  const activeCases = clientCases.filter((item) => item.status !== 'closed');
+
+                  return (
+                    <tr
+                      key={c.id}
+                      style={{
+                        borderBottom: '1px solid var(--border-subtle)',
+                        backgroundColor: idx % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-surface-elevated)',
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      <td style={{ padding: '0.8rem 1rem', fontWeight: 700 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>{c.name}</span>
+                          {c.company && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                              {c.company}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.85rem', textAlign: 'center' }}>
+                        {getComplexityBadge(c.complexity_weighted)}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.85rem', textAlign: 'center' }}>
+                        {getComplexityBadge(c.complexity_evaluated)}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center', fontWeight: 700 }}>
+                        {c.ticket_avg ?? (activeCases.length > 0 ? activeCases.length : '—')}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.85rem' }}>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          {c.category || '—'}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
+                        {c.branches_count ?? '1'}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>
+                        {c.employees_count !== undefined && c.employees_count !== null ? c.employees_count.toLocaleString() : '—'}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
+                        {c.systems_count ?? '1'}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
+                        {c.has_it_department === true ? (
+                          <span style={{ color: 'var(--status-low)', fontWeight: 800, fontSize: '0.75rem' }}>Sí</span>
+                        ) : c.has_it_department === false ? (
+                          <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.75rem' }}>No</span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </td>
+
+                      <td style={{ padding: '0.8rem 1rem', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                            onClick={() => setClientToEdit(c)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="btn-primary"
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                            onClick={() => setIsCaseModalOpen(true)}
+                          >
+                            + Caso
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {/* Footer Totals Row */}
+              <tfoot>
+                <tr style={{ backgroundColor: '#090d16', color: '#f8fafc', fontWeight: 800, borderTop: '2px solid rgba(255,255,255,0.15)' }}>
+                  <td style={{ padding: '0.85rem 1rem' }}>
+                    Total: {filteredClients.length} Clientes
+                  </td>
+                  <td colSpan={2} style={{ padding: '0.85rem 0.85rem', textAlign: 'center', color: '#f87171' }}>
+                    {complexClients} Clientes complejos
+                  </td>
+                  <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center', color: 'var(--accent-primary)' }}>
+                    {complexPercent}%
+                  </td>
+                  <td style={{ padding: '0.85rem 0.85rem' }} />
+                  <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+                    {totalBranches}
+                  </td>
+                  <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+                    {totalEmployees.toLocaleString()}
+                  </td>
+                  <td colSpan={3} />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      ) : (
+        /* ─── VISTA TARJETAS (DIRECTORIO) ─── */
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {filteredClients.map((c) => {
             const clientCases = cases.filter((item) => item.client_id === c.id);
             const activeCases = clientCases.filter((item) => item.status !== 'closed');
 
@@ -110,7 +491,7 @@ export const ClientsView: React.FC = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       {c.name}
                     </h3>
                     {c.company && (
@@ -119,9 +500,36 @@ export const ClientsView: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <span className={`badge ${c.status === 'active' ? 'badge-low' : 'badge-neutral'}`}>
-                    {c.status === 'active' ? 'Activo' : 'Inactivo'}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem' }}>
+                    {getComplexityBadge(c.complexity_evaluated || c.complexity_weighted)}
+                    <span className={`badge ${c.status === 'active' ? 'badge-low' : 'badge-neutral'}`} style={{ fontSize: '0.65rem' }}>
+                      {c.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Categoría & Diagnóstico */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', fontSize: '0.72rem' }}>
+                  {c.category && (
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', fontWeight: 600 }}>
+                      🏷️ {c.category}
+                    </span>
+                  )}
+                  {c.branches_count && c.branches_count > 1 && (
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}>
+                      🏢 {c.branches_count} sucursales
+                    </span>
+                  )}
+                  {c.employees_count && c.employees_count > 0 && (
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}>
+                      👥 {c.employees_count} colaboradores
+                    </span>
+                  )}
+                  {c.has_it_department && (
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--status-low)', border: '1px solid rgba(5, 150, 105, 0.2)', fontWeight: 700 }}>
+                      ✓ Depto. TI
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
@@ -165,9 +573,7 @@ export const ClientsView: React.FC = () => {
                     <button
                       className="btn-primary"
                       style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
-                      onClick={() => {
-                        setIsCaseModalOpen(true);
-                      }}
+                      onClick={() => setIsCaseModalOpen(true)}
                     >
                       + Caso
                     </button>
@@ -175,9 +581,9 @@ export const ClientsView: React.FC = () => {
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       <ClientModal isOpen={isClientModalOpen} onClose={() => setIsClientModalOpen(false)} />
       <ClientModal
