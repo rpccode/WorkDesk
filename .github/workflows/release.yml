@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Rust stable
@@ -32,17 +32,36 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Prepare Signing Key
+        shell: pwsh
+        env:
+          SIGNING_KEY_SECRET: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if ($env:SIGNING_KEY_SECRET) {
+            $raw = $env:SIGNING_KEY_SECRET.Trim()
+            if ($raw.StartsWith("dW50cnVzdGVk")) {
+              $bytes = [System.Convert]::FromBase64String($raw)
+              [System.IO.File]::WriteAllBytes("$PWD/src-tauri/updater.key", $bytes)
+            } else {
+              [System.IO.File]::WriteAllText("$PWD/src-tauri/updater.key", $raw)
+            }
+            Write-Host "Signing key prepared successfully at src-tauri/updater.key"
+          } else {
+            Write-Warning "TAURI_SIGNING_PRIVATE_KEY secret is not set!"
+          }
+
       - name: Build Tauri App & Create Release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ github.workspace }}/src-tauri/updater.key
+          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ github.workspace }}/src-tauri/updater.key
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
         with:
           tauriScript: npx tauri
           tagName: ${{ github.ref_name }}
           releaseName: 'WorkDesk ${{ github.ref_name }}'
-          releaseBody: 'Actualización de WorkDesk con mejoras operativas y correcciones.'
+          releaseBody: 'Actualización automática de WorkDesk con mejoras operativas y correcciones.'
           releaseDraft: false
           prerelease: false
           args: --verbose
