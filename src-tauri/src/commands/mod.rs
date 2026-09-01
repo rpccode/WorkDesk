@@ -6,3 +6,5 @@ pub mod notes;
 pub mod dashboard;
 pub mod emails;
 pub mod oauth;
+pub mod window;
+

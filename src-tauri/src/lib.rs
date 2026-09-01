@@ -49,6 +49,10 @@ pub fn run() {
             commands::emails::sync_inbox_emails,
             // OAuth
             commands::oauth::start_oauth_login,
+            // Window & Mini HUD
+            commands::window::toggle_mini_widget,
+            commands::window::hide_to_tray,
+            commands::window::show_main_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

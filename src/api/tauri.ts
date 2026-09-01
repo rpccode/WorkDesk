@@ -91,4 +91,9 @@ export const api = {
   syncInboxEmails: () => invoke<import('../types').SyncEmailsResult>('sync_inbox_emails'),
   startOAuthLogin: (input: import('../types').StartOAuthInput) =>
     invoke<import('../types').OAuthLoginResult>('start_oauth_login', { input }),
+
+  // Window Controls & Mini Desktop Widget
+  toggleMiniWidget: (enable: boolean) => invoke<void>('toggle_mini_widget', { enable }),
+  hideToTray: () => invoke<void>('hide_to_tray'),
+  showMainWindow: () => invoke<void>('show_main_window'),
 };

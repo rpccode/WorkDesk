@@ -29,8 +29,10 @@ import { EmailAccountsModal } from './components/EmailAccountsModal';
 import { LiveToastContainer } from './components/LiveToastContainer';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
 import { BackgroundStatusWidget } from './components/BackgroundStatusWidget';
+import { DesktopMiniWidget } from './components/DesktopMiniWidget';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import { backgroundEngine } from './services/background-service';
+import { api } from './api/tauri';
 import type { ActiveTab } from './types';
 
 export function App() {
@@ -48,8 +50,17 @@ export function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isMiniWidgetMode, setIsMiniWidgetMode] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  const toggleMiniWidgetMode = async (enable?: boolean) => {
+    const next = enable !== undefined ? enable : !isMiniWidgetMode;
+    setIsMiniWidgetMode(next);
+    try {
+      await api.toggleMiniWidget(next);
+    } catch (_) {}
+  };
 
   useEffect(() => {
     refreshAll();
@@ -65,6 +76,10 @@ export function App() {
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
         setQuickCaptureOpen(true);
+      }
+      if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault();
+        toggleMiniWidgetMode();
       }
     };
 
@@ -145,6 +160,16 @@ export function App() {
       icon: <Settings size={17} />,
     },
   ];
+
+  if (isMiniWidgetMode) {
+    return (
+      <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#090d16' }}>
+        <DesktopMiniWidget onRestore={() => toggleMiniWidgetMode(false)} />
+        <QuickCaptureModal />
+        <LiveToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)' }}>
@@ -230,7 +255,7 @@ export function App() {
 
           {/* Header Controls: Background Status + Bell Notification */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <BackgroundStatusWidget />
+            <BackgroundStatusWidget onToggleMiniWidget={() => toggleMiniWidgetMode(true)} />
 
             <button
               className="btn-ghost"
