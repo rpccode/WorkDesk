@@ -9,7 +9,10 @@ import type {
   Note,
   DashboardSummary,
   ActiveTab,
+  AppNotification,
+  AddNotificationInput,
 } from '../types';
+import { evaluateLiveAlerts, playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
 
 interface WorkDeskState {
   // Navigation & UI
@@ -81,6 +84,18 @@ interface WorkDeskState {
 
   // Master refresh
   refreshAll: () => Promise<void>;
+
+  // Live Notifications
+  isNotificationCenterOpen: boolean;
+  setNotificationCenterOpen: (open: boolean) => void;
+  notifications: AppNotification[];
+  activeToasts: AppNotification[];
+  addNotification: (input: AddNotificationInput) => void;
+  dismissToast: (id: string) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  clearAllNotifications: () => void;
+  triggerLiveAlertsCheck: () => void;
 }
 
 export const useStore = create<WorkDeskState>((set, get) => ({
@@ -93,6 +108,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   setSelectedCaseId: (id) => set({ selectedCaseId: id }),
   caseForEmail: null,
   setCaseForEmail: (c) => set({ caseForEmail: c, activeTab: 'emails' }),
+  isNotificationCenterOpen: false,
+  setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
+  notifications: [],
+  activeToasts: [],
 
   // Clients
   clients: [],
@@ -310,12 +329,79 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     const res = await api.syncInboxEmails();
     get().fetchDashboardSummary();
     get().fetchEmailAccounts();
+
+    if (res.new_emails_count > 0) {
+      get().addNotification({
+        type: 'email',
+        title: 'Nuevos Correos de Clientes',
+        message: res.message,
+        action_label: 'Ver Casos',
+        action_type: 'open_case',
+        show_toast: true,
+      });
+    }
+
     return res;
   },
   startOAuthLogin: async (input) => {
     const res = await api.startOAuthLogin(input);
     await get().fetchEmailAccounts();
     return res;
+  },
+
+  // Notification actions
+  addNotification: (input) => {
+    const newNotif: AppNotification = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      case_id: input.case_id,
+      commitment_id: input.commitment_id,
+      client_id: input.client_id,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      action_label: input.action_label,
+      action_type: input.action_type,
+    };
+
+    set((state) => ({
+      notifications: [newNotif, ...state.notifications],
+      activeToasts: input.show_toast !== false ? [newNotif, ...state.activeToasts.slice(0, 3)] : state.activeToasts,
+    }));
+
+    if (input.show_toast !== false) {
+      playNotificationSound(input.type);
+      sendDesktopNotification(input.title, input.message);
+    }
+  },
+
+  dismissToast: (id) => {
+    set((state) => ({
+      activeToasts: state.activeToasts.filter((t) => t.id !== id),
+    }));
+  },
+
+  markNotificationRead: (id) => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+    }));
+  },
+
+  markAllNotificationsRead: () => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, is_read: true })),
+    }));
+  },
+
+  clearAllNotifications: () => {
+    set({ notifications: [], activeToasts: [] });
+  },
+
+  triggerLiveAlertsCheck: () => {
+    const { commitments, cases, clients, addNotification } = get();
+    const alerts = evaluateLiveAlerts(commitments, cases, clients);
+    alerts.forEach((alert) => addNotification(alert));
   },
 
   // Master refresh
@@ -328,5 +414,6 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       get().fetchNotes(),
       get().fetchEmailAccounts(),
     ]);
+    get().triggerLiveAlertsCheck();
   },
 }));

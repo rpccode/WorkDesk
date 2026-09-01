@@ -11,6 +11,7 @@ import {
   Zap,
   RefreshCw,
   Layers,
+  Bell,
 } from 'lucide-react';
 import { DashboardView } from './views/DashboardView';
 import { CasesView } from './views/CasesView';
@@ -21,6 +22,9 @@ import { EmailBuilderView } from './views/EmailBuilderView';
 import { ReportsView } from './views/ReportsView';
 import { QuickCaptureModal } from './components/QuickCaptureModal';
 import { EmailAccountsModal } from './components/EmailAccountsModal';
+import { LiveToastContainer } from './components/LiveToastContainer';
+import { NotificationCenterModal } from './components/NotificationCenterModal';
+import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import type { ActiveTab } from './types';
 
 export function App() {
@@ -29,16 +33,28 @@ export function App() {
     setActiveTab,
     setQuickCaptureOpen,
     refreshAll,
+    syncInboxEmails,
     dashboardSummary,
+    notifications,
+    setNotificationCenterOpen,
   } = useStore();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   useEffect(() => {
     refreshAll();
     updateLastSync();
+    requestDesktopNotificationPermission();
+
+    // Periodic live background check every 90 seconds
+    const interval = setInterval(() => {
+      refreshAll();
+      syncInboxEmails();
+    }, 90000);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
@@ -48,7 +64,10 @@ export function App() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearInterval(interval);
+    };
   }, []);
 
   const updateLastSync = () => {
@@ -146,38 +165,83 @@ export function App() {
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.65rem',
+          justifyContent: 'space-between',
         }}>
-          {/* Logo icon */}
-          <div style={{
-            padding: '0.5rem',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            color: 'white',
-            boxShadow: '0 0 18px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-            flexShrink: 0,
-          }}>
-            <Layers size={18} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {/* Logo icon */}
+            <div style={{
+              padding: '0.5rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              color: 'white',
+              boxShadow: '0 0 18px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+              flexShrink: 0,
+            }}>
+              <Layers size={18} />
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{
+                  fontSize: '0.98rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.025em',
+                  color: 'var(--text-primary)',
+                }}>
+                  WorkDesk
+                </span>
+                <span style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
+                  padding: '0.1rem 0.35rem',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--accent-glow)',
+                  color: 'var(--accent-primary)',
+                  letterSpacing: '0.04em',
+                }}>
+                  PRO
+                </span>
+              </div>
+              <p style={{
+                fontSize: '0.68rem',
+                color: 'var(--text-muted)',
+                lineHeight: 1,
+                marginTop: '0.2rem',
+              }}>
+                Centro Operativo
+              </p>
+            </div>
           </div>
 
-          <div>
-            <div style={{
-              fontSize: '1.1rem',
-              fontWeight: 800,
-              letterSpacing: '-0.025em',
-              color: '#0f172a',
-            }}>
-              Work<span style={{ color: 'var(--accent-primary)' }}>Desk</span>
-            </div>
-            <div style={{
-              fontSize: '0.62rem',
-              color: '#94a3b8',
-              fontWeight: 600,
-              letterSpacing: '0.1em',
-            }}>
-              CENTRO OPERATIVO
-            </div>
-          </div>
+          {/* Bell Notification Trigger */}
+          <button
+            className="btn-ghost"
+            style={{
+              position: 'relative',
+              padding: '0.45rem',
+              borderRadius: '8px',
+              color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
+            }}
+            onClick={() => setNotificationCenterOpen(true)}
+            title={unreadCount > 0 ? `${unreadCount} alerta(s) pendiente(s)` : 'Centro de Alertas'}
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span
+                className="animate-pulse-glow"
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  right: '3px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--status-critical)',
+                  border: '1.5px solid var(--bg-surface)',
+                }}
+              />
+            )}
+          </button>
         </div>
 
         {/* ── Navigation ─────────────────────────────────────── */}
@@ -314,12 +378,14 @@ export function App() {
         </div>
       </main>
 
-      {/* Global Modals */}
+      {/* Global Modals & Live Overlays */}
       <QuickCaptureModal />
       <EmailAccountsModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
       />
+      <NotificationCenterModal />
+      <LiveToastContainer />
     </div>
   );
 }
