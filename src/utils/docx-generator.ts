@@ -388,12 +388,6 @@ export function printHtmlDocument(htmlOrMarkdown: string, title: string = 'Docum
     });
   }
 
-  const printWindow = window.open('', '_blank', 'width=900,height=750');
-  if (!printWindow) {
-    alert('Por favor habilite las ventanas emergentes (popups) para imprimir o exportar a PDF.');
-    return;
-  }
-
   const printDocumentHtml = `
 <!DOCTYPE html>
 <html lang="es">
@@ -453,13 +447,36 @@ export function printHtmlDocument(htmlOrMarkdown: string, title: string = 'Docum
 </html>
   `;
 
-  printWindow.document.open();
-  printWindow.document.write(printDocumentHtml);
-  printWindow.document.close();
+  // Use hidden iframe to avoid browser / Tauri popup blockers
+  let iframe = document.getElementById('workdesk-print-frame') as HTMLIFrameElement | null;
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'workdesk-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+  }
 
-  // Wait for assets/layout to settle and trigger print dialog
+  const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+  if (!iframeDoc) {
+    window.print();
+    return;
+  }
+
+  iframeDoc.open();
+  iframeDoc.write(printDocumentHtml);
+  iframeDoc.close();
+
   setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 400);
+    try {
+      iframe?.contentWindow?.focus();
+      iframe?.contentWindow?.print();
+    } catch (_) {
+      window.print();
+    }
+  }, 300);
 }

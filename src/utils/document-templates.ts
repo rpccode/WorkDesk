@@ -366,14 +366,14 @@ export function injectTemplateTokens(
   if (client) {
     matrizDiagnostico = `| Parámetro | Valor Evaluado |\n| :--- | :--- |\n` +
       `| **Cliente / Razón Social** | ${client.name} ${client.company ? `(${client.company})` : ''} |\n` +
-      `| **Categoría / Rubro** | ${client.category || 'General'} |\n` +
-      `| **Complejidad Evaluada** | ${client.complexity_evaluated || 'Media'} |\n` +
-      `| **Complejidad Ponderada** | ${client.complexity_weighted || 'Media'} |\n` +
-      `| **Ticket Promedio** | ${client.ticket_avg ?? 1} casos/mes |\n` +
-      `| **Sucursales** | ${client.branches_count ?? 1} |\n` +
-      `| **Dotación Empleados** | ${client.employees_count ? client.employees_count.toLocaleString() : '10'} |\n` +
-      `| **Cantidad de Sistemas** | ${client.systems_count ?? 1} |\n` +
-      `| **Departamento de TI** | ${client.has_it_department === true ? 'Sí (Equipo interno)' : client.has_it_department === false ? 'No (Sin depto TI)' : 'No especificado'} |`;
+      `| **Categoría / Rubro** | ${client.category || '—'} |\n` +
+      `| **Complejidad Evaluada** | ${client.complexity_evaluated || '—'} |\n` +
+      `| **Complejidad Ponderada** | ${client.complexity_weighted || '—'} |\n` +
+      `| **Ticket Promedio** | ${client.ticket_avg !== undefined && client.ticket_avg !== null ? client.ticket_avg : '—'} |\n` +
+      `| **Sucursales** | ${client.branches_count !== undefined && client.branches_count !== null ? client.branches_count : '—'} |\n` +
+      `| **Dotación Empleados** | ${client.employees_count !== undefined && client.employees_count !== null ? client.employees_count.toLocaleString() : '—'} |\n` +
+      `| **Cantidad de Sistemas** | ${client.systems_count !== undefined && client.systems_count !== null ? client.systems_count : '—'} |\n` +
+      `| **Departamento de TI** | ${client.has_it_department === true ? 'Sí' : client.has_it_department === false ? 'No' : '—'} |`;
   } else {
     matrizDiagnostico = '*Selecciona un cliente para autocompletar la matriz de diagnóstico corporativo.*';
   }
@@ -386,13 +386,13 @@ export function injectTemplateTokens(
   const replacements: Record<string, string> = {
     '{{cliente_nombre}}': client?.name || '[NOMBRE CLIENTE]',
     '{{cliente_empresa}}': client?.company || client?.name || '[EMPRESA]',
-    '{{cliente_categoria}}': client?.category || '[CATEGORÍA]',
-    '{{cliente_complejidad_evaluada}}': client?.complexity_evaluated || 'Media',
-    '{{cliente_complejidad_ponderada}}': client?.complexity_weighted || 'Media',
-    '{{cliente_ticket_promedio}}': client?.ticket_avg !== undefined && client?.ticket_avg !== null ? String(client.ticket_avg) : '1',
-    '{{cliente_sucursales}}': client?.branches_count !== undefined && client?.branches_count !== null ? String(client.branches_count) : '1',
+    '{{cliente_categoria}}': client?.category || 'No especificado',
+    '{{cliente_complejidad_evaluada}}': client?.complexity_evaluated || 'No especificado',
+    '{{cliente_complejidad_ponderada}}': client?.complexity_weighted || 'No especificado',
+    '{{cliente_ticket_promedio}}': client?.ticket_avg !== undefined && client?.ticket_avg !== null ? String(client.ticket_avg) : '—',
+    '{{cliente_sucursales}}': client?.branches_count !== undefined && client?.branches_count !== null ? String(client.branches_count) : '—',
     '{{cliente_empleados}}': client?.employees_count !== undefined && client?.employees_count !== null ? client.employees_count.toLocaleString() : '—',
-    '{{cliente_sistemas}}': client?.systems_count !== undefined && client?.systems_count !== null ? String(client.systems_count) : '1',
+    '{{cliente_sistemas}}': client?.systems_count !== undefined && client?.systems_count !== null ? String(client.systems_count) : '—',
     '{{cliente_depto_ti}}': client?.has_it_department === true ? 'Sí' : client?.has_it_department === false ? 'No' : 'No especificado',
     '{{cliente_email}}': client?.email || '[EMAIL CLIENTE]',
     '{{cliente_telefono}}': client?.phone || '[TELÉFONO CLIENTE]',

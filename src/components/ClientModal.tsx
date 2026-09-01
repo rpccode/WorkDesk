@@ -19,29 +19,29 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
   const [status, setStatus] = useState(clientToEdit?.status || 'active');
 
   // Corporate Profile & Complexity Matrix fields
-  const [category, setCategory] = useState(clientToEdit?.category || 'Administrativo');
-  const [complexityWeighted, setComplexityWeighted] = useState<ClientComplexity>(
-    clientToEdit?.complexity_weighted || 'Media'
+  const [category, setCategory] = useState(clientToEdit?.category || '');
+  const [complexityWeighted, setComplexityWeighted] = useState<ClientComplexity | ''>(
+    clientToEdit?.complexity_weighted || ''
   );
-  const [complexityEvaluated, setComplexityEvaluated] = useState<ClientComplexity>(
-    clientToEdit?.complexity_evaluated || 'Media'
+  const [complexityEvaluated, setComplexityEvaluated] = useState<ClientComplexity | ''>(
+    clientToEdit?.complexity_evaluated || ''
   );
   const [ticketAvg, setTicketAvg] = useState<number | ''>(
-    clientToEdit?.ticket_avg !== undefined && clientToEdit?.ticket_avg !== null ? clientToEdit.ticket_avg : 1
+    clientToEdit?.ticket_avg !== undefined && clientToEdit?.ticket_avg !== null ? clientToEdit.ticket_avg : ''
   );
   const [branchesCount, setBranchesCount] = useState<number | ''>(
-    clientToEdit?.branches_count !== undefined && clientToEdit?.branches_count !== null ? clientToEdit.branches_count : 1
+    clientToEdit?.branches_count !== undefined && clientToEdit?.branches_count !== null ? clientToEdit.branches_count : ''
   );
   const [employeesCount, setEmployeesCount] = useState<number | ''>(
-    clientToEdit?.employees_count !== undefined && clientToEdit?.employees_count !== null ? clientToEdit.employees_count : 10
+    clientToEdit?.employees_count !== undefined && clientToEdit?.employees_count !== null ? clientToEdit.employees_count : ''
   );
   const [systemsCount, setSystemsCount] = useState<number | ''>(
-    clientToEdit?.systems_count !== undefined && clientToEdit?.systems_count !== null ? clientToEdit.systems_count : 1
+    clientToEdit?.systems_count !== undefined && clientToEdit?.systems_count !== null ? clientToEdit.systems_count : ''
   );
-  const [hasItDepartment, setHasItDepartment] = useState<boolean>(
+  const [hasItDepartment, setHasItDepartment] = useState<boolean | null>(
     clientToEdit?.has_it_department !== undefined && clientToEdit?.has_it_department !== null
       ? clientToEdit.has_it_department
-      : false
+      : null
   );
 
   const [activeSection, setActiveSection] = useState<'general' | 'profile'>('general');
@@ -56,28 +56,28 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         setEmail(clientToEdit.email || '');
         setPhone(clientToEdit.phone || '');
         setStatus(clientToEdit.status);
-        setCategory(clientToEdit.category || 'Administrativo');
-        setComplexityWeighted(clientToEdit.complexity_weighted || 'Media');
-        setComplexityEvaluated(clientToEdit.complexity_evaluated || 'Media');
-        setTicketAvg(clientToEdit.ticket_avg !== undefined && clientToEdit.ticket_avg !== null ? clientToEdit.ticket_avg : 1);
-        setBranchesCount(clientToEdit.branches_count !== undefined && clientToEdit.branches_count !== null ? clientToEdit.branches_count : 1);
-        setEmployeesCount(clientToEdit.employees_count !== undefined && clientToEdit.employees_count !== null ? clientToEdit.employees_count : 10);
-        setSystemsCount(clientToEdit.systems_count !== undefined && clientToEdit.systems_count !== null ? clientToEdit.systems_count : 1);
-        setHasItDepartment(clientToEdit.has_it_department ?? false);
+        setCategory(clientToEdit.category || '');
+        setComplexityWeighted(clientToEdit.complexity_weighted || '');
+        setComplexityEvaluated(clientToEdit.complexity_evaluated || '');
+        setTicketAvg(clientToEdit.ticket_avg !== undefined && clientToEdit.ticket_avg !== null ? clientToEdit.ticket_avg : '');
+        setBranchesCount(clientToEdit.branches_count !== undefined && clientToEdit.branches_count !== null ? clientToEdit.branches_count : '');
+        setEmployeesCount(clientToEdit.employees_count !== undefined && clientToEdit.employees_count !== null ? clientToEdit.employees_count : '');
+        setSystemsCount(clientToEdit.systems_count !== undefined && clientToEdit.systems_count !== null ? clientToEdit.systems_count : '');
+        setHasItDepartment(clientToEdit.has_it_department !== undefined ? clientToEdit.has_it_department : null);
       } else {
         setName('');
         setCompany('');
         setEmail('');
         setPhone('');
         setStatus('active');
-        setCategory('Administrativo');
-        setComplexityWeighted('Media');
-        setComplexityEvaluated('Media');
-        setTicketAvg(1);
-        setBranchesCount(1);
-        setEmployeesCount(10);
-        setSystemsCount(1);
-        setHasItDepartment(false);
+        setCategory('');
+        setComplexityWeighted('');
+        setComplexityEvaluated('');
+        setTicketAvg('');
+        setBranchesCount('');
+        setEmployeesCount('');
+        setSystemsCount('');
+        setHasItDepartment(null);
       }
       setActiveSection('general');
       setError(null);
@@ -103,13 +103,13 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
         category: category.trim() || undefined,
-        complexity_weighted: complexityWeighted,
-        complexity_evaluated: complexityEvaluated,
+        complexity_weighted: (complexityWeighted || undefined) as ClientComplexity | undefined,
+        complexity_evaluated: (complexityEvaluated || undefined) as ClientComplexity | undefined,
         ticket_avg: ticketAvg === '' ? undefined : Number(ticketAvg),
         branches_count: branchesCount === '' ? undefined : Number(branchesCount),
         employees_count: employeesCount === '' ? undefined : Number(employeesCount),
         systems_count: systemsCount === '' ? undefined : Number(systemsCount),
-        has_it_department: hasItDepartment,
+        has_it_department: hasItDepartment !== null ? hasItDepartment : undefined,
       };
 
       if (clientToEdit) {
@@ -329,7 +329,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       min="0"
                       value={ticketAvg}
                       onChange={(e) => setTicketAvg(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="Ej. 9"
+                      placeholder="Sin especificar"
                       style={{ width: '100%' }}
                     />
                   </div>
@@ -343,9 +343,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     </label>
                     <select
                       value={complexityWeighted}
-                      onChange={(e) => setComplexityWeighted(e.target.value as ClientComplexity)}
+                      onChange={(e) => setComplexityWeighted(e.target.value as ClientComplexity | '')}
                       style={{ width: '100%' }}
                     >
+                      <option value="">(Sin definir)</option>
                       <option value="Alta">🔴 Alta</option>
                       <option value="Media">🟡 Media</option>
                       <option value="Baja">🟢 Baja</option>
@@ -358,9 +359,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     </label>
                     <select
                       value={complexityEvaluated}
-                      onChange={(e) => setComplexityEvaluated(e.target.value as ClientComplexity)}
+                      onChange={(e) => setComplexityEvaluated(e.target.value as ClientComplexity | '')}
                       style={{ width: '100%' }}
                     >
+                      <option value="">(Sin definir)</option>
                       <option value="Alta">🔴 Alta</option>
                       <option value="Media">🟡 Media</option>
                       <option value="Baja">🟢 Baja</option>
@@ -379,7 +381,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       min="1"
                       value={branchesCount}
                       onChange={(e) => setBranchesCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="1"
+                      placeholder="Sin especificar"
                       style={{ width: '100%' }}
                     />
                   </div>
@@ -393,7 +395,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       min="1"
                       value={employeesCount}
                       onChange={(e) => setEmployeesCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="100"
+                      placeholder="Sin especificar"
                       style={{ width: '100%' }}
                     />
                   </div>
@@ -407,13 +409,13 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       min="1"
                       value={systemsCount}
                       onChange={(e) => setSystemsCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="2"
+                      placeholder="Sin especificar"
                       style={{ width: '100%' }}
                     />
                   </div>
                 </div>
 
-                {/* Depto TI Checkbox */}
+                {/* Depto TI Selector */}
                 <div
                   style={{
                     padding: '0.75rem 1rem',
@@ -434,17 +436,38 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     </span>
                   </div>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={hasItDepartment}
-                      onChange={(e) => setHasItDepartment(e.target.checked)}
-                      style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
-                    />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>
-                      {hasItDepartment ? 'Sí' : 'No'}
-                    </span>
-                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className={`btn-ghost ${hasItDepartment === true ? 'active' : ''}`}
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: hasItDepartment === true ? 'var(--status-low-bg)' : 'transparent',
+                        color: hasItDepartment === true ? 'var(--status-low)' : 'var(--text-secondary)',
+                        border: hasItDepartment === true ? '1px solid var(--status-low)' : '1px solid var(--border-subtle)',
+                      }}
+                      onClick={() => setHasItDepartment(hasItDepartment === true ? null : true)}
+                    >
+                      Sí
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-ghost ${hasItDepartment === false ? 'active' : ''}`}
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: hasItDepartment === false ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
+                        color: hasItDepartment === false ? 'var(--status-critical)' : 'var(--text-secondary)',
+                        border: hasItDepartment === false ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-subtle)',
+                      }}
+                      onClick={() => setHasItDepartment(hasItDepartment === false ? null : false)}
+                    >
+                      No
+                    </button>
+                  </div>
                 </div>
               </>
             )}

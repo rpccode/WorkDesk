@@ -23,6 +23,27 @@ import {
 
 const PROFILE_KEY = 'workdesk_consultant_profile';
 const PREFERENCES_KEY = 'workdesk_consultant_preferences';
+const CLIENTS_METADATA_KEY = 'workdesk_clients_metadata';
+
+function getStoredClientsMetadata(): Record<string, Partial<Client>> {
+  try {
+    const raw = localStorage.getItem(CLIENTS_METADATA_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveClientMetadata(id: string, name: string, meta: Partial<Client>) {
+  try {
+    const all = getStoredClientsMetadata();
+    all[id] = { ...all[id], ...meta };
+    if (name) {
+      all[name.toLowerCase().trim()] = { ...all[name.toLowerCase().trim()], ...meta };
+    }
+    localStorage.setItem(CLIENTS_METADATA_KEY, JSON.stringify(all));
+  } catch {}
+}
 
 function loadStoredProfile(): ConsultantProfile {
   try {
@@ -186,7 +207,13 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     set({ isLoadingClients: true });
     try {
       const data = await api.getClients();
-      set({ clients: data });
+      const meta = getStoredClientsMetadata();
+      const merged = data.map((c) => {
+        const byId = meta[c.id] || {};
+        const byName = meta[c.name.toLowerCase().trim()] || {};
+        return { ...c, ...byName, ...byId };
+      });
+      set({ clients: merged });
     } catch (err) {
       console.error('Error fetching clients:', err);
     } finally {
@@ -195,16 +222,30 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   },
   createClient: async (input) => {
     const created = await api.createClient(input);
-    set((state) => ({ clients: [...state.clients, created] }));
+    saveClientMetadata(created.id, input.name, input);
+    const fullClient: Client = {
+      ...created,
+      ...input,
+      status: 'active',
+      created_at: created.created_at || new Date().toISOString(),
+    };
+    set((state) => ({ clients: [...state.clients, fullClient] }));
     get().fetchDashboardSummary();
-    return created;
+    return fullClient;
   },
   updateClient: async (input) => {
     const updated = await api.updateClient(input);
+    const clientStatus = (input.status as ClientStatus) || 'active';
+    saveClientMetadata(input.id, input.name, { ...input, status: clientStatus });
+    const fullClient: Client = {
+      ...updated,
+      ...input,
+      status: clientStatus,
+    };
     set((state) => ({
-      clients: state.clients.map((c) => (c.id === input.id ? { ...c, ...input, status: input.status as ClientStatus } : c)),
+      clients: state.clients.map((c) => (c.id === input.id ? fullClient : c)),
     }));
-    return updated;
+    return fullClient;
   },
 
   // Cases

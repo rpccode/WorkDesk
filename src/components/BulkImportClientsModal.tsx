@@ -31,7 +31,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { clients, createClient, fetchClients, addNotification } = useStore();
+  const { clients, createClient, updateClient, fetchClients, addNotification } = useStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [_selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -128,6 +128,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
     try {
       const result = await parseClientSpreadsheet(file, clients);
       setParseResult(result);
+      // If all rows are detected as existing duplicates, default to importing/updating them
+      if (result.validCount === 0 && result.duplicateCount > 0) {
+        setImportDuplicates(true);
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'Error al leer el archivo Excel/CSV.');
     } finally {
@@ -153,7 +157,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
     });
 
     if (rowsToImport.length === 0) {
-      setErrorMessage('No hay clientes válidos para importar.');
+      setErrorMessage('No hay clientes seleccionados para importar.');
       return;
     }
 
@@ -162,20 +166,44 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
 
     try {
       for (const row of rowsToImport) {
-        await createClient({
-          name: row.name,
-          company: row.company,
-          email: row.email,
-          phone: row.phone,
-          category: row.category,
-          complexity_weighted: row.complexity_weighted,
-          complexity_evaluated: row.complexity_evaluated,
-          ticket_avg: row.ticket_avg,
-          branches_count: row.branches_count,
-          employees_count: row.employees_count,
-          systems_count: row.systems_count,
-          has_it_department: row.has_it_department,
-        });
+        // If client already exists by name, update and enrich its corporate profile
+        const existing = clients.find(
+          (c) => c.name.toLowerCase().trim() === row.name.toLowerCase().trim()
+        );
+
+        if (existing) {
+          await updateClient({
+            id: existing.id,
+            name: row.name,
+            company: row.company || existing.company || undefined,
+            email: row.email || existing.email || undefined,
+            phone: row.phone || existing.phone || undefined,
+            status: row.status || existing.status,
+            category: row.category || existing.category || undefined,
+            complexity_weighted: row.complexity_weighted || existing.complexity_weighted || undefined,
+            complexity_evaluated: row.complexity_evaluated || existing.complexity_evaluated || undefined,
+            ticket_avg: row.ticket_avg !== undefined ? row.ticket_avg : (existing.ticket_avg ?? undefined),
+            branches_count: row.branches_count !== undefined ? row.branches_count : (existing.branches_count ?? undefined),
+            employees_count: row.employees_count !== undefined ? row.employees_count : (existing.employees_count ?? undefined),
+            systems_count: row.systems_count !== undefined ? row.systems_count : (existing.systems_count ?? undefined),
+            has_it_department: row.has_it_department !== undefined ? row.has_it_department : (existing.has_it_department ?? undefined),
+          });
+        } else {
+          await createClient({
+            name: row.name,
+            company: row.company,
+            email: row.email,
+            phone: row.phone,
+            category: row.category,
+            complexity_weighted: row.complexity_weighted,
+            complexity_evaluated: row.complexity_evaluated,
+            ticket_avg: row.ticket_avg,
+            branches_count: row.branches_count,
+            employees_count: row.employees_count,
+            systems_count: row.systems_count,
+            has_it_department: row.has_it_department,
+          });
+        }
         successCount++;
       }
 
@@ -184,7 +212,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
       setImportedCount(successCount);
       addNotification({
         title: 'Carga Masiva Exitosa',
-        message: `Se importaron ${successCount} clientes correctamente a la cartera.`,
+        message: `Se procesaron e importaron ${successCount} clientes en la cartera.`,
         type: 'success',
       });
       if (onSuccess) onSuccess(successCount);
@@ -649,17 +677,20 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               <button type="button" className="btn-secondary" onClick={onClose} disabled={isImporting}>
                 Cancelar
               </button>
-              {parseResult && (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleImport}
-                  disabled={isImporting || parseResult.validCount === 0}
-                >
-                  <CheckCircle2 size={16} />
-                  {isImporting ? 'Importando...' : `Confirmar e Importar (${parseResult.validCount + (importDuplicates ? parseResult.duplicateCount : 0)} clientes)`}
-                </button>
-              )}
+              {parseResult && (() => {
+                const totalToImport = parseResult.validCount + (importDuplicates ? parseResult.duplicateCount : 0);
+                return (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleImport}
+                    disabled={isImporting || totalToImport === 0}
+                  >
+                    <CheckCircle2 size={16} />
+                    {isImporting ? 'Importando...' : `Confirmar e Importar (${totalToImport} clientes)`}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}

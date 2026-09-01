@@ -67,7 +67,7 @@ export const ClientsView: React.FC = () => {
     (c) => c.complexity_evaluated === 'Alta' || c.complexity_weighted === 'Alta'
   ).length;
   const complexPercent = totalClients > 0 ? ((complexClients / totalClients) * 100).toFixed(1) : '0';
-  const totalBranches = clients.reduce((acc, c) => acc + (c.branches_count || 1), 0);
+  const totalBranches = clients.reduce((acc, c) => acc + (c.branches_count || 0), 0);
   const totalEmployees = clients.reduce((acc, c) => acc + (c.employees_count || 0), 0);
 
   const getComplexityBadge = (val?: ClientComplexity | null) => {
@@ -361,9 +361,6 @@ export const ClientsView: React.FC = () => {
               </thead>
               <tbody>
                 {filteredClients.map((c, idx) => {
-                  const clientCases = cases.filter((item) => item.client_id === c.id);
-                  const activeCases = clientCases.filter((item) => item.status !== 'closed');
-
                   return (
                     <tr
                       key={c.id}
@@ -393,7 +390,7 @@ export const ClientsView: React.FC = () => {
                       </td>
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center', fontWeight: 700 }}>
-                        {c.ticket_avg ?? (activeCases.length > 0 ? activeCases.length : '—')}
+                        {c.ticket_avg !== undefined && c.ticket_avg !== null ? c.ticket_avg : '—'}
                       </td>
 
                       <td style={{ padding: '0.8rem 0.85rem' }}>
@@ -403,7 +400,7 @@ export const ClientsView: React.FC = () => {
                       </td>
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
-                        {c.branches_count ?? '1'}
+                        {c.branches_count !== undefined && c.branches_count !== null ? c.branches_count : '—'}
                       </td>
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>
@@ -411,7 +408,7 @@ export const ClientsView: React.FC = () => {
                       </td>
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
-                        {c.systems_count ?? '1'}
+                        {c.systems_count !== undefined && c.systems_count !== null ? c.systems_count : '—'}
                       </td>
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
@@ -460,10 +457,10 @@ export const ClientsView: React.FC = () => {
                   </td>
                   <td style={{ padding: '0.85rem 0.85rem' }} />
                   <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
-                    {totalBranches}
+                    {totalBranches > 0 ? totalBranches : '—'}
                   </td>
                   <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
-                    {totalEmployees.toLocaleString()}
+                    {totalEmployees > 0 ? totalEmployees.toLocaleString() : '—'}
                   </td>
                   <td colSpan={3} />
                 </tr>
