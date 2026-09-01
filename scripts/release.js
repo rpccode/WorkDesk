@@ -88,8 +88,11 @@ console.log(`\n======================================================`);
 console.log(`🚀 COMPILANDO WORKDESK v${targetVersion} [FIRMA AUTOMÁTICA]`);
 console.log(`======================================================\n`);
 
-// 5. Configurar variable de entorno para firma
+// 5. Configurar variables de entorno para firma
+const keyContent = fs.readFileSync(keyPath, 'utf8').trim();
+process.env.TAURI_SIGNING_PRIVATE_KEY = keyPath;
 process.env.TAURI_SIGNING_PRIVATE_KEY_PATH = keyPath;
+process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD = process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '';
 
 // 6. Ejecutar Build con Tauri
 try {
@@ -99,7 +102,9 @@ try {
     stdio: 'inherit',
     env: {
       ...process.env,
+      TAURI_SIGNING_PRIVATE_KEY: keyPath,
       TAURI_SIGNING_PRIVATE_KEY_PATH: keyPath,
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '',
     },
   });
 } catch (err) {
