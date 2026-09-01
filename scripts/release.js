@@ -5,7 +5,7 @@
  * 
  * Modos de uso:
  *   npm run release:patch          (Compila, firma y prepara archivos localmente)
- *   npm run publish:patch          (TODO EN 1 CLIC: Bump + Build + Firma + Git Tag + Sube a GitHub Releases)
+ *   npm run publish:patch          (TODO EN 1 CLIC: Bump + Build + Firma + Sube a GitHub Releases)
  *   npm run publish:minor
  *   npm run publish:major
  */
@@ -42,7 +42,7 @@ const shouldPublish = process.argv.includes('--publish') || process.env.AUTO_PUB
 // 1. Validar clave de firma
 if (!fs.existsSync(keyPath)) {
   console.error('\x1b[31m[ERROR]\x1b[0m No se encontró la clave privada en src-tauri/updater.key');
-  console.error('Genera una clave con: npx @tauri-apps/cli signer generate -w src-tauri/updater.key');
+  console.error('Genera una clave con: npx @tauri-apps/cli signer generate --ci -f -w src-tauri/updater.key');
   process.exit(1);
 }
 
@@ -89,7 +89,6 @@ console.log(`🚀 COMPILANDO WORKDESK v${targetVersion} [FIRMA AUTOMÁTICA]`);
 console.log(`======================================================\n`);
 
 // 5. Configurar variables de entorno para firma
-const keyContent = fs.readFileSync(keyPath, 'utf8').trim();
 process.env.TAURI_SIGNING_PRIVATE_KEY = keyPath;
 process.env.TAURI_SIGNING_PRIVATE_KEY_PATH = keyPath;
 process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD = process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '';
@@ -97,7 +96,7 @@ process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD = process.env.TAURI_SIGNING_PRIVA
 // 6. Ejecutar Build con Tauri
 try {
   console.log('\x1b[34m[BUILD]\x1b[0m Compilando frontend y empaquetando binarios de Rust...\n');
-  execSync('npm run tauri build', {
+  execSync('npx tauri build', {
     cwd: rootDir,
     stdio: 'inherit',
     env: {
@@ -112,7 +111,7 @@ try {
   process.exit(1);
 }
 
-// 7. Recolectar archivos generados
+// 7. Recolectar archivos generados de la versión actual
 const targetBundleDir = path.join(rootDir, 'src-tauri', 'target', 'release', 'bundle');
 const targetVersionDir = path.join(distReleaseDir, `v${targetVersion}`);
 
@@ -135,27 +134,34 @@ function copyIfExists(sourceDir, filterFn, destDir) {
 }
 
 const collectedFiles = [
-  ...copyIfExists(path.join(targetBundleDir, 'nsis'), (f) => f.endsWith('.exe') || f.endsWith('.sig') || f.endsWith('.zip'), targetVersionDir),
-  ...copyIfExists(path.join(targetBundleDir, 'msi'), (f) => f.endsWith('.msi') || f.endsWith('.sig'), targetVersionDir),
-  ...copyIfExists(path.join(targetBundleDir), (f) => f.endsWith('.json'), targetVersionDir),
+  ...copyIfExists(path.join(targetBundleDir, 'nsis'), (f) => f.includes(targetVersion) && (f.endsWith('.exe') || f.endsWith('.sig') || f.endsWith('.zip')), targetVersionDir),
+  ...copyIfExists(path.join(targetBundleDir, 'msi'), (f) => f.includes(targetVersion) && (f.endsWith('.msi') || f.endsWith('.sig')), targetVersionDir),
 ];
 
-// Comprobar latest.json
-const possibleLatestJson = [
-  path.join(targetBundleDir, 'latest.json'),
-  path.join(targetBundleDir, 'nsis', 'latest.json'),
-  path.join(rootDir, 'src-tauri', 'target', 'release', 'latest.json'),
-];
+// Generar o copiar latest.json para el Updater de Tauri v2
+const nsisExe = collectedFiles.find(f => f.name.endsWith('-setup.exe'));
+const nsisSig = collectedFiles.find(f => f.name.endsWith('-setup.exe.sig'));
 
-for (const p of possibleLatestJson) {
-  if (fs.existsSync(p)) {
-    const dest = path.join(targetVersionDir, 'latest.json');
-    fs.copyFileSync(p, dest);
-    if (!collectedFiles.some(f => f.name === 'latest.json')) {
-      collectedFiles.push({ name: 'latest.json', path: dest });
-    }
-    break;
-  }
+const latestJsonPath = path.join(targetVersionDir, 'latest.json');
+let latestManifest = null;
+
+if (nsisExe && nsisSig) {
+  const signatureContent = fs.readFileSync(nsisSig.path, 'utf8').trim();
+  const downloadUrl = `https://github.com/rpccode/WorkDesk/releases/download/v${targetVersion}/${nsisExe.name}`;
+  
+  latestManifest = {
+    version: targetVersion,
+    notes: `Actualización automática a WorkDesk v${targetVersion}`,
+    pub_date: new Date().toISOString(),
+    platforms: {
+      'windows-x86_64': {
+        signature: signatureContent,
+        url: downloadUrl,
+      },
+    },
+  };
+  fs.writeFileSync(latestJsonPath, JSON.stringify(latestManifest, null, 2) + '\n');
+  collectedFiles.push({ name: 'latest.json', path: latestJsonPath });
 }
 
 console.log(`\n======================================================`);
@@ -204,7 +210,7 @@ async function publishToGitHub() {
   }
 
   const uploadUrl = releaseData.upload_url.replace(/\{(\?.*)?\}$/, '');
-  console.log(`✓ Release creado en GitHub (${releaseData.html_url})`);
+  console.log(`✓ Release creado en GitHub: ${releaseData.html_url}`);
 
   // Subir cada artefacto
   for (const file of collectedFiles) {
