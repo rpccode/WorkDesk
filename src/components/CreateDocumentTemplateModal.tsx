@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { FileText, X, Check, UploadCloud, FileCode, Sparkles } from 'lucide-react';
+import { FileText, X, Check, UploadCloud, AlertCircle } from 'lucide-react';
 import {
   AVAILABLE_TOKENS,
   saveCustomDocumentTemplate,
@@ -8,6 +8,7 @@ import {
 } from '../utils/document-templates';
 import { parseDocumentTemplateFile } from '../utils/docx-parser';
 import { playNotificationSound } from '../utils/live-alerts';
+import { useStore } from '../store';
 
 interface CreateDocumentTemplateModalProps {
   isOpen: boolean;
@@ -20,11 +21,13 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
   onClose,
   onSuccess,
 }) => {
+  const { addNotification } = useStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<DocumentTemplate['category']>('Personalizado');
   const [content, setContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
@@ -43,6 +46,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
     const current = content;
     const updated = current.substring(0, start) + token + current.substring(end);
     setContent(updated);
+    if (fieldErrors.content) setFieldErrors((prev) => ({ ...prev, content: '' }));
+
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -66,10 +71,24 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
       if (!title.trim()) {
         setTitle(parsed.title);
       }
+      setFieldErrors({});
       playNotificationSound('success');
+      addNotification({
+        type: 'success',
+        title: 'Archivo Word Importado',
+        message: `El contenido de "${file.name}" se cargó en la plantilla.`,
+        show_toast: true,
+      });
     } catch (err: any) {
-      setError('Error al leer el documento de Word: ' + err.message);
+      const msg = 'Error al leer el documento de Word: ' + err.message;
+      setError(msg);
       playNotificationSound('critical');
+      addNotification({
+        type: 'critical',
+        title: 'Error de Lectura Word',
+        message: msg,
+        show_toast: true,
+      });
     } finally {
       setIsReadingFile(false);
       if (fileInputRef.current) {
@@ -78,14 +97,30 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
     if (!title.trim()) {
-      setError('El título de la plantilla es obligatorio.');
-      return;
+      errors.title = 'El título de la plantilla es obligatorio.';
     }
     if (!content.trim()) {
-      setError('El contenido de la plantilla no puede estar vacío.');
+      errors.content = 'El contenido de la plantilla no puede estar vacío.';
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      setError('Por favor completa el título y contenido de la plantilla.');
+      playNotificationSound('critical');
+      addNotification({
+        type: 'warning',
+        title: 'Plantilla Incompleta',
+        message: 'Debes especificar un título y redactar el contenido del documento.',
+        show_toast: true,
+      });
       return;
     }
 
@@ -98,10 +133,24 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
       });
 
       playNotificationSound('success');
+      addNotification({
+        type: 'success',
+        title: 'Plantilla Guardada',
+        message: `La plantilla "${title.trim()}" está disponible en la librería.`,
+        show_toast: true,
+      });
       onSuccess(created);
       onClose();
     } catch (err: any) {
-      setError('Error al guardar plantilla: ' + err.message);
+      const msg = 'Error al guardar plantilla: ' + err.message;
+      setError(msg);
+      playNotificationSound('critical');
+      addNotification({
+        type: 'critical',
+        title: 'Error al Guardar',
+        message: msg,
+        show_toast: true,
+      });
     }
   };
 
@@ -159,15 +208,15 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
               <FileText size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 Cargar o Crear Plantilla de Documento
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
                 Sube un documento de Word (.docx) existente o redacta una plantilla desde cero
               </p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
+          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -175,8 +224,22 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
         {/* Body */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {error && (
-            <div style={{ padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--status-critical-bg)', color: 'var(--status-critical)', fontSize: '0.82rem' }}>
-              {error}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: 'var(--status-critical)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+              }}
+            >
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
 
@@ -218,32 +281,37 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                 Haz clic para seleccionar tu archivo .docx de Word o plantilla existente
               </span>
             </div>
-
-            {uploadedFileName && (
-              <span className="badge badge-low" style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>
-                ✓ Documento importado y convertido a plantilla editable
-              </span>
-            )}
           </div>
 
-          <form id="create-template-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
+          <form id="template-create-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                  Nombre de la Plantilla *
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                  Título de la Plantilla <span style={{ color: 'var(--status-critical)' }}>*</span>
                 </label>
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ej. Plan de Mitigación / Acta de Conformidad"
-                  style={{ width: '100%' }}
-                  required
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (fieldErrors.title) setFieldErrors((prev) => ({ ...prev, title: '' }));
+                  }}
+                  placeholder="Ej. Propuesta de Arquitectura y Auditoría"
+                  style={{
+                    width: '100%',
+                    border: fieldErrors.title ? '1.5px solid var(--status-critical)' : undefined,
+                    boxShadow: fieldErrors.title ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                  }}
                 />
+                {fieldErrors.title && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <AlertCircle size={12} /> {fieldErrors.title}
+                  </span>
+                )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
                   Categoría
                 </label>
                 <select
@@ -251,89 +319,88 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                   onChange={(e) => setCategory(e.target.value as any)}
                   style={{ width: '100%' }}
                 >
-                  <option value="Diagnóstico">Diagnóstico</option>
-                  <option value="Minutas">Minutas</option>
-                  <option value="Propuestas">Propuestas</option>
-                  <option value="Cierre">Cierre</option>
-                  <option value="Cartas">Cartas</option>
+                  <option value="Propuesta">Propuesta</option>
+                  <option value="Auditoría">Auditoría</option>
+                  <option value="Informe">Informe</option>
+                  <option value="Carta">Carta</option>
                   <option value="Personalizado">Personalizado</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                Descripción u Objetivo de Uso
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                Descripción Breve
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Breve descripción del propósito de este documento..."
+                placeholder="Breve explicación del objetivo de este documento..."
                 style={{ width: '100%' }}
               />
             </div>
 
-            {/* Variable insertion buttons */}
+            {/* Variable Tokens Helper */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Contenido de la Plantilla con Variables *
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                  Variables Dinámicas Disponibles (Haz clic para insertar):
                 </label>
-                <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Sparkles size={12} /> Marcadores Dinámicos Disponibles
-                </span>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.35rem',
-                  padding: '0.6rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--bg-surface-elevated)',
-                  marginBottom: '0.6rem',
-                  maxHeight: '90px',
-                  overflowY: 'auto',
-                }}
-              >
-                {AVAILABLE_TOKENS.map((t) => (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '0.65rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                {AVAILABLE_TOKENS.map((token) => (
                   <button
-                    key={t.token}
+                    key={token.token}
                     type="button"
-                    title={t.description}
-                    onClick={() => handleInsertToken(t.token)}
+                    className="btn-ghost"
                     style={{
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '4px',
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
+                      fontSize: '0.72rem',
+                      padding: '0.25rem 0.5rem',
                       backgroundColor: 'var(--bg-surface)',
-                      border: '1px solid var(--border-subtle)',
+                      border: '1px solid var(--border-medium)',
+                      borderRadius: '4px',
                       color: 'var(--accent-primary)',
-                      cursor: 'pointer',
+                      fontFamily: 'monospace',
                     }}
+                    onClick={() => handleInsertToken(token.token)}
+                    title={token.label}
                   >
-                    + {t.label}
+                    + {token.token}
                   </button>
                 ))}
               </div>
+            </div>
 
+            {/* Content Editor */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                Contenido Markdown del Documento <span style={{ color: 'var(--status-critical)' }}>*</span>
+              </label>
               <textarea
                 ref={textareaRef}
                 rows={12}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="# {{caso_titulo}}&#10;&#10;Estimado/a {{cliente_nombre}},&#10;&#10;Presentamos el informe de seguimiento..."
+                onChange={(e) => {
+                  setContent(e.target.value);
+                  if (fieldErrors.content) setFieldErrors((prev) => ({ ...prev, content: '' }));
+                }}
+                placeholder="# Título del Documento&#10;&#10;Estimado/a {{CLIENTE_NOMBRE}},&#10;&#10;Por medio de la presente..."
                 style={{
                   width: '100%',
-                  fontFamily: 'monospace',
-                  fontSize: '0.82rem',
-                  lineHeight: 1.5,
+                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                  fontSize: '0.84rem',
+                  lineHeight: '1.5',
+                  border: fieldErrors.content ? '1.5px solid var(--status-critical)' : undefined,
+                  boxShadow: fieldErrors.content ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
                 }}
-                required
               />
+              {fieldErrors.content && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <AlertCircle size={12} /> {fieldErrors.content}
+                </span>
+              )}
             </div>
           </form>
         </div>
@@ -346,31 +413,15 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: 'var(--bg-surface-elevated)',
+            backgroundColor: 'var(--bg-surface)',
           }}
         >
-          <button
-            type="button"
-            className="btn-ghost"
-            style={{ fontSize: '0.78rem' }}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FileCode size={15} /> Cargar otro archivo Word (.docx)
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            Cancelar
           </button>
-
-          <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              form="create-template-form"
-              className="btn-primary"
-              disabled={isReadingFile || !title.trim() || !content.trim()}
-            >
-              <Check size={16} /> Guardar Plantilla en Librería
-            </button>
-          </div>
+          <button type="submit" form="template-create-form" className="btn-primary">
+            <Check size={16} /> Guardar en Plantillas
+          </button>
         </div>
       </div>
     </div>

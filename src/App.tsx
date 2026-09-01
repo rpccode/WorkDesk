@@ -201,67 +201,66 @@ export function App() {
 
         {/* ── Logo Header ─────────────────────────────────────── */}
         <div style={{
-          padding: '1.2rem 1.1rem 1rem',
+          padding: '1rem 0.95rem 0.85rem',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
+          gap: '0.65rem',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {/* Logo icon */}
-            <div style={{
-              padding: '0.5rem',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              color: 'white',
-              boxShadow: '0 0 18px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-              flexShrink: 0,
-            }}>
-              <Layers size={18} />
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{
-                  fontSize: '0.98rem',
-                  fontWeight: 800,
-                  letterSpacing: '-0.025em',
-                  color: 'var(--text-primary)',
-                }}>
-                  WorkDesk
-                </span>
-                <span style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 600,
-                  padding: '0.1rem 0.35rem',
-                  borderRadius: '4px',
-                  backgroundColor: 'var(--accent-glow)',
-                  color: 'var(--accent-primary)',
-                  letterSpacing: '0.04em',
-                }}>
-                  PRO
-                </span>
-              </div>
-              <p style={{
-                fontSize: '0.68rem',
-                color: 'var(--text-muted)',
-                lineHeight: 1,
-                marginTop: '0.2rem',
+          {/* Top Row: Logo and Notification Bell */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              {/* Logo icon */}
+              <div style={{
+                padding: '0.45rem',
+                borderRadius: '9px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                color: 'white',
+                boxShadow: '0 0 16px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+                flexShrink: 0,
               }}>
-                Centro Operativo
-              </p>
+                <Layers size={17} />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{
+                    fontSize: '0.96rem',
+                    fontWeight: 800,
+                    letterSpacing: '-0.025em',
+                    color: 'var(--text-primary)',
+                  }}>
+                    WorkDesk
+                  </span>
+                  <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    padding: '0.1rem 0.3rem',
+                    borderRadius: '4px',
+                    backgroundColor: 'var(--accent-glow)',
+                    color: 'var(--accent-primary)',
+                    letterSpacing: '0.04em',
+                  }}>
+                    PRO
+                  </span>
+                </div>
+                <p style={{
+                  fontSize: '0.66rem',
+                  color: 'var(--text-muted)',
+                  lineHeight: 1,
+                  marginTop: '0.15rem',
+                }}>
+                  Centro Operativo
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Header Controls: Background Status + Bell Notification */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <BackgroundStatusWidget onToggleMiniWidget={() => toggleMiniWidgetMode(true)} />
-
+            {/* Notification Bell */}
             <button
               className="btn-ghost"
               style={{
                 position: 'relative',
-                padding: '0.45rem',
+                padding: '0.4rem',
                 borderRadius: '8px',
                 color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
               }}
@@ -274,8 +273,8 @@ export function App() {
                   className="animate-pulse-glow"
                   style={{
                     position: 'absolute',
-                    top: '3px',
-                    right: '3px',
+                    top: '2px',
+                    right: '2px',
                     width: '8px',
                     height: '8px',
                     borderRadius: '50%',
@@ -286,6 +285,9 @@ export function App() {
               )}
             </button>
           </div>
+
+          {/* Bottom Row: Full-Width Background Status Widget */}
+          <BackgroundStatusWidget onToggleMiniWidget={() => toggleMiniWidgetMode(true)} fullWidth />
         </div>
 
         {/* ── Navigation ─────────────────────────────────────── */}

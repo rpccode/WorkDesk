@@ -8,6 +8,7 @@ import {
   X,
   Minimize2,
   LayoutTemplate,
+  ChevronDown,
 } from 'lucide-react';
 import { backgroundEngine, type BackgroundServiceStats } from '../services/background-service';
 import { useStore } from '../store';
@@ -16,9 +17,13 @@ import { playNotificationSound } from '../utils/live-alerts';
 
 interface BackgroundStatusWidgetProps {
   onToggleMiniWidget?: () => void;
+  fullWidth?: boolean;
 }
 
-export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ onToggleMiniWidget }) => {
+export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
+  onToggleMiniWidget,
+  fullWidth = false,
+}) => {
   const { consultantPreferences, updateConsultantPreferences } = useStore();
   const [stats, setStats] = useState<BackgroundServiceStats>(backgroundEngine.getStats());
   const [isOpen, setIsOpen] = useState(false);
@@ -79,8 +84,8 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
-      {/* Navbar Status Pill */}
+    <div ref={containerRef} style={{ position: 'relative', width: fullWidth ? '100%' : 'auto' }}>
+      {/* Status Pill Trigger */}
       <button
         type="button"
         className="btn-ghost"
@@ -88,40 +93,56 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
         style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: fullWidth ? 'space-between' : 'flex-start',
           gap: '0.4rem',
-          padding: '0.3rem 0.6rem',
+          padding: '0.35rem 0.65rem',
           fontSize: '0.72rem',
-          borderRadius: '20px',
+          borderRadius: '8px',
+          width: fullWidth ? '100%' : 'auto',
           backgroundColor: consultantPreferences.enable_background_watchdog
-            ? 'rgba(16, 185, 129, 0.12)'
+            ? 'rgba(16, 185, 129, 0.1)'
             : 'rgba(148, 163, 184, 0.1)',
           border: consultantPreferences.enable_background_watchdog
-            ? '1px solid rgba(16, 185, 129, 0.35)'
+            ? '1px solid rgba(16, 185, 129, 0.3)'
             : '1px solid var(--border-subtle)',
           color: consultantPreferences.enable_background_watchdog
             ? 'var(--status-low)'
             : 'var(--text-muted)',
           cursor: 'pointer',
+          transition: 'all 0.15s ease',
         }}
         title="Estado del Servicio en Segundo Plano (SLA & Vigilante)"
       >
-        <span
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden' }}>
+          <span
+            style={{
+              width: '6.5px',
+              height: '6.5px',
+              borderRadius: '50%',
+              backgroundColor: consultantPreferences.enable_background_watchdog
+                ? 'var(--status-low)'
+                : 'var(--text-muted)',
+              boxShadow: consultantPreferences.enable_background_watchdog
+                ? '0 0 6px var(--status-low)'
+                : 'none',
+              flexShrink: 0,
+            }}
+          />
+          <ShieldCheck size={13} style={{ flexShrink: 0 }} />
+          <span style={{ fontWeight: 700, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+            {consultantPreferences.enable_background_watchdog ? 'Segundo Plano Activo' : 'En Pausa'}
+          </span>
+        </div>
+
+        <ChevronDown
+          size={12}
           style={{
-            width: '6.5px',
-            height: '6.5px',
-            borderRadius: '50%',
-            backgroundColor: consultantPreferences.enable_background_watchdog
-              ? 'var(--status-low)'
-              : 'var(--text-muted)',
-            boxShadow: consultantPreferences.enable_background_watchdog
-              ? '0 0 6px var(--status-low)'
-              : 'none',
+            color: 'var(--text-muted)',
+            transition: 'transform 0.2s',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            flexShrink: 0,
           }}
         />
-        <ShieldCheck size={13} />
-        <span style={{ fontWeight: 700 }}>
-          {consultantPreferences.enable_background_watchdog ? 'Segundo Plano Activo' : 'En Pausa'}
-        </span>
       </button>
 
       {/* Popover Dropdown Panel */}
@@ -130,40 +151,41 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
           className="glass-card animate-fade-in"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            top: 'calc(100% + 6px)',
             left: 0,
-            width: '300px',
+            width: fullWidth ? '100%' : '290px',
+            minWidth: '240px',
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-xl)',
-            padding: '1rem',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            padding: '0.9rem',
             zIndex: 99999,
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.75rem',
+            gap: '0.7rem',
           }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <div style={{ padding: '0.3rem', borderRadius: '6px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
-                <Zap size={14} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.45rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ padding: '0.25rem', borderRadius: '6px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+                <Zap size={13} />
               </div>
               <div>
-                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: 0 }}>
-                  Vigilante en Segundo Plano
+                <h4 style={{ fontSize: '0.8rem', fontWeight: 800, margin: 0 }}>
+                  Vigilante de Fondo
                 </h4>
-                <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>
-                  Monitoreo continuo de compromisos & correos
+                <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>
+                  Monitoreo continuo SLA
                 </span>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              style={{ background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
+              style={{ background: 'transparent', padding: '0.15rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </div>
 
@@ -174,12 +196,12 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
               className="btn-primary animate-pulse-glow"
               style={{
                 width: '100%',
-                fontSize: '0.74rem',
-                padding: '0.5rem 0.75rem',
+                fontSize: '0.72rem',
+                padding: '0.45rem 0.65rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.4rem',
+                gap: '0.35rem',
                 fontWeight: 700,
               }}
               onClick={() => {
@@ -187,8 +209,8 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
                 onToggleMiniWidget();
               }}
             >
-              <LayoutTemplate size={13} />
-              Modo Widget de Escritorio (Always-On-Top)
+              <LayoutTemplate size={12} />
+              Modo Widget de Escritorio
             </button>
           )}
 
@@ -198,25 +220,25 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '0.55rem 0.75rem',
+              padding: '0.45rem 0.65rem',
               borderRadius: 'var(--radius-sm)',
               backgroundColor: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
             }}
           >
             <div>
-              <span style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 700, display: 'block', color: 'var(--text-primary)' }}>
                 Vigilante Activo
               </span>
-              <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>
-                Cada {consultantPreferences.background_check_interval_seconds || 60} segundos
+              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>
+                Cada {consultantPreferences.background_check_interval_seconds || 60}s
               </span>
             </div>
 
             <button
               type="button"
               className={consultantPreferences.enable_background_watchdog ? 'btn-primary' : 'btn-secondary'}
-              style={{ fontSize: '0.7rem', padding: '0.25rem 0.55rem' }}
+              style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}
               onClick={handleToggleWatchdog}
             >
               {consultantPreferences.enable_background_watchdog ? 'Activado' : 'Pausado'}
@@ -224,28 +246,28 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
           </div>
 
           {/* Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem' }}>
-            <div style={{ padding: '0.5rem 0.6rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--status-critical)', fontSize: '0.68rem', fontWeight: 700 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+            <div style={{ padding: '0.4rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-critical)', fontSize: '0.66rem', fontWeight: 700 }}>
                 <AlertTriangle size={11} /> Vencidos
               </div>
-              <p style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? 'var(--status-critical)' : 'var(--text-primary)' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? 'var(--status-critical)' : 'var(--text-primary)' }}>
                 {stats.overdueCount}
               </p>
             </div>
 
-            <div style={{ padding: '0.5rem 0.6rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--status-medium)', fontSize: '0.68rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.4rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-medium)', fontSize: '0.66rem', fontWeight: 700 }}>
                 <Clock size={11} /> Vencen Hoy
               </div>
-              <p style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.dueTodayCount > 0 ? 'var(--status-medium)' : 'var(--text-primary)' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.dueTodayCount > 0 ? 'var(--status-medium)' : 'var(--text-primary)' }}>
                 {stats.dueTodayCount}
               </p>
             </div>
           </div>
 
           {/* Status info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Último ciclo:</span>
               <strong style={{ color: 'var(--text-primary)' }}>{formatLastScan()}</strong>
@@ -253,32 +275,32 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({ 
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Notificaciones Escritorio:</span>
               <strong style={{ color: consultantPreferences.enable_desktop_notifications ? 'var(--status-low)' : 'var(--text-muted)' }}>
-                {consultantPreferences.enable_desktop_notifications ? 'Habilitadas' : 'Desactivadas'}
+                {consultantPreferences.enable_desktop_notifications ? 'Activas' : 'Inactivas'}
               </strong>
             </div>
           </div>
 
           {/* Actions: Force Scan & Hide to Tray */}
-          <div style={{ display: 'flex', gap: '0.4rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.35rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.45rem' }}>
             <button
               type="button"
               className="btn-secondary"
-              style={{ flex: 1, fontSize: '0.72rem', padding: '0.35rem 0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.3rem' }}
+              style={{ flex: 1, fontSize: '0.7rem', padding: '0.3rem 0.45rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.25rem' }}
               onClick={handleForceScan}
               disabled={isForcing}
             >
-              <RefreshCw size={12} className={isForcing ? 'animate-spin' : ''} />
-              {isForcing ? 'Escaneando...' : 'Escanear Ahora'}
+              <RefreshCw size={11} className={isForcing ? 'animate-spin' : ''} />
+              {isForcing ? 'Escaneando...' : 'Escanear'}
             </button>
 
             <button
               type="button"
               className="btn-ghost"
-              style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', color: 'var(--text-muted)' }}
+              style={{ fontSize: '0.7rem', padding: '0.3rem 0.45rem', color: 'var(--text-muted)' }}
               onClick={handleMinimizeToTray}
               title="Ocultar a la bandeja de Windows"
             >
-              <Minimize2 size={13} /> Ocultar
+              <Minimize2 size={12} /> Ocultar
             </button>
           </div>
         </div>

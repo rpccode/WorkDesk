@@ -32,6 +32,8 @@ import {
 } from '../utils/docx-generator';
 import { CreateDocumentTemplateModal } from '../components/CreateDocumentTemplateModal';
 import { FormattedDocumentPreview } from '../components/FormattedDocumentPreview';
+import { SearchableClientSelect } from '../components/SearchableClientSelect';
+import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { playNotificationSound } from '../utils/live-alerts';
 
 type DocumentCenterTab = 'library' | 'generator' | 'editor' | 'weekly';
@@ -608,45 +610,24 @@ export const ReportsView: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                  🏢 Seleccionar Cliente / Razón Social:
-                </label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.84rem' }}
-                >
-                  {clients.length === 0 ? (
-                    <option value="">(No hay clientes registrados)</option>
-                  ) : (
-                    clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.company ? `(${c.company})` : ''} {c.complexity_evaluated ? `[${c.complexity_evaluated}]` : ''}
-                      </option>
-                    ))
-                  )}
-                </select>
+                <SearchableClientSelect
+                  label="🏢 Seleccionar Cliente / Razón Social:"
+                  clients={clients}
+                  selectedClientId={selectedClientId}
+                  onChange={(id) => setSelectedClientId(id)}
+                  placeholder="Buscar cliente por nombre o empresa..."
+                />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                  💼 Seleccionar Caso / Proyecto Vinculado:
-                </label>
-                <select
-                  value={selectedCaseId}
-                  onChange={(e) => setSelectedCaseId(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.84rem' }}
-                >
-                  {clientCases.length === 0 ? (
-                    <option value="">(Sin casos específicos para este cliente)</option>
-                  ) : (
-                    clientCases.map((cs) => (
-                      <option key={cs.id} value={cs.id}>
-                        {cs.title} [{cs.priority}]
-                      </option>
-                    ))
-                  )}
-                </select>
+                <SearchableCaseSelect
+                  label="💼 Seleccionar Caso / Proyecto Vinculado:"
+                  cases={clientCases}
+                  selectedCaseId={selectedCaseId}
+                  onChange={(id) => setSelectedCaseId(id)}
+                  placeholder="Buscar caso del cliente..."
+                  allowClear
+                />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', backgroundColor: 'var(--bg-surface-elevated)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>

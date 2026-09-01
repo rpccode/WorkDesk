@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { FileText, Plus, Search, Trash2, Tag } from 'lucide-react';
+import { FileText, Plus, Search, Trash2 } from 'lucide-react';
+import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatDate } from '../utils/date';
 
 export const NotesView: React.FC = () => {
@@ -71,20 +72,14 @@ export const NotesView: React.FC = () => {
           />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Tag size={15} color="var(--text-muted)" />
-              <select
-                value={targetCaseId}
-                onChange={(e) => setTargetCaseId(e.target.value)}
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.65rem' }}
-              >
-                <option value="">-- Sin vincular a caso --</option>
-                {cases.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    [{c.client_name || 'Cliente'}] {c.title}
-                  </option>
-                ))}
-              </select>
+            <div style={{ flex: '1 1 320px' }}>
+              <SearchableCaseSelect
+                cases={cases}
+                selectedCaseId={targetCaseId}
+                onChange={(id) => setTargetCaseId(id)}
+                placeholder="Vincular a un caso (opcional)..."
+                allowClear
+              />
             </div>
 
             <button type="submit" className="btn-primary" disabled={isSaving || !newContent.trim()}>

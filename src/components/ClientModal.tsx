@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useStore } from '../store';
-import { Users, X, Check } from 'lucide-react';
+import { Users, X, Check, AlertCircle } from 'lucide-react';
 import type { Client, ClientComplexity } from '../types';
+import { playNotificationSound } from '../utils/live-alerts';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface ClientModalProps {
 }
 
 export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clientToEdit }) => {
-  const { createClient, updateClient } = useStore();
+  const { createClient, updateClient, addNotification } = useStore();
   const [name, setName] = useState(clientToEdit?.name || '');
   const [company, setCompany] = useState(clientToEdit?.company || '');
   const [email, setEmail] = useState(clientToEdit?.email || '');
@@ -47,6 +48,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
   const [activeSection, setActiveSection] = useState<'general' | 'profile'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (isOpen) {
@@ -81,15 +83,54 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
       }
       setActiveSection('general');
       setError(null);
+      setFieldErrors({});
     }
   }, [isOpen, clientToEdit]);
 
   if (!isOpen) return null;
 
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      errors.name = 'El nombre del cliente o contacto es obligatorio.';
+    }
+
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        errors.email = 'El formato del correo es inválido (ej: contacto@empresa.com).';
+      }
+    }
+
+    if (branchesCount !== '' && Number(branchesCount) < 0) {
+      errors.branchesCount = 'El número de sucursales no puede ser negativo.';
+    }
+
+    if (employeesCount !== '' && Number(employeesCount) < 0) {
+      errors.employeesCount = 'El número de empleados no puede ser negativo.';
+    }
+
+    if (systemsCount !== '' && Number(systemsCount) < 0) {
+      errors.systemsCount = 'El número de sistemas no puede ser negativo.';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      setError('El nombre del cliente o contacto es obligatorio.');
+
+    if (!validate()) {
+      setError('Por favor corrige los campos señalados en rojo.');
+      playNotificationSound('critical');
+      addNotification({
+        type: 'warning',
+        title: 'Formulario Incompleto',
+        message: 'Revisa los campos obligatorios o formatos incorrectos.',
+        show_toast: true,
+      });
       return;
     }
 
@@ -118,12 +159,34 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
           ...payload,
           status,
         });
+        addNotification({
+          type: 'success',
+          title: 'Cliente Actualizado',
+          message: `El cliente "${name.trim()}" se actualizó exitosamente.`,
+          show_toast: true,
+        });
       } else {
         await createClient(payload);
+        addNotification({
+          type: 'success',
+          title: 'Cliente Registrado',
+          message: `El cliente "${name.trim()}" ha sido registrado correctamente.`,
+          show_toast: true,
+        });
       }
+
+      playNotificationSound('success');
       onClose();
     } catch (err: any) {
-      setError(typeof err === 'string' ? err : 'Error al guardar el cliente.');
+      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar los datos del cliente en la base de datos.';
+      setError(errMsg);
+      playNotificationSound('critical');
+      addNotification({
+        type: 'critical',
+        title: 'Error al Guardar Cliente',
+        message: errMsg,
+        show_toast: true,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -161,27 +224,22 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-elevated)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Users size={20} />
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                {clientToEdit ? 'Editar Cliente' : 'Nuevo Cliente'}
-              </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                Ficha de contacto y diagnóstico corporativo
-              </p>
-            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+              {clientToEdit ? 'Editar Ficha del Cliente' : 'Nuevo Cliente'}
+            </h3>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
+          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
 
-        {/* Navigation Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface)' }}>
+        {/* Tab Navigation */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)' }}>
           <button
             type="button"
             className={`btn-ghost ${activeSection === 'general' ? 'active' : ''}`}
@@ -196,7 +254,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
             }}
             onClick={() => setActiveSection('general')}
           >
-            1. Datos de Contacto
+            1. Datos Generales
           </button>
           <button
             type="button"
@@ -219,8 +277,23 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
           {error && (
-            <div style={{ padding: '0.6rem 0.85rem', marginBottom: '1rem', borderRadius: 'var(--radius-sm)', background: 'var(--status-critical-bg)', color: 'var(--status-critical)', fontSize: '0.85rem' }}>
-              {error}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                marginBottom: '1.25rem',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: 'var(--status-critical)',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+              }}
+            >
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
 
@@ -229,16 +302,27 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
               <>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                    Nombre del Cliente / Contacto *
+                    Nombre del Cliente / Contacto <span style={{ color: 'var(--status-critical)' }}>*</span>
                   </label>
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: '' }));
+                    }}
                     placeholder="Ej. PREFIAUTO / Juan Pérez"
-                    style={{ width: '100%' }}
-                    required
+                    style={{
+                      width: '100%',
+                      border: fieldErrors.name ? '1.5px solid var(--status-critical)' : undefined,
+                      boxShadow: fieldErrors.name ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                    }}
                   />
+                  {fieldErrors.name && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <AlertCircle size={12} /> {fieldErrors.name}
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -262,10 +346,22 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                      }}
                       placeholder="contacto@cliente.com"
-                      style={{ width: '100%' }}
+                      style={{
+                        width: '100%',
+                        border: fieldErrors.email ? '1.5px solid var(--status-critical)' : undefined,
+                        boxShadow: fieldErrors.email ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                      }}
                     />
+                    {fieldErrors.email && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <AlertCircle size={12} /> {fieldErrors.email}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
@@ -374,99 +470,85 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                      Sucursales
+                      Cant. Sucursales
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       value={branchesCount}
                       onChange={(e) => setBranchesCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="Sin especificar"
+                      placeholder="0"
                       style={{ width: '100%' }}
                     />
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                      Empleados
+                      Cant. Empleados
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       value={employeesCount}
                       onChange={(e) => setEmployeesCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="Sin especificar"
+                      placeholder="0"
                       style={{ width: '100%' }}
                     />
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                      Sistemas
+                      Cant. Sistemas
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       value={systemsCount}
                       onChange={(e) => setSystemsCount(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="Sin especificar"
+                      placeholder="0"
                       style={{ width: '100%' }}
                     />
                   </div>
                 </div>
 
-                {/* Depto TI Selector */}
-                <div
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'var(--bg-surface-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', color: 'var(--text-primary)' }}>
-                      ¿Cuenta con Departamento de TI?
-                    </span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      Indica si el cliente posee equipo técnico interno
-                    </span>
-                  </div>
+                {/* ¿Tiene Departamento de TI? */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    ¿Tiene Departamento de TI Propio?
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.2rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="hasItDepartment"
+                        checked={hasItDepartment === true}
+                        onChange={() => setHasItDepartment(true)}
+                        style={{ accentColor: 'var(--accent-primary)' }}
+                      />
+                      <span>Sí, cuenta con TI</span>
+                    </label>
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      className={`btn-ghost ${hasItDepartment === true ? 'active' : ''}`}
-                      style={{
-                        padding: '0.25rem 0.65rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        backgroundColor: hasItDepartment === true ? 'var(--status-low-bg)' : 'transparent',
-                        color: hasItDepartment === true ? 'var(--status-low)' : 'var(--text-secondary)',
-                        border: hasItDepartment === true ? '1px solid var(--status-low)' : '1px solid var(--border-subtle)',
-                      }}
-                      onClick={() => setHasItDepartment(hasItDepartment === true ? null : true)}
-                    >
-                      Sí
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn-ghost ${hasItDepartment === false ? 'active' : ''}`}
-                      style={{
-                        padding: '0.25rem 0.65rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        backgroundColor: hasItDepartment === false ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
-                        color: hasItDepartment === false ? 'var(--status-critical)' : 'var(--text-secondary)',
-                        border: hasItDepartment === false ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-subtle)',
-                      }}
-                      onClick={() => setHasItDepartment(hasItDepartment === false ? null : false)}
-                    >
-                      No
-                    </button>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="hasItDepartment"
+                        checked={hasItDepartment === false}
+                        onChange={() => setHasItDepartment(false)}
+                        style={{ accentColor: 'var(--accent-primary)' }}
+                      />
+                      <span>No tiene TI</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="hasItDepartment"
+                        checked={hasItDepartment === null}
+                        onChange={() => setHasItDepartment(null)}
+                        style={{ accentColor: 'var(--accent-primary)' }}
+                      />
+                      <span>Sin especificar</span>
+                    </label>
                   </div>
                 </div>
               </>
@@ -475,43 +557,23 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         </div>
 
         {/* Modal Footer */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-elevated)' }}>
-          <div>
-            {activeSection === 'general' ? (
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{ fontSize: '0.78rem' }}
-                onClick={() => setActiveSection('profile')}
-              >
-                Siguiente: Diagnóstico Corporativo →
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ fontSize: '0.78rem' }}
-                onClick={() => setActiveSection('general')}
-              >
-                ← Volver a Contacto
-              </button>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              form="client-form"
-              className="btn-primary"
-              disabled={isSaving || !name.trim()}
-            >
-              <Check size={16} />
-              {isSaving ? 'Guardando...' : clientToEdit ? 'Actualizar cliente' : 'Crear cliente'}
-            </button>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderTop: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface)' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            form="client-form"
+            className="btn-primary"
+            disabled={isSaving}
+          >
+            <Check size={16} />
+            {isSaving ? 'Guardando...' : clientToEdit ? 'Actualizar Cliente' : 'Guardar Cliente'}
+          </button>
         </div>
       </div>
     </div>

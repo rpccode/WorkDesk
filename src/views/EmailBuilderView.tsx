@@ -13,6 +13,7 @@ import {
 import { EMAIL_TEMPLATES, buildEmail } from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
 import { EmailAccountsModal } from '../components/EmailAccountsModal';
+import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatSignature } from '../utils/theme-manager';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
@@ -228,24 +229,13 @@ export const EmailBuilderView: React.FC = () => {
           </h3>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              1. Selecciona el Caso de Referencia
-            </label>
-            <select
-              value={selectedCaseId}
-              onChange={(e) => setSelectedCaseId(e.target.value)}
-              style={{ width: '100%' }}
-            >
-              {cases.length === 0 ? (
-                <option value="">No hay casos activos</option>
-              ) : (
-                cases.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    [{c.client_name || 'Cliente'}] {c.title}
-                  </option>
-                ))
-              )}
-            </select>
+            <SearchableCaseSelect
+              label="1. Selecciona el Caso de Referencia"
+              cases={cases}
+              selectedCaseId={selectedCaseId}
+              onChange={(id) => setSelectedCaseId(id)}
+              placeholder="Buscar caso o cliente..."
+            />
           </div>
 
           <div>
