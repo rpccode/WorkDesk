@@ -56,8 +56,8 @@ describe('Excel & CSV Client Importer', () => {
 
     const result = await parseClientSpreadsheet(file, []);
 
-    expect(result.totalRows).toBe(17);
-    expect(result.validCount).toBe(17);
+    expect(result.totalRows).toBe(SAMPLE_CLIENTS_MATRIX.length);
+    expect(result.validCount).toBe(SAMPLE_CLIENTS_MATRIX.length);
     expect(result.invalidCount).toBe(0);
 
     // Verify first client (PREFIAUTO)

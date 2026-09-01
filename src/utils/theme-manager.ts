@@ -13,9 +13,13 @@ export const DEFAULT_CONSULTANT_PREFERENCES: ConsultantPreferences = {
   inactive_client_days: 7,
   enable_sound_alerts: true,
   enable_desktop_notifications: true,
-  sync_interval_seconds: 90,
+  sync_interval_seconds: 60,
   accent_color: 'blue',
   theme_mode: 'light',
+  enable_background_watchdog: true,
+  enable_background_email_sync: true,
+  enable_auto_drafts: true,
+  background_check_interval_seconds: 60,
 };
 
 export const ACCENT_PALETTES: Record<
@@ -58,6 +62,7 @@ export const ACCENT_PALETTES: Record<
  * Applies custom accent color directly to Document root CSS variables.
  */
 export function applyAccentColor(accent: AccentColor): void {
+  if (typeof document === 'undefined') return;
   const palette = ACCENT_PALETTES[accent] || ACCENT_PALETTES.blue;
   const root = document.documentElement;
   root.style.setProperty('--accent-primary', palette.hex);

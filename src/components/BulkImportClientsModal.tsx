@@ -653,7 +653,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
 
                           return (
                             <tr
-                              key={row.rowIndex}
+                              key={row.rowNumber}
                               style={{
                                 borderBottom: '1px solid var(--border-subtle)',
                                 backgroundColor: !row.isValid
@@ -663,7 +663,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                                   : undefined,
                               }}
                             >
-                              <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)' }}>{row.rowIndex}</td>
+                              <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)' }}>{row.rowNumber}</td>
                               <td style={{ padding: '0.45rem 0.6rem', fontWeight: 700 }}>
                                 {row.name || <span style={{ color: 'var(--status-critical)', fontStyle: 'italic' }}>Sin nombre</span>}
                               </td>

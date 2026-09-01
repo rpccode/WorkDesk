@@ -12,6 +12,8 @@ import {
   Bell,
   Volume2,
   FileSpreadsheet,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import {
   ACCENT_PALETTES,
@@ -489,9 +491,97 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
           </div>
         </div>
 
+        {/* ── 5. Motor en Segundo Plano & Tareas Automáticas ─────────── */}
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+            <Zap size={18} color="var(--accent-primary)" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>Motor en Segundo Plano & Tareas Automáticas</h3>
+          </div>
+
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            Permite que WorkDesk trabaje silenciosamente en segundo plano monitoreando plazos, respaldando borradores y sincronizando bandejas de entrada.
+          </p>
+
+          {/* Background Watchdog toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
+            <div>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShieldCheck size={15} color="var(--status-low)" /> Vigilante SLA & Vencimientos de Compromisos
+              </span>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Evalúa en segundo plano los acuerdos próximos a expirar y dispara alertas sonoras y de escritorio.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferencesForm.enable_background_watchdog}
+              onChange={(e) => handlePreferenceChange('enable_background_watchdog', e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Interval selection */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: '1px solid var(--border-subtle)' }}>
+            <div>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                Frecuencia del Ciclo en Segundo Plano
+              </span>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Intervalo de escaneo silencioso y actualización del centro operativo.
+              </p>
+            </div>
+            <select
+              value={preferencesForm.background_check_interval_seconds || 60}
+              onChange={(e) => handlePreferenceChange('background_check_interval_seconds', Number(e.target.value))}
+              style={{ fontSize: '0.82rem' }}
+            >
+              <option value={30}>Cada 30 segundos (Alta velocidad)</option>
+              <option value={60}>Cada 60 segundos (Recomendado)</option>
+              <option value={120}>Cada 2 minutos</option>
+              <option value={300}>Cada 5 minutos (Ahorro de recursos)</option>
+            </select>
+          </div>
+
+          {/* Email Background Sync */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: '1px solid var(--border-subtle)' }}>
+            <div>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Mail size={15} color="var(--accent-primary)" /> Sincronización Silenciosa de Correos
+              </span>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Consulta nuevas respuestas de clientes en segundo plano sin congelar la interfaz.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferencesForm.enable_background_email_sync}
+              onChange={(e) => handlePreferenceChange('enable_background_email_sync', e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Auto Drafts Backup */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: '1px solid var(--border-subtle)' }}>
+            <div>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Database size={15} color="var(--accent-primary)" /> Respaldo Automático de Borradores
+              </span>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Guarda notas y redacciones continuamente para prevenir pérdidas por cortes de energía.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferencesForm.enable_auto_drafts}
+              onChange={(e) => handlePreferenceChange('enable_auto_drafts', e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            />
+          </div>
+        </div>
+
       </div>
 
-      {/* ── 5. Cuentas de Correo & Copias de Seguridad (Full Width) ── */}
+      {/* ── 6. Cuentas de Correo & Copias de Seguridad (Full Width) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.5rem' }}>
         
         {/* Email Accounts Card */}

@@ -232,4 +232,10 @@ export interface ConsultantPreferences {
   sync_interval_seconds: number;
   accent_color: AccentColor;
   theme_mode: ThemeMode;
+  // Background Services & Watchdog
+  enable_background_watchdog: boolean;
+  enable_background_email_sync: boolean;
+  enable_auto_drafts: boolean;
+  background_check_interval_seconds: number;
 }
+

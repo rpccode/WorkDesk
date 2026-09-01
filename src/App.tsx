@@ -28,7 +28,9 @@ import { QuickCaptureModal } from './components/QuickCaptureModal';
 import { EmailAccountsModal } from './components/EmailAccountsModal';
 import { LiveToastContainer } from './components/LiveToastContainer';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
+import { BackgroundStatusWidget } from './components/BackgroundStatusWidget';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
+import { backgroundEngine } from './services/background-service';
 import type { ActiveTab } from './types';
 
 export function App() {
@@ -37,9 +39,9 @@ export function App() {
     setActiveTab,
     setQuickCaptureOpen,
     refreshAll,
-    syncInboxEmails,
     dashboardSummary,
     notifications,
+    consultantPreferences,
     setNotificationCenterOpen,
   } = useStore();
 
@@ -54,11 +56,10 @@ export function App() {
     updateLastSync();
     requestDesktopNotificationPermission();
 
-    // Periodic live background check every 90 seconds
-    const interval = setInterval(() => {
-      refreshAll();
-      syncInboxEmails();
-    }, 90000);
+    // Start background engine daemon
+    if (consultantPreferences.enable_background_watchdog) {
+      backgroundEngine.start(consultantPreferences.background_check_interval_seconds || 60);
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
@@ -70,7 +71,7 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      clearInterval(interval);
+      backgroundEngine.stop();
     };
   }, []);
 
@@ -227,35 +228,39 @@ export function App() {
             </div>
           </div>
 
-          {/* Bell Notification Trigger */}
-          <button
-            className="btn-ghost"
-            style={{
-              position: 'relative',
-              padding: '0.45rem',
-              borderRadius: '8px',
-              color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
-            }}
-            onClick={() => setNotificationCenterOpen(true)}
-            title={unreadCount > 0 ? `${unreadCount} alerta(s) pendiente(s)` : 'Centro de Alertas'}
-          >
-            <Bell size={16} />
-            {unreadCount > 0 && (
-              <span
-                className="animate-pulse-glow"
-                style={{
-                  position: 'absolute',
-                  top: '3px',
-                  right: '3px',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--status-critical)',
-                  border: '1.5px solid var(--bg-surface)',
-                }}
-              />
-            )}
-          </button>
+          {/* Header Controls: Background Status + Bell Notification */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <BackgroundStatusWidget />
+
+            <button
+              className="btn-ghost"
+              style={{
+                position: 'relative',
+                padding: '0.45rem',
+                borderRadius: '8px',
+                color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
+              }}
+              onClick={() => setNotificationCenterOpen(true)}
+              title={unreadCount > 0 ? `${unreadCount} alerta(s) pendiente(s)` : 'Centro de Alertas'}
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && (
+                <span
+                  className="animate-pulse-glow"
+                  style={{
+                    position: 'absolute',
+                    top: '3px',
+                    right: '3px',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--status-critical)',
+                    border: '1.5px solid var(--bg-surface)',
+                  }}
+                />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* ── Navigation ─────────────────────────────────────── */}
