@@ -54,6 +54,16 @@ export const api = {
     invoke<Case>('update_case', { input }),
   closeCase: (id: string) => invoke<void>('close_case', { id }),
 
+  // Tickets
+  getTickets: () => invoke<import('../types').Ticket[]>('get_tickets'),
+  createTicket: (input: import('../types').CreateTicketInput) =>
+    invoke<import('../types').Ticket>('create_ticket', { input }),
+  updateTicket: (input: import('../types').UpdateTicketInput) =>
+    invoke<import('../types').Ticket>('update_ticket', { input }),
+  deleteTicket: (id: string) => invoke<void>('delete_ticket', { id }),
+  bulkCreateTickets: (inputs: import('../types').CreateTicketInput[]) =>
+    invoke<import('../types').Ticket[]>('bulk_create_tickets', { inputs }),
+
   // Commitments
   getCommitments: (caseId?: string, statusFilter?: string) =>
     invoke<Commitment[]>('get_commitments', { caseId, statusFilter }),

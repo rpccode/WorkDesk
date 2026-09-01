@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from './store';
 import {
   LayoutDashboard,
+  Tag,
   Briefcase,
   CheckSquare,
   Calendar,
@@ -16,6 +17,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { DashboardView } from './views/DashboardView';
+import { TicketsView } from './views/TicketsView';
 import { CasesView } from './views/CasesView';
 import { CommitmentsView } from './views/CommitmentsView';
 import { CalendarView } from './views/CalendarView';
@@ -43,6 +45,7 @@ export function App() {
     refreshAll,
     dashboardSummary,
     notifications,
+    tickets,
     consultantPreferences,
     setNotificationCenterOpen,
   } = useStore();
@@ -53,6 +56,8 @@ export function App() {
   const [isMiniWidgetMode, setIsMiniWidgetMode] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const openTicketsCount = tickets.filter((t) => t.status !== 'resolved' && t.status !== 'closed').length;
+  const hasCriticalTickets = tickets.some((t) => (t.priority === 'critical' || t.priority === 'high') && t.status !== 'closed' && t.status !== 'resolved');
 
   const toggleMiniWidgetMode = async (enable?: boolean) => {
     const next = enable !== undefined ? enable : !isMiniWidgetMode;
@@ -113,6 +118,13 @@ export function App() {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard size={17} />,
+    },
+    {
+      id: 'tickets',
+      label: 'Tickets & Soporte',
+      icon: <Tag size={17} />,
+      badge: openTicketsCount > 0 ? openTicketsCount : undefined,
+      badgeCritical: hasCriticalTickets,
     },
     {
       id: 'cases',
@@ -415,6 +427,7 @@ export function App() {
       >
         <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
           {activeTab === 'dashboard'    && <DashboardView />}
+          {activeTab === 'tickets'      && <TicketsView />}
           {activeTab === 'cases'        && <CasesView />}
           {activeTab === 'commitments'  && <CommitmentsView />}
           {activeTab === 'calendar'     && <CalendarView />}

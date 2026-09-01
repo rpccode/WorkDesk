@@ -87,7 +87,79 @@ export interface DashboardSummary {
   critical_cases: Case[];
 }
 
-export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports' | 'settings';
+export type ActiveTab = 'dashboard' | 'tickets' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports' | 'settings';
+
+export type TicketPriority = 'critical' | 'high' | 'medium' | 'low';
+export type TicketStatus = 'open' | 'in_progress' | 'waiting_client' | 'resolved' | 'closed';
+export type TicketCategory =
+  | 'Soporte TI'
+  | 'Incidencia'
+  | 'Requerimiento'
+  | 'Consultoría'
+  | 'Facturación'
+  | 'Infraestructura'
+  | 'Configuración'
+  | 'Otro';
+export type TicketChannel = 'Email' | 'WhatsApp' | 'Teléfono' | 'Portal' | 'Reunión' | 'Otro';
+
+export interface Ticket {
+  id: string;
+  ticket_number: string;
+  client_id: string;
+  client_name?: string | null;
+  client_company?: string | null;
+  case_id?: string | null;
+  case_title?: string | null;
+  title: string;
+  description?: string | null;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  channel: TicketChannel;
+  requester_name: string;
+  requester_email?: string | null;
+  assigned_to?: string | null;
+  resolution?: string | null;
+  sla_due_date?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+  resolved_at?: string | null;
+  closed_at?: string | null;
+}
+
+export interface CreateTicketInput {
+  ticket_number?: string;
+  client_id: string;
+  case_id?: string;
+  title: string;
+  description?: string;
+  category?: TicketCategory;
+  priority?: TicketPriority;
+  status?: TicketStatus;
+  channel?: TicketChannel;
+  requester_name: string;
+  requester_email?: string;
+  assigned_to?: string;
+  resolution?: string;
+  sla_due_date?: string;
+}
+
+export interface UpdateTicketInput {
+  id: string;
+  client_id?: string;
+  case_id?: string | null;
+  title?: string;
+  description?: string | null;
+  category?: TicketCategory;
+  priority?: TicketPriority;
+  status?: TicketStatus;
+  channel?: TicketChannel;
+  requester_name?: string;
+  requester_email?: string | null;
+  assigned_to?: string | null;
+  resolution?: string | null;
+  sla_due_date?: string | null;
+}
 
 export type EmailAccountProvider = 'smtp_imap' | 'microsoft_graph' | 'gmail_api';
 
