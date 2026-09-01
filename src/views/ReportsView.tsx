@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store';
 import {
   FileText,
@@ -14,12 +14,15 @@ import {
   Calendar,
   Eye,
   Edit3,
+  BookOpen,
+  Save,
 } from 'lucide-react';
 import { buildWeeklyReport } from '../utils/report-builder';
 import {
   loadSavedDocumentTemplates,
   injectTemplateTokens,
   deleteCustomDocumentTemplate,
+  updateCustomDocumentTemplate,
   AVAILABLE_TOKENS,
   type DocumentTemplate,
 } from '../utils/document-templates';
@@ -29,6 +32,7 @@ import {
   printHtmlDocument,
 } from '../utils/docx-generator';
 import { CreateDocumentTemplateModal } from '../components/CreateDocumentTemplateModal';
+import { FormattedDocumentPreview } from '../components/FormattedDocumentPreview';
 import { playNotificationSound } from '../utils/live-alerts';
 
 export const ReportsView: React.FC = () => {
@@ -52,10 +56,16 @@ export const ReportsView: React.FC = () => {
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
   const [templateContent, setTemplateContent] = useState<string>('');
+  const [templateTitle, setTemplateTitle] = useState<string>('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [copiedDoc, setCopiedDoc] = useState(false);
   const [editorMode, setEditorMode] = useState<'split' | 'preview' | 'edit'>('split');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  const editorSectionRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Weekly Report state
   const [weeklyPeriod, setWeeklyPeriod] = useState('Semana en Curso');
@@ -75,6 +85,7 @@ export const ReportsView: React.FC = () => {
     const tmpl = templates.find((t) => t.id === selectedTemplateId) || templates[0];
     if (tmpl) {
       setTemplateContent(tmpl.content);
+      setTemplateTitle(tmpl.title);
     }
   }, [selectedTemplateId, templates]);
 
@@ -101,6 +112,7 @@ export const ReportsView: React.FC = () => {
   const currentClient = clients.find((c) => c.id === selectedClientId) || null;
   const currentCase = cases.find((c) => c.id === selectedCaseId) || null;
   const caseCommitments = commitments.filter((c) => (selectedCaseId ? c.case_id === selectedCaseId : true));
+  const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   // Rendered document with dynamic values replaced
   const renderedDocument = injectTemplateTokens(templateContent, {
@@ -133,14 +145,14 @@ export const ReportsView: React.FC = () => {
   }, [cases, commitments, weeklyPeriod, consultantProfile]);
 
   // Export handlers
-  const handleExportDocx = async () => {
+  const handleExportDocx = async (targetContent?: string, customTitle?: string) => {
     try {
       setIsExportingDocx(true);
-      const currentTmpl = templates.find((t) => t.id === selectedTemplateId);
-      const title = currentTmpl?.title || 'Documento de Consultoría';
+      const title = customTitle || currentTemplate?.title || 'Documento de Consultoría';
+      const contentToExport = targetContent || renderedDocument;
       const filename = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${new Date().toISOString().split('T')[0]}.docx`;
 
-      const blob = await generateDocxBlobFromMarkdown(renderedDocument, title);
+      const blob = await generateDocxBlobFromMarkdown(contentToExport, title);
       triggerFileDownload(blob, filename);
       playNotificationSound('success');
 
@@ -156,11 +168,10 @@ export const ReportsView: React.FC = () => {
     }
   };
 
-  const handlePrintPdf = () => {
-    const currentTmpl = templates.find((t) => t.id === selectedTemplateId);
-    const title = currentTmpl?.title || 'Documento';
+  const handlePrintPdf = (contentToPrint?: string, customTitle?: string) => {
+    const title = customTitle || currentTemplate?.title || 'Documento';
     playNotificationSound('info');
-    printHtmlDocument(renderedDocument, title);
+    printHtmlDocument(contentToPrint || renderedDocument, title);
   };
 
   const handleCopyDoc = () => {
@@ -190,16 +201,64 @@ export const ReportsView: React.FC = () => {
     }
   };
 
+  const handleSelectAndScrollToEdit = (template: DocumentTemplate) => {
+    setSelectedTemplateId(template.id);
+    setTemplateContent(template.content);
+    setTemplateTitle(template.title);
+    setEditorMode('split');
+    playNotificationSound('info');
+
+    // Smooth scroll down to the editor section
+    setTimeout(() => {
+      editorSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      textareaRef.current?.focus();
+    }, 150);
+  };
+
+  const handleSaveTemplateChanges = () => {
+    if (!templateContent.trim()) {
+      alert('El contenido no puede estar vacío.');
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      updateCustomDocumentTemplate(selectedTemplateId, {
+        title: templateTitle.trim() || currentTemplate?.title,
+        content: templateContent,
+      });
+
+      const updated = loadSavedDocumentTemplates();
+      setTemplates(updated);
+      playNotificationSound('success');
+      addNotification({
+        title: 'Plantilla Actualizada',
+        message: `Los cambios en "${templateTitle || currentTemplate?.title}" fueron guardados.`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      alert('Error al guardar plantilla: ' + err.message);
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  // Filter templates list
+  const filteredTemplates = templates.filter((t) => {
+    if (filterCategory === 'all') return true;
+    return t.category === filterCategory;
+  });
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* View Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Centro de Documentos & Informes
+            Centro de Documentos & Plantillas
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Generación y exportación de documentos ejecutivos en Word (.docx) y PDF con datos dinámicos
+            Generación, autocompletado y exportación de documentos oficiales en Word (.docx) y PDF
           </p>
         </div>
 
@@ -240,51 +299,205 @@ export const ReportsView: React.FC = () => {
 
       {activeMainTab === 'templates' ? (
         /* ══════════════════════════════════════════════════════════ */
-        /*  PESTAÑA 1: GENERADOR DE DOCUMENTOS CON PLANTILLAS WORD/PDF */
+        /*  PESTAÑA 1: TABLA DE PLANTILLAS + WORKSPACE DE REDACCIÓN   */
         /* ══════════════════════════════════════════════════════════ */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Top Control Bar: Template Selector + Client/Case Binding */}
-          <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* ─── 1. TABLA DE DOCUMENTOS Y PLANTILLAS DISPONIBLES ─── */}
+          <div className="glass-card" style={{ padding: '1.35rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ padding: '0.45rem', borderRadius: '8px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>
+                    Librería de Plantillas y Documentos
+                  </h3>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    Selecciona una plantilla para redactar o presiona Editar para personalizar su contenido
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
+                >
+                  <option value="all">Todas las Categorías ({templates.length})</option>
+                  <option value="Diagnóstico">Diagnóstico</option>
+                  <option value="Minutas">Minutas</option>
+                  <option value="Propuestas">Propuestas</option>
+                  <option value="Cierre">Cierre</option>
+                  <option value="Cartas">Cartas</option>
+                  <option value="Personalizado">Personalizadas</option>
+                </select>
+
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  <Plus size={15} /> + Nueva Plantilla
+                </button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th style={{ padding: '0.65rem 0.85rem', textAlign: 'left', fontWeight: 700 }}>Categoría</th>
+                    <th style={{ padding: '0.65rem 0.85rem', textAlign: 'left', fontWeight: 700 }}>Título de la Plantilla</th>
+                    <th style={{ padding: '0.65rem 0.85rem', textAlign: 'left', fontWeight: 700 }}>Descripción / Uso</th>
+                    <th style={{ padding: '0.65rem 0.85rem', textAlign: 'center', fontWeight: 700 }}>Tipo</th>
+                    <th style={{ padding: '0.65rem 0.85rem', textAlign: 'right', fontWeight: 700 }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTemplates.map((t) => {
+                    const isSelected = t.id === selectedTemplateId;
+
+                    return (
+                      <tr
+                        key={t.id}
+                        style={{
+                          borderBottom: '1px solid var(--border-subtle)',
+                          backgroundColor: isSelected ? 'var(--accent-glow)' : 'transparent',
+                          transition: 'background-color 0.15s',
+                        }}
+                      >
+                        <td style={{ padding: '0.65rem 0.85rem' }}>
+                          <span
+                            style={{
+                              padding: '0.15rem 0.45rem',
+                              borderRadius: '4px',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--bg-surface-elevated)',
+                              border: '1px solid var(--border-subtle)',
+                              color: 'var(--accent-primary)',
+                            }}
+                          >
+                            {t.category}
+                          </span>
+                        </td>
+
+                        <td style={{ padding: '0.65rem 0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {t.title}
+                        </td>
+
+                        <td style={{ padding: '0.65rem 0.85rem', color: 'var(--text-secondary)', fontSize: '0.76rem', maxWidth: '300px' }}>
+                          {t.description}
+                        </td>
+
+                        <td style={{ padding: '0.65rem 0.85rem', textAlign: 'center' }}>
+                          {t.isDefault ? (
+                            <span className="badge badge-neutral" style={{ fontSize: '0.65rem' }}>Oficial</span>
+                          ) : (
+                            <span className="badge badge-low" style={{ fontSize: '0.65rem' }}>Personalizada</span>
+                          )}
+                        </td>
+
+                        <td style={{ padding: '0.65rem 0.85rem', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              className={isSelected ? 'btn-primary' : 'btn-secondary'}
+                              style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                              onClick={() => {
+                                setSelectedTemplateId(t.id);
+                                setTemplateContent(t.content);
+                                setTemplateTitle(t.title);
+                                playNotificationSound('info');
+                              }}
+                            >
+                              <Check size={12} /> {isSelected ? 'Activa' : 'Seleccionar'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                              onClick={() => handleSelectAndScrollToEdit(t)}
+                              title="Editar el contenido de esta plantilla"
+                            >
+                              <Edit3 size={12} /> Editar
+                            </button>
+
+                            {!t.isDefault && (
+                              <button
+                                type="button"
+                                className="btn-ghost"
+                                style={{ padding: '0.25rem 0.45rem', fontSize: '0.72rem', color: 'var(--status-critical)' }}
+                                onClick={() => handleDeleteTemplate(t.id)}
+                                title="Eliminar plantilla"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ─── 2. BARRA DE AUTOCOMPLETADO & DATOS DINÁMICOS ─── */}
+          <div ref={editorSectionRef} className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Sparkles size={18} color="var(--accent-primary)" />
                 <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Configuración de Autocompletado Dinámico
+                  Generador de Documento: {currentTemplate?.title || 'Documento'}
                 </span>
               </div>
 
-              <button
-                className="btn-secondary"
-                style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
-                onClick={() => setIsCreateModalOpen(true)}
-              >
-                <Plus size={14} /> + Nueva / Subir Plantilla
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ fontSize: '0.78rem' }}
+                  onClick={handleCopyDoc}
+                >
+                  {copiedDoc ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedDoc ? '¡Copiado!' : 'Copiar Texto'}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ fontSize: '0.78rem' }}
+                  onClick={() => handlePrintPdf()}
+                >
+                  <Printer size={14} /> Exportar PDF / Imprimir
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ fontSize: '0.78rem', backgroundColor: '#1e3a8a', borderColor: '#1e3a8a' }}
+                  onClick={() => handleExportDocx()}
+                  disabled={isExportingDocx}
+                >
+                  <Download size={14} />
+                  {isExportingDocx ? 'Generando Word...' : 'Descargar Word (.docx)'}
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
-              {/* Template Selector */}
+            {/* Inyección de Datos: Cliente y Caso */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem', textTransform: 'uppercase' }}>
-                  📄 Plantilla de Documento:
-                </label>
-                <select
-                  value={selectedTemplateId}
-                  onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.82rem', fontWeight: 600 }}
-                >
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      [{t.category}] {t.title} {t.isDefault ? '' : '★'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Client Selector */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem', textTransform: 'uppercase' }}>
-                  🏢 Cliente / Organización:
+                  🏢 Inyectar Datos de Cliente:
                 </label>
                 <select
                   value={selectedClientId}
@@ -303,10 +516,9 @@ export const ReportsView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Case Selector */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem', textTransform: 'uppercase' }}>
-                  💼 Caso / Proyecto Vinculado:
+                  💼 Inyectar Datos de Caso / Proyecto:
                 </label>
                 <select
                   value={selectedCaseId}
@@ -324,12 +536,20 @@ export const ReportsView: React.FC = () => {
                   )}
                 </select>
               </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Consultor asignado: <strong style={{ color: 'var(--text-primary)' }}>{consultantProfile.name || 'Sin configurar'}</strong>
+                </span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Compromisos a incluir: <strong style={{ color: 'var(--accent-primary)' }}>{caseCommitments.length} acuerdos</strong>
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Action Toolbar */}
-          <div className="glass-card" style={{ padding: '0.75rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-            {/* View layout toggle */}
+          {/* ─── 3. WORKSPACE: EDITOR & PREVISUALIZADOR REAL DE DOCUMENTO ─── */}
+          <div className="glass-card" style={{ padding: '0.75rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '0.35rem' }}>
               <button
                 type="button"
@@ -337,7 +557,7 @@ export const ReportsView: React.FC = () => {
                 style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => setEditorMode('split')}
               >
-                <Layers size={13} /> Vista Dividida
+                <Layers size={13} /> Vista Dividida (Editor + Hoja Real)
               </button>
               <button
                 type="button"
@@ -345,7 +565,7 @@ export const ReportsView: React.FC = () => {
                 style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => setEditorMode('preview')}
               >
-                <Eye size={13} /> Solo Vista Previa
+                <Eye size={13} /> Solo Hoja de Documento
               </button>
               <button
                 type="button"
@@ -353,70 +573,42 @@ export const ReportsView: React.FC = () => {
                 style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => setEditorMode('edit')}
               >
-                <Edit3 size={13} /> Solo Editor
+                <Edit3 size={13} /> Solo Editor de Texto
               </button>
             </div>
 
-            {/* Export Buttons */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ fontSize: '0.78rem' }}
-                onClick={handleCopyDoc}
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
+                onClick={handleSaveTemplateChanges}
+                disabled={isSavingTemplate}
               >
-                {copiedDoc ? <Check size={14} /> : <Copy size={14} />}
-                {copiedDoc ? '¡Copiado!' : 'Copiar Texto'}
-              </button>
-
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{ fontSize: '0.78rem' }}
-                onClick={handlePrintPdf}
-              >
-                <Printer size={14} /> Exportar PDF / Imprimir
-              </button>
-
-              <button
-                type="button"
-                className="btn-primary"
-                style={{ fontSize: '0.78rem', backgroundColor: '#1e3a8a', borderColor: '#1e3a8a' }}
-                onClick={handleExportDocx}
-                disabled={isExportingDocx}
-              >
-                <Download size={14} />
-                {isExportingDocx ? 'Generando Word...' : 'Descargar Word (.docx)'}
+                <Save size={13} /> {isSavingTemplate ? 'Guardando...' : 'Guardar Cambios en Plantilla'}
               </button>
             </div>
           </div>
 
-          {/* Document Workspace Area */}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns:
-                editorMode === 'split' ? '1fr 1.2fr' : '1fr',
-              gap: '1.25rem',
+                editorMode === 'split' ? '1fr 1.25fr' : '1fr',
+              gap: '1.5rem',
               alignItems: 'start',
             }}
           >
-            {/* LEFT PANE: Markdown / Variables Editor */}
+            {/* LEFT PANE: Editor with Token Palette */}
             {(editorMode === 'split' || editorMode === 'edit') && (
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                    Editor de Plantilla (Marcadores Dinámicos)
+                    Editor de Plantilla
                   </span>
-                  {templates.find((t) => t.id === selectedTemplateId && !t.isDefault) && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteTemplate(selectedTemplateId)}
-                      style={{ background: 'transparent', color: 'var(--status-critical)', padding: '0.2rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                    >
-                      <Trash2 size={13} /> Eliminar plantilla
-                    </button>
-                  )}
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    Haz clic en una variable para insertarla
+                  </span>
                 </div>
 
                 {/* Variable Token Quick Palette */}
@@ -425,21 +617,38 @@ export const ReportsView: React.FC = () => {
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '0.3rem',
-                    padding: '0.5rem',
+                    padding: '0.55rem',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: 'var(--bg-surface-elevated)',
-                    maxHeight: '90px',
+                    maxHeight: '95px',
                     overflowY: 'auto',
                   }}
                 >
-                  {AVAILABLE_TOKENS.slice(0, 10).map((t) => (
+                  {AVAILABLE_TOKENS.map((t) => (
                     <button
                       key={t.token}
                       type="button"
                       title={t.description}
-                      onClick={() => setTemplateContent((prev) => prev + ' ' + t.token)}
+                      onClick={() => {
+                        if (!textareaRef.current) {
+                          setTemplateContent((prev) => prev + ' ' + t.token);
+                          return;
+                        }
+                        const start = textareaRef.current.selectionStart;
+                        const end = textareaRef.current.selectionEnd;
+                        const current = templateContent;
+                        const updated = current.substring(0, start) + t.token + current.substring(end);
+                        setTemplateContent(updated);
+                        setTimeout(() => {
+                          if (textareaRef.current) {
+                            textareaRef.current.focus();
+                            textareaRef.current.selectionStart = start + t.token.length;
+                            textareaRef.current.selectionEnd = start + t.token.length;
+                          }
+                        }, 0);
+                      }}
                       style={{
-                        padding: '0.15rem 0.4rem',
+                        padding: '0.15rem 0.45rem',
                         borderRadius: '3px',
                         fontSize: '0.68rem',
                         fontWeight: 600,
@@ -455,7 +664,8 @@ export const ReportsView: React.FC = () => {
                 </div>
 
                 <textarea
-                  rows={20}
+                  ref={textareaRef}
+                  rows={24}
                   value={templateContent}
                   onChange={(e) => setTemplateContent(e.target.value)}
                   style={{
@@ -469,37 +679,23 @@ export const ReportsView: React.FC = () => {
               </div>
             )}
 
-            {/* RIGHT PANE: Rendered Executive Document Sheet */}
+            {/* RIGHT PANE: Real Formatted Document Sheet */}
             {(editorMode === 'split' || editorMode === 'preview') && (
-              <div
-                className="glass-card"
-                style={{
-                  padding: '2rem',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
-                  boxShadow: 'var(--shadow-lg)',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 'var(--radius-md)',
-                  minHeight: '600px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '0.75rem', marginBottom: '1.5rem' }}>
-                  <div>
-                    <h4 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#0f172a', margin: 0 }}>
-                      WorkDesk • Consultoría Operativa
-                    </h4>
-                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                      Documento Oficial de Trabajo
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>
-                    {new Date().toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Previsualización Real (Hoja Word / PDF con Formato Oficial)
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--status-low)', fontWeight: 700 }}>
+                    ● Renderizado en vivo con datos reales
                   </span>
                 </div>
 
-                <div style={{ fontSize: '0.86rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
-                  {renderedDocument}
-                </div>
+                <FormattedDocumentPreview
+                  markdownContent={renderedDocument}
+                  docTitle={currentTemplate?.title || 'Documento'}
+                  docCategory={currentTemplate?.category}
+                />
               </div>
             )}
           </div>
@@ -557,21 +753,12 @@ export const ReportsView: React.FC = () => {
             </div>
           </div>
 
-          {/* Preview Sheet */}
-          <div
-            className="glass-card"
-            style={{
-              padding: '2.5rem',
-              backgroundColor: '#ffffff',
-              color: '#0f172a',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid #cbd5e1',
-            }}
-          >
-            <div style={{ fontSize: '0.86rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
-              {weeklyMarkdown}
-            </div>
-          </div>
+          {/* Formatted Preview Sheet for Weekly Report */}
+          <FormattedDocumentPreview
+            markdownContent={weeklyMarkdown}
+            docTitle="Informe Ejecutivo de Productividad"
+            docCategory="Reportes"
+          />
         </div>
       )}
 
@@ -583,11 +770,16 @@ export const ReportsView: React.FC = () => {
           const updated = loadSavedDocumentTemplates();
           setTemplates(updated);
           setSelectedTemplateId(newTmpl.id);
+          setTemplateContent(newTmpl.content);
+          setTemplateTitle(newTmpl.title);
           addNotification({
             title: 'Plantilla Guardada',
             message: `La plantilla "${newTmpl.title}" fue agregada a tu librería de documentos.`,
             type: 'success',
           });
+          setTimeout(() => {
+            editorSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
         }}
       />
     </div>

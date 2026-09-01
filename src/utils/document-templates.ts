@@ -325,6 +325,30 @@ export function deleteCustomDocumentTemplate(id: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
 
+export function updateCustomDocumentTemplate(
+  id: string,
+  updates: Partial<Omit<DocumentTemplate, 'id' | 'createdAt'>>
+): void {
+  const existingRaw = localStorage.getItem(STORAGE_KEY);
+  const list: DocumentTemplate[] = existingRaw ? JSON.parse(existingRaw) : [];
+  const index = list.findIndex((t) => t.id === id);
+  if (index !== -1) {
+    list[index] = { ...list[index], ...updates };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } else {
+    // If it was a default template, create a customized copy
+    const def = DEFAULT_DOCUMENT_TEMPLATES.find((t) => t.id === id);
+    if (def) {
+      saveCustomDocumentTemplate({
+        title: updates.title || def.title,
+        description: updates.description || def.description,
+        category: updates.category || def.category,
+        content: updates.content !== undefined ? updates.content : def.content,
+      });
+    }
+  }
+}
+
 /**
  * Injects dynamic data into template placeholders.
  */
