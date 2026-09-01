@@ -190,14 +190,62 @@ export const CasesView: React.FC = () => {
                   lineHeight: 1.45,
                   flex: 1,
                   display: '-webkit-box',
-                  WebkitLineClamp: 3,
+                  WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  marginBottom: '1rem',
+                  marginBottom: '0.5rem',
                 }}
               >
                 {c.description || 'Sin descripción detallada.'}
               </p>
+
+              {/* Próxima Acción Indicator */}
+              {c.next_action?.description ? (
+                <div
+                  style={{
+                    margin: '0.25rem 0 0.75rem',
+                    padding: '0.45rem 0.65rem',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    border: '1px solid rgba(59,130,246,0.25)',
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' }}>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>➔</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.next_action.description}
+                    </span>
+                  </div>
+                  {c.next_action.due_date && (
+                    <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {c.next_action.due_date}
+                    </span>
+                  )}
+                </div>
+              ) : c.status !== 'closed' ? (
+                <div
+                  style={{
+                    margin: '0.25rem 0 0.75rem',
+                    padding: '0.35rem 0.55rem',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(245,158,11,0.08)',
+                    border: '1px dashed rgba(245,158,11,0.4)',
+                    fontSize: '0.72rem',
+                    color: 'var(--status-medium)',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <span>⚠️ Sin próxima acción definida</span>
+                </div>
+              ) : null}
 
               <div
                 style={{

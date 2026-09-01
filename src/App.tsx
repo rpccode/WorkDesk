@@ -15,7 +15,14 @@ import {
   Layers,
   Bell,
   Settings,
+  Sun,
+  Inbox,
+  Clock,
+  Search,
 } from 'lucide-react';
+import { MyDayView } from './views/MyDayView';
+import { WaitingOnView } from './views/WaitingOnView';
+import { InboxView } from './views/InboxView';
 import { DashboardView } from './views/DashboardView';
 import { TicketsView } from './views/TicketsView';
 import { CasesView } from './views/CasesView';
@@ -27,6 +34,7 @@ import { EmailBuilderView } from './views/EmailBuilderView';
 import { ReportsView } from './views/ReportsView';
 import { SettingsView } from './views/SettingsView';
 import { QuickCaptureModal } from './components/QuickCaptureModal';
+import { CommandCenterModal } from './components/CommandCenterModal';
 import { EmailAccountsModal } from './components/EmailAccountsModal';
 import { LiveToastContainer } from './components/LiveToastContainer';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
@@ -55,10 +63,14 @@ export function App() {
   const [lastSync, setLastSync] = useState<string>('');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMiniWidgetMode, setIsMiniWidgetMode] = useState(false);
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
+  const { inboxItems, commitments } = useStore();
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   const openTicketsCount = tickets.filter((t) => t.status !== 'resolved' && t.status !== 'closed').length;
   const hasCriticalTickets = tickets.some((t) => (t.priority === 'critical' || t.priority === 'high') && t.status !== 'closed' && t.status !== 'resolved');
+  const unprocessedInboxCount = inboxItems.filter((i) => i.status === 'inbox').length;
+  const waitingCount = commitments.filter((c) => c.status !== 'done' && c.owner !== 'me').length;
 
   const toggleMiniWidgetMode = async (enable?: boolean) => {
     const next = enable !== undefined ? enable : !isMiniWidgetMode;
@@ -79,6 +91,10 @@ export function App() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsCommandCenterOpen((prev) => !prev);
+      }
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
         setQuickCaptureOpen(true);
@@ -114,24 +130,35 @@ export function App() {
     icon: React.ReactNode;
     badge?: number;
     badgeCritical?: boolean;
+    section?: string;
   }[] = [
+    // Operaciones Personales
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard size={17} />,
+      id: 'my_day',
+      label: 'Mi Día',
+      icon: <Sun size={17} />,
+      section: 'Operaciones',
     },
     {
-      id: 'tickets',
-      label: 'Tickets & Soporte',
-      icon: <Tag size={17} />,
-      badge: openTicketsCount > 0 ? openTicketsCount : undefined,
-      badgeCritical: hasCriticalTickets,
+      id: 'inbox',
+      label: 'Bandeja (Inbox)',
+      icon: <Inbox size={17} />,
+      badge: unprocessedInboxCount > 0 ? unprocessedInboxCount : undefined,
     },
+    {
+      id: 'waiting_on',
+      label: 'Esperando de Otros',
+      icon: <Clock size={17} />,
+      badge: waitingCount > 0 ? waitingCount : undefined,
+    },
+
+    // Gestión
     {
       id: 'cases',
       label: 'Casos & Proyectos',
       icon: <Briefcase size={17} />,
       badge: dashboardSummary?.active_cases_count,
+      section: 'Gestión',
     },
     {
       id: 'commitments',
@@ -143,14 +170,34 @@ export function App() {
       badgeCritical: !!(dashboardSummary?.overdue_commitments_count),
     },
     {
-      id: 'calendar',
-      label: 'Calendario',
-      icon: <Calendar size={17} />,
+      id: 'tickets',
+      label: 'Tickets & Soporte',
+      icon: <Tag size={17} />,
+      badge: openTicketsCount > 0 ? openTicketsCount : undefined,
+      badgeCritical: hasCriticalTickets,
     },
     {
       id: 'clients',
       label: 'Clientes',
       icon: <Users size={17} />,
+    },
+
+    // Herramientas & Reportes
+    {
+      id: 'calendar',
+      label: 'Calendario',
+      icon: <Calendar size={17} />,
+      section: 'Herramientas',
+    },
+    {
+      id: 'reports',
+      label: 'Documentos & Word',
+      icon: <FileBarChart2 size={17} />,
+    },
+    {
+      id: 'emails',
+      label: 'Correos',
+      icon: <Mail size={17} />,
     },
     {
       id: 'notes',
@@ -158,14 +205,9 @@ export function App() {
       icon: <FileText size={17} />,
     },
     {
-      id: 'emails',
-      label: 'Generador de Correos',
-      icon: <Mail size={17} />,
-    },
-    {
-      id: 'reports',
-      label: 'Informe Ejecutivo',
-      icon: <FileBarChart2 size={17} />,
+      id: 'dashboard',
+      label: 'Dashboard KPIs',
+      icon: <LayoutDashboard size={17} />,
     },
     {
       id: 'settings',
@@ -312,25 +354,67 @@ export function App() {
           gap: '0.2rem',
           overflowY: 'auto',
         }}>
-          {navItems.map((item) => {
+          {/* Global Omni-Search Trigger Button */}
+          <button
+            type="button"
+            className="card-hover"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.45rem 0.65rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-subtle)',
+              backgroundColor: 'rgba(59,130,246,0.06)',
+              color: 'var(--text-secondary)',
+              fontSize: '0.75rem',
+              marginBottom: '0.4rem',
+              cursor: 'pointer',
+            }}
+            onClick={() => setIsCommandCenterOpen(true)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Search size={13} color="var(--accent-primary)" />
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Buscar...</span>
+            </div>
+            <span style={{ fontSize: '0.62rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
+              Ctrl+K
+            </span>
+          </button>
+
+          {navItems.map((item, idx) => {
             const isActive = activeTab === item.id;
             return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`nav-item${isActive ? ' active' : ''}`}
-              >
-                <span className="nav-item-icon">
-                  {item.icon}
-                </span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`nav-badge ${item.badgeCritical ? 'nav-badge-critical' : 'nav-badge-default'}`}>
-                    {item.badge}
+              <React.Fragment key={item.id}>
+                {item.section && (
+                  <span style={{
+                    fontSize: '0.64rem',
+                    fontWeight: 800,
+                    color: 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    padding: idx === 0 ? '0.2rem 0.6rem 0.25rem' : '0.65rem 0.6rem 0.25rem',
+                  }}>
+                    {item.section}
                   </span>
                 )}
-              </button>
+                <button
+                  onClick={() => setActiveTab(item.id)}
+                  className={`nav-item${isActive ? ' active' : ''}`}
+                >
+                  <span className="nav-item-icon">
+                    {item.icon}
+                  </span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className={`nav-badge ${item.badgeCritical ? 'nav-badge-critical' : 'nav-badge-default'}`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              </React.Fragment>
             );
           })}
         </nav>
@@ -428,6 +512,9 @@ export function App() {
       >
         <div style={{ maxWidth: '1300px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <UpdateChecker />
+          {activeTab === 'my_day'       && <MyDayView />}
+          {activeTab === 'inbox'        && <InboxView />}
+          {activeTab === 'waiting_on'   && <WaitingOnView />}
           {activeTab === 'dashboard'    && <DashboardView />}
           {activeTab === 'tickets'      && <TicketsView />}
           {activeTab === 'cases'        && <CasesView />}
@@ -443,6 +530,10 @@ export function App() {
 
       {/* Global Modals & Live Overlays */}
       <QuickCaptureModal />
+      <CommandCenterModal
+        isOpen={isCommandCenterOpen}
+        onClose={() => setIsCommandCenterOpen(false)}
+      />
       <EmailAccountsModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}

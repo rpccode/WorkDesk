@@ -21,6 +21,9 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
   const [description, setDescription] = useState(caseToEdit?.description || '');
   const [priority, setPriority] = useState<CasePriority>(caseToEdit?.priority || 'medium');
   const [status, setStatus] = useState(caseToEdit?.status || 'open');
+  const [nextActionDesc, setNextActionDesc] = useState(caseToEdit?.next_action?.description || '');
+  const [nextActionDueDate, setNextActionDueDate] = useState(caseToEdit?.next_action?.due_date || '');
+  const [nextActionOwner, setNextActionOwner] = useState<'me' | 'client' | 'third_party' | 'team'>(caseToEdit?.next_action?.owner_type || 'me');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -36,12 +39,18 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
         setDescription(caseToEdit.description || '');
         setPriority(caseToEdit.priority);
         setStatus(caseToEdit.status);
+        setNextActionDesc(caseToEdit.next_action?.description || '');
+        setNextActionDueDate(caseToEdit.next_action?.due_date || '');
+        setNextActionOwner(caseToEdit.next_action?.owner_type || 'me');
       } else {
         setClientId(clients[0]?.id || '');
         setTitle('');
         setDescription('');
         setPriority('medium');
         setStatus('open');
+        setNextActionDesc('');
+        setNextActionDueDate(new Date().toISOString().split('T')[0]);
+        setNextActionOwner('me');
       }
       setError(null);
       setFieldErrors({});
@@ -83,6 +92,15 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
     setIsSaving(true);
     setError(null);
 
+    const nextActionObj = nextActionDesc.trim()
+      ? {
+          description: nextActionDesc.trim(),
+          due_date: nextActionDueDate || undefined,
+          owner_type: nextActionOwner,
+          status: 'pending' as const,
+        }
+      : null;
+
     try {
       if (caseToEdit) {
         await updateCase({
@@ -92,6 +110,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           description: description.trim() || undefined,
           priority,
           status,
+          next_action: nextActionObj,
         });
         addNotification({
           type: 'success',
@@ -105,6 +124,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           title: title.trim(),
           description: description.trim() || undefined,
           priority,
+          next_action: nextActionObj,
         });
         addNotification({
           type: 'success',
@@ -333,12 +353,62 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               Descripción o Antecedentes (Opcional)
             </label>
             <textarea
-              rows={3}
+              rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalles sobre el caso, requerimientos, alcance o notas iniciales..."
               style={{ width: '100%', resize: 'vertical' }}
             />
+          </div>
+
+          {/* Próxima Acción (Next Action) Initial Definition */}
+          <div
+            style={{
+              padding: '0.85rem 1rem',
+              backgroundColor: 'rgba(37,99,235,0.06)',
+              border: '1px solid rgba(59,130,246,0.25)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+            }}
+          >
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              🎯 Próxima Acción (Next Action)
+            </span>
+            <input
+              type="text"
+              value={nextActionDesc}
+              onChange={(e) => setNextActionDesc(e.target.value)}
+              placeholder="¿Qué tiene que suceder ahora para que esto avance? (opcional)"
+              style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+            />
+            {nextActionDesc.trim() && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Fecha límite:</label>
+                  <input
+                    type="date"
+                    value={nextActionDueDate}
+                    onChange={(e) => setNextActionDueDate(e.target.value)}
+                    style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Responsable:</label>
+                  <select
+                    value={nextActionOwner}
+                    onChange={(e) => setNextActionOwner(e.target.value as any)}
+                    style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem' }}
+                  >
+                    <option value="me">Yo</option>
+                    <option value="client">Cliente</option>
+                    <option value="team">Equipo / TI</option>
+                    <option value="third_party">Terceros</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>

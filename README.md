@@ -1,63 +1,76 @@
-# WorkDesk — Centro de Operaciones y Gestión de Consultoría
+# WorkDesk — Personal Operations Center (Centro Personal de Operaciones)
 
 ![WorkDesk](public/logo.png)
 
-**Plataforma de escritorio integral para la gestión operativa de consultores, seguimiento de casos, compromisos, clientes y generación automatizada de informes.**
+**Plataforma de escritorio integral para la operación diaria de consultores de alta demanda: gestión por Próxima Acción, bandeja de captura GTD, control de bloqueos y generación de informes ejecutivos.**
 
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2.0-blue?logo=tauri)](https://tauri.app/)
 [![React 19](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.0-646cff?logo=vite)](https://vitejs.dev/)
+[![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-emerald.svg)](package.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## 🚀 Descripción General
+## 🎯 Filosofía: Personal Operations System
 
-**WorkDesk** es una aplicación de escritorio nativa diseñada para consultores y equipos operativos que gestionan múltiples cuentas, proyectos de alta demanda y requerimientos críticos. Combina la velocidad y bajo consumo de recursos de **Tauri v2 (Rust)** con una interfaz moderna y fluida desarrollada en **React 19** y **TypeScript**.
+WorkDesk trasciende los gestores tradicionales bajo la premisa operativa:
+
+> **Caso → Próxima Acción → Compromiso**
+> *"¿Qué tiene que suceder ahora para que esto avance?"*
 
 ---
 
-## ✨ Funcionalidades Principales
+## ✨ Funcionalidades Principales (v0.3.0)
 
-### 📊 1. Dashboard Ejecutivo y KPIs
+### ☀️ 1. Módulo "Mi Día" (Morning Brief Operativo)
+- **Centro de Gravedad Diario:** Responde inmediatamente a la pregunta *"¿Qué hago ahora?"*.
+- **Atención Urgente:** Casos críticos, compromisos vencidos y anomalías operativas señaladas al instante.
+- **Matriz de Próximas Acciones:** Acciones priorizadas por cliente y fecha límite con marcado en 1 clic.
+- **Listos para Cerrar:** Detección automática de casos con todos sus compromisos cumplidos listos para cierre.
 
-- Métricas operativas en tiempo real: casos activos, compromisos por vencer, distribución de carga y clientes con bloqueos.
-- Alertas inmediatas para tareas críticas y seguimiento de SLA.
+### 🎯 2. Próxima Acción (Next Action) de Primer Nivel
+- Cada caso cuenta con una próxima acción concreta obligatoria (`description`, `due_date`, `owner_type`).
+- Detección de casos huérfanos sin próxima acción para garantizar que ningún proyecto quede inerte.
 
-### 👥 2. Gestión de Clientes y Directorio
+### ⏳ 3. Esperando de Otros & Bloqueos (Aging)
+- Panel especializado en dependencias de terceros (Clientes, Desarrollo, Contabilidad, Infraestructura).
+- **Contador de Días Transcurridos (Aging):** *"Llevas 6 días esperando validación"*.
+- Disparo en 1 clic de correos de seguimiento contextualizados o registro de llamadas.
 
+### 📥 4. Bandeja de Entrada Rápida (Inbox GTD)
+- Captura de ideas, pendientes o notas sin fricción (`Alt + N`).
+- Clasificación y procesamiento posterior hacia **Caso**, **Compromiso**, **Seguimiento** o **Nota**.
+
+### 🔍 5. Command Center Universal (`Ctrl + K` / `Cmd + K`)
+- Buscador global indexado en tiempo real en milisegundos para Clientes, Casos, Próximas Acciones, Tickets, Documentos y Comandos.
+
+### 📊 6. Dashboard Ejecutivo y KPIs
+- Métricas operativas en tiempo real, distribución de carga y clientes con bloqueos.
+
+### 👥 7. Gestión de Clientes y Directorio
 - Fichas completas de clientes con cálculo de complejidad operativa (ponderada y evaluada).
 - Registro de contactos clave, departamentos, sedes y sistemas vinculados.
 
-### 📂 3. Casos y Proyectos
+### 📂 8. Casos y Proyectos
+- Flujo de estados: *Abierto*, *En Progreso*, *En Espera* y *Cerrado*.
+- Niveles de prioridad (Crítica, Alta, Media, Baja) y Timeline automático de eventos.
 
-- Flujo de estados: *Abierto*, *En Progreso*, *En Espera (Cliente/Tercero)* y *Cerrado*.
-- Niveles de prioridad con código visual (Crítica, Alta, Media, Baja).
-- Bitácora integrada, reasignación ágil de clientes y detalle centralizado.
-
-### ✅ 4. Matriz de Compromisos
-
+### ✅ 9. Matriz de Compromisos
 - Separación clara entre compromisos propios (*Me*) y de clientes/terceros (*They*).
 - Fechas de vencimiento con advertencias visuales y control de cumplimiento.
 
-### 📑 5. Centro de Documentación & Generador Word (.docx)
+### 📑 10. Centro de Documentación & Generador Word (.docx)
+- **Importación Inteligente:** Soporte para subir plantillas de Word (`.docx`) preservando formato y tablas.
+- **Inyección Dinámica de Marcadores:** Uso de tokens como `{{cliente_nombre}}`, `{{caso_titulo}}`, tablas y firmas.
+- **Exportación en 1 Clic:** Descarga directa de archivos Word `.docx`.
 
-- **Importación Inteligente:** Soporte para subir plantillas existentes de Word (`.docx`) preservando el formato y tablas mediante motor HTML enriquecido.
-- **Inyección Dinámica de Marcadores:** Uso de tokens como `{{cliente_nombre}}`, `{{caso_titulo}}`, `{{consultor_nombre}}`, tablas de compromisos y bloques de firma.
-- **Exportación en 1 Clic:** Generación y descarga directa de archivos Word `.docx` con formato oficial o impresión de informes.
-- **Informe Ejecutivo Semanal/Mensual:** Resumen estructurado de productividad listo para presentar.
-
-### ✉️ 6. Generador de Correos Profesionales
-
+### ✉️ 11. Generador de Correos Profesionales
 - Redacción acelerada de minutas, solicitudes de información y seguimientos con variables automáticas.
-- Botón de copiado con formato y apertura directa en cliente de correo.
 
-### 📅 7. Calendario & Agenda
-
+### 📅 12. Calendario & Agenda
 - Vista interactiva de entregas, hitos de proyectos y compromisos agendados.
-
-### ⚡ 8. Captura Rápida Global
 
 - Atajo de teclado global (`Alt+N` / `Ctrl+Alt+N`) para registrar tareas, notas o casos desde cualquier vista sin perder el contexto.
 

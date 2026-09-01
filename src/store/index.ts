@@ -16,6 +16,10 @@ import type {
   AddNotificationInput,
   ConsultantProfile,
   ConsultantPreferences,
+  InboxItem,
+  InboxSuggestedType,
+  ActivityEvent,
+  NextAction,
 } from '../types';
 import { evaluateLiveAlerts, playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
 import {
@@ -35,6 +39,9 @@ const TICKETS_STORAGE_KEY = 'workdesk_tickets_v1';
 const EMAIL_ACCOUNTS_CACHE_KEY = 'workdesk_email_accounts_cache_v1';
 const DASHBOARD_CACHE_KEY = 'workdesk_dashboard_cache_v1';
 const NOTIFICATIONS_CACHE_KEY = 'workdesk_notifications_cache_v1';
+const INBOX_STORAGE_KEY = 'workdesk_inbox_items_v1';
+const ACTIVITIES_STORAGE_KEY = 'workdesk_activities_v1';
+const CASES_NEXT_ACTIONS_KEY = 'workdesk_cases_next_actions_v1';
 
 function getStoredCache<T>(key: string, fallback: T): T {
   try {
@@ -51,6 +58,30 @@ function saveStoredCache<T>(key: string, data: T) {
   } catch (e) {
     console.warn(`Error saving cache for ${key}:`, e);
   }
+}
+
+function getStoredInboxItems(): InboxItem[] {
+  return getStoredCache<InboxItem[]>(INBOX_STORAGE_KEY, []);
+}
+
+function saveStoredInboxItems(items: InboxItem[]) {
+  saveStoredCache(INBOX_STORAGE_KEY, items);
+}
+
+function getStoredNextActions(): Record<string, NextAction> {
+  return getStoredCache<Record<string, NextAction>>(CASES_NEXT_ACTIONS_KEY, {});
+}
+
+function saveStoredNextActions(actions: Record<string, NextAction>) {
+  saveStoredCache(CASES_NEXT_ACTIONS_KEY, actions);
+}
+
+function getStoredActivities(): ActivityEvent[] {
+  return getStoredCache<ActivityEvent[]>(ACTIVITIES_STORAGE_KEY, []);
+}
+
+function saveStoredActivities(events: ActivityEvent[]) {
+  saveStoredCache(ACTIVITIES_STORAGE_KEY, events);
 }
 
 function getStoredTickets(): Ticket[] {
@@ -190,9 +221,21 @@ interface WorkDeskState {
   setCaseFilter: (filter: string) => void;
   isLoadingCases: boolean;
   fetchCases: () => Promise<void>;
-  createCase: (input: { client_id: string; title: string; description?: string; priority?: string }) => Promise<Case>;
-  updateCase: (input: { id: string; client_id?: string; title: string; description?: string; status: string; priority: string }) => Promise<Case>;
+  createCase: (input: { client_id: string; title: string; description?: string; priority?: string; next_action?: NextAction | null }) => Promise<Case>;
+  updateCase: (input: { id: string; client_id?: string; title: string; description?: string; status: string; priority: string; next_action?: NextAction | null }) => Promise<Case>;
+  updateCaseNextAction: (caseId: string, nextAction: NextAction | null) => void;
   closeCase: (id: string) => Promise<void>;
+
+  // Inbox GTD
+  inboxItems: InboxItem[];
+  addInboxItem: (content: string, suggestedType?: InboxSuggestedType, clientId?: string | null) => InboxItem;
+  updateInboxItem: (id: string, updates: Partial<InboxItem>) => void;
+  deleteInboxItem: (id: string) => void;
+  processInboxItem: (id: string, target: 'case' | 'commitment' | 'followup' | 'note' | 'discarded', targetData?: any) => Promise<any>;
+
+  // Activity Log
+  activityEvents: ActivityEvent[];
+  logActivity: (event: Omit<ActivityEvent, 'id' | 'created_at'>) => void;
 
   // Tickets
   tickets: Ticket[];
@@ -369,7 +412,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   },
 
   // Cases
-  cases: getStoredCache<Case[]>(CASES_CACHE_KEY, []),
+  cases: (getStoredCache<Case[]>(CASES_CACHE_KEY, []) || []).map((c) => {
+    const nextMap = getStoredNextActions();
+    return { ...c, next_action: c.next_action || nextMap[c.id] || null };
+  }),
   caseFilter: 'all',
   setCaseFilter: (filter) => {
     set({ caseFilter: filter });
@@ -381,10 +427,15 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     try {
       const filter = get().caseFilter;
       const data = await api.getCases(filter === 'all' ? undefined : filter);
+      const nextMap = getStoredNextActions();
+      const enriched = (data || []).map((c) => ({
+        ...c,
+        next_action: c.next_action || nextMap[c.id] || null,
+      }));
       if (filter === 'all') {
-        saveStoredCache(CASES_CACHE_KEY, data);
+        saveStoredCache(CASES_CACHE_KEY, enriched);
       }
-      set({ cases: data });
+      set({ cases: enriched });
     } catch (err) {
       console.error('Error fetching cases (using local cache):', err);
     } finally {
@@ -393,26 +444,85 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   },
   createCase: async (input) => {
     const created = await api.createCase(input);
+    let finalCase = created;
+    if (input.next_action) {
+      const nextMap = getStoredNextActions();
+      nextMap[created.id] = input.next_action;
+      saveStoredNextActions(nextMap);
+      finalCase = { ...created, next_action: input.next_action };
+    }
     set((state) => {
-      const updated = [created, ...state.cases];
+      const updated = [finalCase, ...state.cases];
       saveStoredCache(CASES_CACHE_KEY, updated);
       return { cases: updated };
     });
+    get().logActivity({
+      entity_type: 'case',
+      entity_id: created.id,
+      event_type: 'case_created',
+      title: `Caso creado: "${created.title}"`,
+      case_id: created.id,
+      case_title: created.title,
+      client_id: created.client_id,
+    });
     get().fetchDashboardSummary();
-    return created;
+    return finalCase;
   },
   updateCase: async (input) => {
     const updated = await api.updateCase(input);
+    let finalCase = updated;
+    if (input.next_action !== undefined) {
+      const nextMap = getStoredNextActions();
+      if (input.next_action) {
+        nextMap[input.id] = input.next_action;
+      } else {
+        delete nextMap[input.id];
+      }
+      saveStoredNextActions(nextMap);
+      finalCase = { ...updated, next_action: input.next_action };
+    }
     set((state) => {
-      const updatedList = state.cases.map((c) => (c.id === input.id ? updated : c));
+      const updatedList = state.cases.map((c) => (c.id === input.id ? { ...c, ...finalCase } : c));
       saveStoredCache(CASES_CACHE_KEY, updatedList);
       return { cases: updatedList };
     });
     get().fetchDashboardSummary();
-    return updated;
+    return finalCase;
+  },
+  updateCaseNextAction: (caseId, nextAction) => {
+    const nextMap = getStoredNextActions();
+    if (nextAction) {
+      nextMap[caseId] = nextAction;
+    } else {
+      delete nextMap[caseId];
+    }
+    saveStoredNextActions(nextMap);
+
+    const targetCase = get().cases.find((c) => c.id === caseId);
+
+    set((state) => {
+      const updatedList = state.cases.map((c) =>
+        c.id === caseId ? { ...c, next_action: nextAction } : c
+      );
+      saveStoredCache(CASES_CACHE_KEY, updatedList);
+      return { cases: updatedList };
+    });
+
+    if (nextAction && targetCase) {
+      get().logActivity({
+        entity_type: 'case',
+        entity_id: caseId,
+        event_type: 'next_action_updated',
+        title: `Próxima acción en "${targetCase.title}": ${nextAction.description}`,
+        case_id: caseId,
+        case_title: targetCase.title,
+        client_id: targetCase.client_id,
+      });
+    }
   },
   closeCase: async (id) => {
     await api.closeCase(id);
+    const targetCase = get().cases.find((c) => c.id === id);
     set((state) => {
       const updatedList: Case[] = state.cases.map((c) =>
         c.id === id ? { ...c, status: 'closed' as const, closed_at: new Date().toISOString() } : c
@@ -420,7 +530,113 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       saveStoredCache(CASES_CACHE_KEY, updatedList);
       return { cases: updatedList };
     });
+    if (targetCase) {
+      get().logActivity({
+        entity_type: 'case',
+        entity_id: id,
+        event_type: 'case_status_changed',
+        title: `Caso cerrado: "${targetCase.title}"`,
+        case_id: id,
+        case_title: targetCase.title,
+        client_id: targetCase.client_id,
+      });
+    }
     get().fetchDashboardSummary();
+  },
+
+  // Inbox GTD
+  inboxItems: getStoredInboxItems(),
+  addInboxItem: (content, suggestedType = 'task', clientId = null) => {
+    const clients = get().clients;
+    const client = clientId ? clients.find((c) => c.id === clientId) : null;
+    const newItem: InboxItem = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `inbox_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      content: content.trim(),
+      suggested_type: suggestedType,
+      client_id: clientId,
+      client_name: client?.name || null,
+      status: 'inbox',
+      created_at: new Date().toISOString(),
+    };
+
+    const updated = [newItem, ...get().inboxItems];
+    saveStoredInboxItems(updated);
+    set({ inboxItems: updated });
+    return newItem;
+  },
+  updateInboxItem: (id, updates) => {
+    const updated = get().inboxItems.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    );
+    saveStoredInboxItems(updated);
+    set({ inboxItems: updated });
+  },
+  deleteInboxItem: (id) => {
+    const updated = get().inboxItems.filter((item) => item.id !== id);
+    saveStoredInboxItems(updated);
+    set({ inboxItems: updated });
+  },
+  processInboxItem: async (id, target, targetData) => {
+    const item = get().inboxItems.find((i) => i.id === id);
+    if (!item) return;
+
+    const now = new Date().toISOString();
+    let result: any = null;
+
+    if (target === 'case' && targetData) {
+      result = await get().createCase({
+        client_id: targetData.client_id || item.client_id || get().clients[0]?.id || '',
+        title: targetData.title || item.content.substring(0, 80),
+        description: item.content,
+        priority: targetData.priority || 'medium',
+      });
+    } else if (target === 'commitment' && targetData) {
+      result = await get().createCommitment({
+        case_id: targetData.case_id,
+        description: item.content,
+        owner: targetData.owner || 'me',
+        due_date: targetData.due_date,
+      });
+    } else if (target === 'note' && targetData) {
+      result = await get().createNote({
+        case_id: targetData.case_id,
+        content: item.content,
+      });
+    } else if (target === 'followup' && targetData) {
+      result = await get().createFollowup({
+        case_id: targetData.case_id,
+        type: targetData.type || 'call',
+        summary: item.content,
+        date: targetData.date || now.split('T')[0],
+      });
+    }
+
+    const updated = get().inboxItems.map((i) =>
+      i.id === id
+        ? {
+            ...i,
+            status: target === 'discarded' ? ('discarded' as const) : ('processed' as const),
+            processed_as: target,
+            processed_at: now,
+          }
+        : i
+    );
+    saveStoredInboxItems(updated);
+    set({ inboxItems: updated });
+    return result;
+  },
+
+  // Activity Log
+  activityEvents: getStoredActivities(),
+  logActivity: (event) => {
+    const newEvent: ActivityEvent = {
+      ...event,
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      created_at: new Date().toISOString(),
+    };
+    const list = [newEvent, ...get().activityEvents].slice(0, 300);
+    saveStoredActivities(list);
+    set({ activityEvents: list });
   },
 
   // Tickets

@@ -28,6 +28,14 @@ export interface Client {
 export type CaseStatus = 'open' | 'in_progress' | 'waiting' | 'closed';
 export type CasePriority = 'low' | 'medium' | 'high' | 'critical';
 
+export interface NextAction {
+  description: string;
+  due_date?: string | null;
+  owner_type: 'me' | 'client' | 'third_party' | 'team';
+  owner_name?: string | null;
+  status: 'pending' | 'done';
+}
+
 export interface Case {
   id: string;
   client_id: string;
@@ -36,6 +44,7 @@ export interface Case {
   description?: string | null;
   status: CaseStatus;
   priority: CasePriority;
+  next_action?: NextAction | null;
   created_at: string;
   updated_at?: string | null;
   closed_at?: string | null;
@@ -65,6 +74,7 @@ export interface Followup {
   type: FollowupType;
   summary: string;
   date: string;
+  condition?: string | null;
   created_at: string;
 }
 
@@ -74,6 +84,47 @@ export interface Note {
   case_title?: string | null;
   client_name?: string | null;
   content: string;
+  created_at: string;
+}
+
+export type InboxItemStatus = 'inbox' | 'processed' | 'discarded';
+export type InboxSuggestedType = 'task' | 'case' | 'followup' | 'note';
+
+export interface InboxItem {
+  id: string;
+  content: string;
+  suggested_type?: InboxSuggestedType;
+  client_id?: string | null;
+  client_name?: string | null;
+  status: InboxItemStatus;
+  processed_as?: 'case' | 'commitment' | 'followup' | 'note' | 'discarded' | null;
+  created_at: string;
+  processed_at?: string | null;
+}
+
+export type ActivityEventType =
+  | 'case_created'
+  | 'case_status_changed'
+  | 'case_priority_changed'
+  | 'next_action_updated'
+  | 'commitment_created'
+  | 'commitment_completed'
+  | 'followup_created'
+  | 'email_sent'
+  | 'document_generated'
+  | 'note_created';
+
+export interface ActivityEvent {
+  id: string;
+  entity_type: 'case' | 'commitment' | 'client' | 'ticket' | 'followup' | 'document' | 'note' | 'inbox';
+  entity_id: string;
+  event_type: ActivityEventType;
+  title: string;
+  description?: string | null;
+  client_id?: string | null;
+  client_name?: string | null;
+  case_id?: string | null;
+  case_title?: string | null;
   created_at: string;
 }
 
@@ -87,7 +138,20 @@ export interface DashboardSummary {
   critical_cases: Case[];
 }
 
-export type ActiveTab = 'dashboard' | 'tickets' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports' | 'settings';
+export type ActiveTab =
+  | 'my_day'
+  | 'inbox'
+  | 'waiting_on'
+  | 'dashboard'
+  | 'tickets'
+  | 'cases'
+  | 'commitments'
+  | 'calendar'
+  | 'clients'
+  | 'notes'
+  | 'emails'
+  | 'reports'
+  | 'settings';
 
 export type TicketPriority = 'critical' | 'high' | 'medium' | 'low';
 export type TicketStatus = 'open' | 'in_progress' | 'waiting_client' | 'resolved' | 'closed';
