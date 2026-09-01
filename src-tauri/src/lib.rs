@@ -3,10 +3,41 @@ pub mod commands;
 
 use tauri::Manager;
 
+/// Called from the frontend to check + install an available update.
+/// Returns { available: bool, version?: string, notes?: string }
+#[tauri::command]
+async fn check_for_updates(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    use tauri_plugin_updater::UpdaterExt;
+
+    let updater = app
+        .updater_builder()
+        .build()
+        .map_err(|e| format!("Updater build error: {e}"))?;
+
+    match updater.check().await {
+        Ok(Some(update)) => {
+            let version = update.version.clone();
+            let notes   = update.body.clone().unwrap_or_default();
+            update
+                .download_and_install(|_, _| {}, || {})
+                .await
+                .map_err(|e| format!("Install error: {e}"))?;
+            Ok(serde_json::json!({
+                "available": true,
+                "version": version,
+                "notes": notes,
+            }))
+        }
+        Ok(None) => Ok(serde_json::json!({ "available": false })),
+        Err(e)   => Err(format!("Update check failed: {e}")),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let db_state = db::init_db(&app.handle())
                 .map_err(|e| format!("Failed to initialize database: {}", e))?;
@@ -14,6 +45,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            check_for_updates,
             // Clients
             commands::clients::get_clients,
             commands::clients::create_client,

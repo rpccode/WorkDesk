@@ -32,6 +32,7 @@ import { LiveToastContainer } from './components/LiveToastContainer';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
 import { BackgroundStatusWidget } from './components/BackgroundStatusWidget';
 import { DesktopMiniWidget } from './components/DesktopMiniWidget';
+import { UpdateChecker } from './components/UpdateChecker';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import { backgroundEngine } from './services/background-service';
 import { api } from './api/tauri';
@@ -425,7 +426,8 @@ export function App() {
           background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
         }}
       >
-        <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1300px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <UpdateChecker />
           {activeTab === 'dashboard'    && <DashboardView />}
           {activeTab === 'tickets'      && <TicketsView />}
           {activeTab === 'cases'        && <CasesView />}

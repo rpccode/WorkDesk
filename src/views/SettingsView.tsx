@@ -22,6 +22,7 @@ import {
 } from '../utils/theme-manager';
 import { playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
+import { CheckUpdatesButton } from '../components/UpdateChecker';
 import type { AccentColor, ConsultantProfile, ConsultantPreferences } from '../types';
 
 interface SettingsViewProps {
@@ -922,6 +923,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     ✓ Copia de seguridad exportada y guardada en Descargas
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Actualizaciones del Software */}
+            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+                  <ShieldCheck size={18} color="var(--accent-primary)" />
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Actualizaciones del Sistema</h3>
+                </div>
+
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.75rem', margin: 0 }}>
+                  WorkDesk busca automáticamente nuevas versiones al iniciar. También puedes buscar e instalar mejoras manualmente.
+                </p>
+              </div>
+
+              <div>
+                <CheckUpdatesButton />
               </div>
             </div>
 
