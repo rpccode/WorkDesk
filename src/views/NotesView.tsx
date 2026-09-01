@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { FileText, Plus, Search, Trash2 } from 'lucide-react';
 import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
+import { Pagination } from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { formatDate } from '../utils/date';
 
 export const NotesView: React.FC = () => {
@@ -36,7 +38,7 @@ export const NotesView: React.FC = () => {
     }
   };
 
-  const filteredNotes = notes.filter((n) => {
+  const filteredNotes = useMemo(() => notes.filter((n) => {
     const matchesSearch =
       n.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (n.case_title && n.case_title.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -45,7 +47,11 @@ export const NotesView: React.FC = () => {
     const matchesCase = !selectedCaseFilter || n.case_id === selectedCaseFilter;
 
     return matchesSearch && matchesCase;
-  });
+  }), [notes, searchTerm, selectedCaseFilter]);
+
+  const pagination = usePagination(filteredNotes, { defaultPageSize: 24, pageSizeOptions: [12, 24, 48, 96] });
+
+  React.useEffect(() => { pagination.resetPage(); }, [searchTerm, selectedCaseFilter]);
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -135,7 +141,7 @@ export const NotesView: React.FC = () => {
 
       {/* Notes Feed */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-        {filteredNotes.length === 0 ? (
+        {pagination.paginatedItems.length === 0 ? (
           <div
             className="glass-card"
             style={{
@@ -149,7 +155,7 @@ export const NotesView: React.FC = () => {
             <p style={{ fontSize: '1rem', fontWeight: 600 }}>No hay notas registradas</p>
           </div>
         ) : (
-          filteredNotes.map((n) => (
+          pagination.paginatedItems.map((n) => (
             <div
               key={n.id}
               className="glass-card"
@@ -203,6 +209,20 @@ export const NotesView: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredNotes.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          pageSizeOptions={[12, 24, 48, 96]}
+          onPageChange={pagination.setCurrentPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="notas"
+        />
+      )}
     </div>
   );
 };

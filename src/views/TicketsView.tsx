@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store';
 import {
   Tag,
@@ -16,6 +16,8 @@ import {
 import * as XLSX from 'xlsx';
 import { TicketModal } from '../components/TicketModal';
 import { BulkImportTicketsModal } from '../components/BulkImportTicketsModal';
+import { Pagination } from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { playNotificationSound } from '../utils/live-alerts';
 import type {
   Ticket,
@@ -70,6 +72,9 @@ export const TicketsView: React.FC = () => {
       return true;
     });
   }, [tickets, searchTerm, statusFilter, priorityFilter, categoryFilter, clientFilter]);
+
+  const pagination = usePagination(filteredTickets, { defaultPageSize: 25 });
+  useEffect(() => { pagination.resetPage(); }, [searchTerm, statusFilter, priorityFilter, categoryFilter, clientFilter]);
 
   // KPIs
   const totalCount = tickets.length;
@@ -605,7 +610,7 @@ export const TicketsView: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTickets.map((ticket) => (
+                {pagination.paginatedItems.map((ticket) => (
                   <tr
                     key={ticket.id}
                     style={{
@@ -715,6 +720,19 @@ export const TicketsView: React.FC = () => {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Pagination */}
+        {filteredTickets.length > 0 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setCurrentPage}
+            onPageSizeChange={pagination.setPageSize}
+            itemLabel="tickets"
+          />
         )}
       </div>
 

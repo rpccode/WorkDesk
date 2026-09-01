@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../store';
 import {
   CheckSquare,
@@ -9,6 +9,8 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { CommitmentModal } from '../components/CommitmentModal';
+import { Pagination } from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { formatRelativeDate, formatDate, isOverdue } from '../utils/date';
 
 export const CommitmentsView: React.FC = () => {
@@ -30,14 +32,19 @@ export const CommitmentsView: React.FC = () => {
     fetchCommitments();
   }, []);
 
-  const filteredCommitments = commitments.filter((c) => {
+  const filteredCommitments = useMemo(() => commitments.filter((c) => {
     const matchesSearch =
       c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.case_title && c.case_title.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (c.client_name && c.client_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return matchesSearch;
-  });
+  }), [commitments, searchTerm]);
+
+  const pagination = usePagination(filteredCommitments, { defaultPageSize: 25 });
+
+  // Reset page on filter change
+  React.useEffect(() => { pagination.resetPage(); }, [searchTerm, commitmentFilter]);
 
   const handleSnooze = async (id: string) => {
     if (!snoozeDate) return;
@@ -123,7 +130,7 @@ export const CommitmentsView: React.FC = () => {
 
       {/* List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {filteredCommitments.length === 0 ? (
+        {pagination.paginatedItems.length === 0 ? (
           <div
             className="glass-card"
             style={{
@@ -136,7 +143,7 @@ export const CommitmentsView: React.FC = () => {
             <p style={{ fontSize: '1rem', fontWeight: 600 }}>No hay compromisos con los filtros seleccionados</p>
           </div>
         ) : (
-          filteredCommitments.map((com) => {
+          pagination.paginatedItems.map((com) => {
             const isDone = com.status === 'done';
             const overdue = !isDone && isOverdue(com.due_date);
 
@@ -259,6 +266,19 @@ export const CommitmentsView: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredCommitments.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setCurrentPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="compromisos"
+        />
+      )}
 
       <CommitmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>

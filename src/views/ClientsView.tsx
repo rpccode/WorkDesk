@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../store';
 import {
   Users,
@@ -19,6 +19,8 @@ import {
 import { ClientModal } from '../components/ClientModal';
 import { CaseModal } from '../components/CaseModal';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
+import { Pagination } from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { playNotificationSound } from '../utils/live-alerts';
 import type { Client, ClientComplexity } from '../types';
 
@@ -40,7 +42,7 @@ export const ClientsView: React.FC = () => {
   }, []);
 
   // Filter logic
-  const filteredClients = clients.filter((c) => {
+  const filteredClients = useMemo(() => clients.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -56,7 +58,11 @@ export const ClientsView: React.FC = () => {
       c.complexity_weighted === selectedComplexity;
 
     return matchesSearch && matchesCategory && matchesComplexity;
-  });
+  }), [clients, searchTerm, selectedCategory, selectedComplexity]);
+
+  const pagination = usePagination(filteredClients, { defaultPageSize: 25 });
+
+  React.useEffect(() => { pagination.resetPage(); }, [searchTerm, selectedCategory, selectedComplexity, viewMode]);
 
   // Extract unique categories for filter
   const uniqueCategories = Array.from(
@@ -394,7 +400,7 @@ export const ClientsView: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map((c, idx) => {
+                {pagination.paginatedItems.map((c, idx) => {
                   return (
                     <tr
                       key={c.id}
@@ -501,11 +507,25 @@ export const ClientsView: React.FC = () => {
               </tfoot>
             </table>
           </div>
+
+          {/* Pagination - Matrix View */}
+          {filteredClients.length > 0 && (
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel="clientes"
+            />
+          )}
         </div>
       ) : (
         /* ─── VISTA TARJETAS (DIRECTORIO) ─── */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
-          {filteredClients.map((c) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+            {pagination.paginatedItems.map((c) => {
             const clientCases = cases.filter((item) => item.client_id === c.id);
             const activeCases = clientCases.filter((item) => item.status !== 'closed');
 
@@ -612,7 +632,22 @@ export const ClientsView: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+            })}
+          </div>
+
+          {/* Pagination - Cards View */}
+          {filteredClients.length > 0 && (
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              pageSizeOptions={[12, 24, 48, 96]}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel="clientes"
+            />
+          )}
         </div>
       )}
 

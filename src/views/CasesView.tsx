@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { Briefcase, Plus, Search, Mail } from 'lucide-react';
 import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
+import { Pagination } from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { formatDate } from '../utils/date';
 import type { Case } from '../types';
 
@@ -18,16 +20,24 @@ export const CasesView: React.FC = () => {
     fetchCases();
   }, []);
 
-  const filteredCases = cases.filter((c) => {
+  const filteredCases = useMemo(() => cases.filter((c) => {
     const matchesSearch =
       c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.client_name && c.client_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesPriority = priorityFilter === 'all' || c.priority === priorityFilter;
+    const matchesStatus =
+      caseFilter === 'all' ||
+      (caseFilter === 'active' ? c.status !== 'closed' : c.status === caseFilter);
 
-    return matchesSearch && matchesPriority;
-  });
+    return matchesSearch && matchesPriority && matchesStatus;
+  }), [cases, searchTerm, priorityFilter, caseFilter]);
+
+  const pagination = usePagination(filteredCases, { defaultPageSize: 25 });
+
+  // Reset page when filters change
+  useEffect(() => { pagination.resetPage(); }, [searchTerm, priorityFilter, caseFilter]);
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -61,7 +71,7 @@ export const CasesView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Gestión de Casos & Proyectos
+            Gestión de Casos &amp; Proyectos
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
             Expedientes de consultoría, hitos y control de entregables
@@ -117,11 +127,15 @@ export const CasesView: React.FC = () => {
             <option value="low">Baja</option>
           </select>
         </div>
+
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+          {filteredCases.length} caso{filteredCases.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Grid of Cases */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
-        {filteredCases.length === 0 ? (
+        {pagination.paginatedItems.length === 0 ? (
           <div
             className="glass-card"
             style={{
@@ -142,7 +156,7 @@ export const CasesView: React.FC = () => {
             </button>
           </div>
         ) : (
-          filteredCases.map((c) => (
+          pagination.paginatedItems.map((c) => (
             <div
               key={c.id}
               className="glass-card"
@@ -225,6 +239,20 @@ export const CasesView: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredCases.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          pageSizeOptions={[12, 24, 48, 96]}
+          onPageChange={pagination.setCurrentPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="casos"
+        />
+      )}
 
       <CaseDetailsDrawer c={selectedCase} onClose={() => setSelectedCase(null)} />
       <CaseModal isOpen={isNewCaseModalOpen} onClose={() => setIsNewCaseModalOpen(false)} />
