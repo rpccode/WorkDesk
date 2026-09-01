@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { Briefcase, Plus, Search, Mail } from 'lucide-react';
+import { Briefcase, Plus, Search, Mail, FileText } from 'lucide-react';
 import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
+import { CaseBriefModal } from '../components/CaseBriefModal';
 import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { formatDate } from '../utils/date';
@@ -15,6 +16,7 @@ export const CasesView: React.FC = () => {
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [isNewCaseModalOpen, setIsNewCaseModalOpen] = useState(false);
   const [caseToEdit, setCaseToEdit] = useState<Case | null>(null);
+  const [caseForBrief, setCaseForBrief] = useState<Case | null>(null);
 
   useEffect(() => {
     fetchCases();
@@ -262,6 +264,17 @@ export const CasesView: React.FC = () => {
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   <button
                     className="btn-secondary"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: 'var(--accent-primary)' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCaseForBrief(c);
+                    }}
+                    title="Generar minuta ejecutiva o resumen en Word"
+                  >
+                    <FileText size={13} /> Minuta
+                  </button>
+                  <button
+                    className="btn-secondary"
                     style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -308,6 +321,11 @@ export const CasesView: React.FC = () => {
         isOpen={!!caseToEdit}
         onClose={() => setCaseToEdit(null)}
         caseToEdit={caseToEdit}
+      />
+      <CaseBriefModal
+        isOpen={!!caseForBrief}
+        onClose={() => setCaseForBrief(null)}
+        caseItem={caseForBrief}
       />
     </div>
   );

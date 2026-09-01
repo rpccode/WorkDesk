@@ -22,13 +22,15 @@ import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { playNotificationSound } from '../utils/live-alerts';
-import type { Client, ClientComplexity } from '../types';
+import { calculateClientHealth } from '../utils/client-health';
+import type { Client, ClientComplexity, ClientHealthReport } from '../types';
 
 export const ClientsView: React.FC = () => {
-  const { clients, cases, fetchClients, fetchCases, deleteAllClients, addNotification } = useStore();
+  const { clients, cases, commitments, tickets, fetchClients, fetchCases, deleteAllClients, addNotification } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
+  const [selectedRisk, setSelectedRisk] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('matrix');
 
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -40,6 +42,73 @@ export const ClientsView: React.FC = () => {
     fetchClients();
     fetchCases();
   }, []);
+
+  // Compute health for each client
+  const clientHealthMap = useMemo(() => {
+    const map = new Map<string, ClientHealthReport>();
+    clients.forEach((c) => {
+      map.set(c.id, calculateClientHealth(c, cases, commitments, tickets));
+    });
+    return map;
+  }, [clients, cases, commitments, tickets]);
+
+  const getHealthBadge = (report?: ClientHealthReport) => {
+    if (!report) return null;
+    if (report.level === 'critical') {
+      return (
+        <span
+          title={report.recommendations[0]}
+          style={{
+            padding: '0.2rem 0.55rem',
+            borderRadius: '4px',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            color: 'var(--status-critical)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          🚨 Riesgo {report.score}/100
+        </span>
+      );
+    }
+    if (report.level === 'warning') {
+      return (
+        <span
+          title={report.recommendations[0]}
+          style={{
+            padding: '0.2rem 0.55rem',
+            borderRadius: '4px',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            color: 'var(--status-medium)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ⚠️ Observación {report.score}/100
+        </span>
+      );
+    }
+    return (
+      <span
+        style={{
+          padding: '0.2rem 0.55rem',
+          borderRadius: '4px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          color: 'var(--status-low)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        ✓ Saludable
+      </span>
+    );
+  };
 
   // Filter logic
   const filteredClients = useMemo(() => clients.filter((c) => {
@@ -57,8 +126,15 @@ export const ClientsView: React.FC = () => {
       c.complexity_evaluated === selectedComplexity ||
       c.complexity_weighted === selectedComplexity;
 
-    return matchesSearch && matchesCategory && matchesComplexity;
-  }), [clients, searchTerm, selectedCategory, selectedComplexity]);
+    const report = clientHealthMap.get(c.id);
+    const matchesRisk =
+      selectedRisk === 'all' ||
+      (selectedRisk === 'critical' && report?.level === 'critical') ||
+      (selectedRisk === 'warning' && report?.level === 'warning') ||
+      (selectedRisk === 'healthy' && report?.level === 'healthy');
+
+    return matchesSearch && matchesCategory && matchesComplexity && matchesRisk;
+  }), [clients, searchTerm, selectedCategory, selectedComplexity, selectedRisk, clientHealthMap]);
 
   const pagination = usePagination(filteredClients, { defaultPageSize: 25 });
 
@@ -289,6 +365,17 @@ export const ClientsView: React.FC = () => {
             <option value="Media">🟡 Media</option>
             <option value="Baja">🟢 Baja</option>
           </select>
+
+          <select
+            value={selectedRisk}
+            onChange={(e) => setSelectedRisk(e.target.value)}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+          >
+            <option value="all">Todo Estado Salud</option>
+            <option value="critical">🚨 Riesgo Crítico</option>
+            <option value="warning">⚠️ En Observación</option>
+            <option value="healthy">🟢 Saludable</option>
+          </select>
         </div>
 
         {/* View Toggle */}
@@ -371,6 +458,9 @@ export const ClientsView: React.FC = () => {
                     Cliente / Cuenta
                   </th>
                   <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontWeight: 800 }}>
+                    Salud & Riesgo
+                  </th>
+                  <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontWeight: 800 }}>
                     Complejidad Ponderada
                   </th>
                   <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontWeight: 800 }}>
@@ -401,6 +491,7 @@ export const ClientsView: React.FC = () => {
               </thead>
               <tbody>
                 {pagination.paginatedItems.map((c, idx) => {
+                  const health = clientHealthMap.get(c.id);
                   return (
                     <tr
                       key={c.id}
@@ -419,6 +510,10 @@ export const ClientsView: React.FC = () => {
                             </span>
                           )}
                         </div>
+                      </td>
+
+                      <td style={{ padding: '0.8rem 0.85rem', textAlign: 'center' }}>
+                        {getHealthBadge(health)}
                       </td>
 
                       <td style={{ padding: '0.8rem 0.85rem', textAlign: 'center' }}>

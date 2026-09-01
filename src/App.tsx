@@ -19,10 +19,12 @@ import {
   Inbox,
   Clock,
   Search,
+  TrendingUp,
 } from 'lucide-react';
 import { MyDayView } from './views/MyDayView';
 import { WaitingOnView } from './views/WaitingOnView';
 import { InboxView } from './views/InboxView';
+import { ConsultingAnalyticsView } from './views/ConsultingAnalyticsView';
 import { DashboardView } from './views/DashboardView';
 import { TicketsView } from './views/TicketsView';
 import { CasesView } from './views/CasesView';
@@ -188,6 +190,11 @@ export function App() {
       label: 'Calendario',
       icon: <Calendar size={17} />,
       section: 'Herramientas',
+    },
+    {
+      id: 'analytics',
+      label: 'Analíticas & SLA',
+      icon: <TrendingUp size={17} />,
     },
     {
       id: 'reports',
@@ -522,6 +529,7 @@ export function App() {
           {activeTab === 'calendar'     && <CalendarView />}
           {activeTab === 'clients'      && <ClientsView />}
           {activeTab === 'notes'        && <NotesView />}
+          {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
           {activeTab === 'emails'       && <EmailBuilderView />}
           {activeTab === 'reports'      && <ReportsView />}
           {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}

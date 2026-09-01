@@ -13,16 +13,20 @@ import {
   Target,
   Building2,
   Mail,
+  ShieldAlert,
 } from 'lucide-react';
 import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
 import { CommitmentModal } from '../components/CommitmentModal';
+import { calculateClientHealth } from '../utils/client-health';
 import type { Case, NextAction } from '../types';
 
 export const MyDayView: React.FC = () => {
   const {
     cases,
     commitments,
+    clients,
+    tickets,
     consultantProfile,
     setActiveTab,
     setSelectedCaseId,
@@ -86,6 +90,17 @@ export const MyDayView: React.FC = () => {
         return dateA.localeCompare(dateB);
       });
   }, [activeCases]);
+
+  // Consulting Intelligence: Critical Risk Accounts
+  const criticalRiskClients = useMemo(() => {
+    return clients
+      .map((c) => ({
+        client: c,
+        report: calculateClientHealth(c, cases, commitments, tickets),
+      }))
+      .filter((item) => item.report.level === 'critical')
+      .sort((a, b) => b.report.score - a.report.score);
+  }, [clients, cases, commitments, tickets]);
 
   const handleSaveNextAction = (caseId: string) => {
     if (!nextActionDesc.trim()) return;
@@ -179,9 +194,38 @@ export const MyDayView: React.FC = () => {
       </div>
 
       {/* ── ATENCIÓN URGENTE / ANOMALÍAS ─────────────────────────────────────── */}
-      {(overdueCommitments.length > 0 || casesWithoutNextAction.length > 0 || criticalCases.length > 0) && (
+      {(overdueCommitments.length > 0 || casesWithoutNextAction.length > 0 || criticalCases.length > 0 || criticalRiskClients.length > 0) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
           
+          {/* Cuentas en Riesgo Crítico */}
+          {criticalRiskClients.length > 0 && (
+            <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-critical)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-critical)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <ShieldAlert size={15} /> {criticalRiskClients.length} Cuenta(s) en Riesgo Crítico
+                </span>
+                <button type="button" className="btn-ghost" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('analytics')}>
+                  Analíticas <ArrowRight size={12} />
+                </button>
+              </div>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
+                Acumulación de retrasos o bloqueos prolongados detectados:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {criticalRiskClients.slice(0, 2).map(({ client, report }) => (
+                  <div key={client.id} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {client.name}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--status-critical)', fontWeight: 800 }}>
+                      Score {report.score}/100
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Vencidos */}
           {overdueCommitments.length > 0 && (
             <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-critical)' }}>

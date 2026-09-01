@@ -151,7 +151,51 @@ export type ActiveTab =
   | 'notes'
   | 'emails'
   | 'reports'
+  | 'analytics'
   | 'settings';
+
+export type ClientHealthLevel = 'healthy' | 'warning' | 'critical';
+
+export interface ClientHealthReport {
+  client_id: string;
+  score: number; // 0 - 100 (Risk Score: 0 is great, 100 is critical risk)
+  level: ClientHealthLevel;
+  factors: {
+    overdue_count: number;
+    waiting_days_max: number;
+    critical_tickets_count: number;
+    complexity_penalty: number;
+  };
+  recommendations: string[];
+}
+
+export interface CaseBrief {
+  case_id: string;
+  title: string;
+  client_name: string;
+  generated_at: string;
+  executive_summary: string;
+  key_decisions: string[];
+  next_action?: NextAction | null;
+  pending_commitments: Commitment[];
+  completed_commitments: Commitment[];
+  blockers: string[];
+}
+
+export interface ConsultantAnalytics {
+  on_time_sla_rate: number;
+  total_commitments_completed: number;
+  avg_case_resolution_days: number;
+  avg_client_response_days: number;
+  bottlenecks_by_client: {
+    client_id: string;
+    client_name: string;
+    waiting_items_count: number;
+    avg_waiting_days: number;
+  }[];
+}
+
+export type EmailTone = 'formal' | 'assertive' | 'alignment' | 'technical';
 
 export type TicketPriority = 'critical' | 'high' | 'medium' | 'low';
 export type TicketStatus = 'open' | 'in_progress' | 'waiting_client' | 'resolved' | 'closed';

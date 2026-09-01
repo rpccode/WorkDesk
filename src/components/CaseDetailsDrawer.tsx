@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { CommitmentModal } from './CommitmentModal';
 import { FollowupModal } from './FollowupModal';
+import { CaseBriefModal } from './CaseBriefModal';
 import { formatDate, isOverdue } from '../utils/date';
 import type { Case, NextAction } from '../types';
 
@@ -47,6 +48,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
 
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
+  const [isBriefModalOpen, setIsBriefModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes' | 'emails' | 'timeline'>('commitments');
 
   // Next action inline editing state
@@ -339,6 +341,13 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               onClick={() => setIsFollowupModalOpen(true)}
             >
               <Plus size={14} /> Registrar Actividad
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', color: 'var(--accent-primary)' }}
+              onClick={() => setIsBriefModalOpen(true)}
+            >
+              <FileText size={14} /> Minuta Ejecutiva
             </button>
             <button
               className="btn-secondary"
@@ -689,6 +698,12 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
         onClose={() => setIsFollowupModalOpen(false)}
         caseId={c.id}
         caseTitle={c.title}
+      />
+
+      <CaseBriefModal
+        isOpen={isBriefModalOpen}
+        onClose={() => setIsBriefModalOpen(false)}
+        caseItem={c}
       />
     </>
   );

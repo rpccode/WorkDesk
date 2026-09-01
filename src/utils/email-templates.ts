@@ -89,6 +89,64 @@ Saludos cordiales,`;
     },
   },
   {
+    id: 'minuta_ejecutiva_completa',
+    name: 'Minuta Ejecutiva de Caso (Consulting Intelligence)',
+    category: 'minuta',
+    subjectTemplate: (d) =>
+      `Minuta Ejecutiva & Próximos Pasos: ${d.caseTitle || '[Caso]'} — ${d.clientName || '[Cliente]'}`,
+    bodyTemplate: (d) => {
+      const recipient = d.recipientName || d.clientName || 'Estimados';
+      const myItems = (d.myCommitments || [])
+        .map((c) => `  ➔ [Consultor] ${c.description} (Límite: ${c.due_date ? formatDate(c.due_date) : 'Por definir'})`)
+        .join('\n');
+      const clientItems = (d.clientCommitments || [])
+        .map((c) => `  ➔ [Cliente] ${c.description} (Límite: ${c.due_date ? formatDate(c.due_date) : 'Por definir'})`)
+        .join('\n');
+
+      return `Estimado/a ${recipient},
+
+Junto con saludar, comparto el informe ejecutivo y estado de acuerdos para el caso "${d.caseTitle || '[Caso]'}" (${d.clientName || '[Cliente]'}):
+
+1. RESUMEN Y ALCANCE:
+${d.caseDescription || '  • Seguimiento operativo del caso.'}
+
+2. PRÓXIMOS PASOS Y COMPROMISOS:
+${myItems ? `Compromisos de Consultoría:\n${myItems}\n` : ''}
+${clientItems ? `Requerimientos y Validaciones del Cliente:\n${clientItems}\n` : ''}
+${!myItems && !clientItems ? '  • Todos los compromisos al día.\n' : ''}
+${d.nextSteps ? `Próxima Acción Inmediata:\n➔ ${d.nextSteps}\n` : ''}
+${d.extraNotes ? `3. OBSERVACIONES:\n${d.extraNotes}\n` : ''}
+Quedo a su disposición para cualquier duda o alineación técnica.
+
+Saludos cordiales,`;
+    },
+  },
+  {
+    id: 'reclamo_firme_bloqueo',
+    name: 'Reclamo Firme de Bloqueo / Destrabe Crítico',
+    category: 'escalacion',
+    subjectTemplate: (d) =>
+      `[CRÍTICO] Bloqueo de avance en caso: ${d.caseTitle || '[Caso]'} — Requerimiento de validación`,
+    bodyTemplate: (d) => {
+      const recipient = d.recipientName || d.clientName || 'Equipo';
+      const clientItems = (d.clientCommitments || [])
+        .map((c) => `  • ${c.description}${c.due_date ? ` (Pactado para: ${formatDate(c.due_date)})` : ''}`)
+        .join('\n');
+
+      return `Estimado/a ${recipient},
+
+Nos ponemos en contacto para alertar sobre una dependencia crítica que mantiene detenido el avance del caso "${d.caseTitle || '[Caso]'}".
+
+PUNTOS BLOQUEANTES EN ESPERA DE SU RESPUESTA:
+${clientItems || '  • Validación técnica y entrega de información pendiente.'}
+
+${d.extraNotes ? `Impacto:\n${d.extraNotes}\n` : 'El no contar con estas definiciones impacta de forma directa las fechas comprometidas en el cronograma.\n'}
+Agradecemos encarecidamente confirmar la fecha límite en la que contaremos con esta información para reanudar los trabajos.
+
+Atentamente,`;
+    },
+  },
+  {
     id: 'cierre_caso',
     name: 'Cierre y Entrega Final',
     category: 'cierre',
