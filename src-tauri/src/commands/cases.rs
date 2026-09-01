@@ -29,6 +29,7 @@ pub struct CreateCaseInput {
 #[derive(Debug, Deserialize)]
 pub struct UpdateCaseInput {
     pub id: String,
+    pub client_id: Option<String>,
     pub title: String,
     pub description: Option<String>,
     pub status: String,
@@ -131,10 +132,26 @@ pub fn update_case(state: State<'_, DbState>, input: UpdateCaseInput) -> Result<
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let now = Utc::now().to_rfc3339();
 
-    let rows = conn.execute(
-        "UPDATE cases SET title = ?1, description = ?2, status = ?3, priority = ?4, updated_at = ?5 WHERE id = ?6",
-        rusqlite::params![input.title, input.description, input.status, input.priority, now, input.id],
-    ).map_err(|e| e.to_string())?;
+    let rows = if let Some(ref new_client_id) = input.client_id {
+        // Check if client exists
+        let client_exists: i64 = conn
+            .query_row("SELECT COUNT(*) FROM clients WHERE id = ?1", [new_client_id], |r| r.get(0))
+            .map_err(|e| e.to_string())?;
+
+        if client_exists == 0 {
+            return Err("El cliente especificado no existe.".to_string());
+        }
+
+        conn.execute(
+            "UPDATE cases SET client_id = ?1, title = ?2, description = ?3, status = ?4, priority = ?5, updated_at = ?6 WHERE id = ?7",
+            rusqlite::params![new_client_id, input.title, input.description, input.status, input.priority, now, input.id],
+        ).map_err(|e| e.to_string())?
+    } else {
+        conn.execute(
+            "UPDATE cases SET title = ?1, description = ?2, status = ?3, priority = ?4, updated_at = ?5 WHERE id = ?6",
+            rusqlite::params![input.title, input.description, input.status, input.priority, now, input.id],
+        ).map_err(|e| e.to_string())?
+    };
 
     if rows == 0 {
         return Err("Caso no encontrado.".to_string());

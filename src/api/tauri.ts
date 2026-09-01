@@ -50,7 +50,7 @@ export const api = {
     invoke<Case[]>('get_cases', { statusFilter }),
   createCase: (input: { client_id: string; title: string; description?: string; priority?: string }) =>
     invoke<Case>('create_case', { input }),
-  updateCase: (input: { id: string; title: string; description?: string; status: string; priority: string }) =>
+  updateCase: (input: { id: string; client_id?: string; title: string; description?: string; status: string; priority: string }) =>
     invoke<Case>('update_case', { input }),
   closeCase: (id: string) => invoke<void>('close_case', { id }),
 

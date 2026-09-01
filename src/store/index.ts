@@ -121,7 +121,7 @@ interface WorkDeskState {
   isLoadingCases: boolean;
   fetchCases: () => Promise<void>;
   createCase: (input: { client_id: string; title: string; description?: string; priority?: string }) => Promise<Case>;
-  updateCase: (input: { id: string; title: string; description?: string; status: string; priority: string }) => Promise<Case>;
+  updateCase: (input: { id: string; client_id?: string; title: string; description?: string; status: string; priority: string }) => Promise<Case>;
   closeCase: (id: string) => Promise<void>;
 
   // Commitments

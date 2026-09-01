@@ -87,6 +87,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       if (caseToEdit) {
         await updateCase({
           id: caseToEdit.id,
+          client_id: clientId,
           title: title.trim(),
           description: description.trim() || undefined,
           priority,
@@ -194,79 +195,77 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {!caseToEdit && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Cliente <span style={{ color: 'var(--status-critical)' }}>*</span>
-                </label>
-                {clients.length > 0 && (
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem', color: 'var(--accent-primary)' }}
-                    onClick={() => setIsClientModalOpen(true)}
-                  >
-                    + Crear otro cliente
-                  </button>
-                )}
-              </div>
-
-              {clients.length === 0 ? (
-                <div
-                  style={{
-                    padding: '1rem',
-                    borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'var(--accent-glow)',
-                    border: '1px solid rgba(37,99,235,0.2)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.6rem',
-                  }}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Cliente Asignado <span style={{ color: 'var(--status-critical)' }}>*</span>
+              </label>
+              {clients.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem', color: 'var(--accent-primary)' }}
+                  onClick={() => setIsClientModalOpen(true)}
                 >
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                    Aún no tienes clientes registrados para vincular este caso.
-                  </p>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
-                      onClick={() => setIsClientModalOpen(true)}
-                    >
-                      <UserPlus size={13} /> + Crear Cliente
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
-                      onClick={() => setIsBulkImportOpen(true)}
-                    >
-                      <FileSpreadsheet size={13} /> Importar Excel / CSV
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <SearchableClientSelect
-                    clients={clients}
-                    selectedClientId={clientId}
-                    onChange={(id) => {
-                      setClientId(id);
-                      if (fieldErrors.client) setFieldErrors((prev) => ({ ...prev, client: '' }));
-                    }}
-                    placeholder="Buscar cliente por nombre o empresa..."
-                    required
-                  />
-                  {fieldErrors.client && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <AlertCircle size={12} /> {fieldErrors.client}
-                    </span>
-                  )}
-                </>
+                  + Crear otro cliente
+                </button>
               )}
             </div>
-          )}
+
+            {clients.length === 0 ? (
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--accent-glow)',
+                  border: '1px solid rgba(37,99,235,0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                }}
+              >
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                  Aún no tienes clientes registrados para vincular este caso.
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
+                    onClick={() => setIsClientModalOpen(true)}
+                  >
+                    <UserPlus size={13} /> + Crear Cliente
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
+                    onClick={() => setIsBulkImportOpen(true)}
+                  >
+                    <FileSpreadsheet size={13} /> Importar Excel / CSV
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <SearchableClientSelect
+                  clients={clients}
+                  selectedClientId={clientId}
+                  onChange={(id) => {
+                    setClientId(id);
+                    if (fieldErrors.client) setFieldErrors((prev) => ({ ...prev, client: '' }));
+                  }}
+                  placeholder="Buscar o reasignar cliente por nombre o empresa..."
+                  required
+                />
+                {fieldErrors.client && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <AlertCircle size={12} /> {fieldErrors.client}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
