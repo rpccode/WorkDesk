@@ -45,7 +45,7 @@
       "active": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJENEI2MzFDMEVDQzMyMjkKUldRcE1zd09IR05MdlRXZWtqMEordUI2a3h5bEgrK2dhWXNpZW9xaFVCWFpqbDFud2hiZk5YSzEK",
       "endpoints": [
-        "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/releases/latest.json"
+        "https://github.com/rpccode/WorkDesk/releases/latest/download/latest.json"
       ],
       "dialog": false,
       "windows": {

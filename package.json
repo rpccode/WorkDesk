@@ -9,7 +9,15 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "build:exe": "npm run tauri build",
-    "build:exe:debug": "npm run tauri build -- --debug"
+    "build:exe:debug": "npm run tauri build -- --debug",
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "publish": "node scripts/release.js --publish",
+    "publish:patch": "node scripts/release.js patch --publish",
+    "publish:minor": "node scripts/release.js minor --publish",
+    "publish:major": "node scripts/release.js major --publish"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

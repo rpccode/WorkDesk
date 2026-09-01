@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Tauri updater keys & releases
+*.key
+*.key.pub
+dist-release/
+.env
+.env*.local
