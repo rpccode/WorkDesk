@@ -12,6 +12,7 @@ import {
 import {
   parseTicketExcelFile,
   convertRowsToCreateTicketInputs,
+  extractNewClientsFromRows,
   generateTicketExcelTemplate,
   type TicketImportValidationResult,
 } from '../utils/excel-ticket-importer';
@@ -28,7 +29,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { clients, tickets, bulkCreateTickets, addNotification } = useStore();
+  const { clients, tickets, bulkCreateTickets, createClient, addNotification } = useStore();
 
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
@@ -78,10 +79,28 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
     setImportProgress(10);
 
     try {
+      // 1. Auto-create any new distinct clients found in the import
+      const newClients = extractNewClientsFromRows(validationResult.rows);
+      if (newClients.length > 0) {
+        setImportProgress(25);
+        for (const nc of newClients) {
+          try {
+            await createClient({
+              name: nc.name,
+              company: nc.company || undefined,
+              email: nc.email || undefined,
+            });
+          } catch (e) {
+            console.warn('Auto-create client fallback:', e);
+          }
+        }
+      }
+
+      setImportProgress(45);
       const fallbackClientId = clients[0]?.id || '';
       const inputs = convertRowsToCreateTicketInputs(validationResult.rows, fallbackClientId);
 
-      setImportProgress(50);
+      setImportProgress(75);
       const created = await bulkCreateTickets(inputs);
       setImportProgress(100);
 
@@ -89,7 +108,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
       addNotification({
         type: 'success',
         title: 'Carga Masiva Exitosa',
-        message: `Se importaron ${created.length} tickets correctamente.`,
+        message: `Se importaron ${created.length} tickets correctamente${newClients.length > 0 ? ` y se crearon ${newClients.length} nuevos clientes` : ''}.`,
         show_toast: true,
       });
 
@@ -288,7 +307,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
           {validationResult && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span
                     className="badge"
                     style={{
@@ -315,8 +334,36 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     </span>
                   )}
 
+                  {validationResult.duplicateCount > 0 && (
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        color: 'var(--status-high)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ⚠ {validationResult.duplicateCount} Duplicados
+                    </span>
+                  )}
+
+                  {validationResult.newClientsCount > 0 && (
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                        color: 'var(--accent-primary)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      + {validationResult.newClientsCount} Nuevos Clientes
+                    </span>
+                  )}
+
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                    Total analizado: {validationResult.totalRows} filas
+                    {validationResult.totalRows} filas · encabezado en fila {validationResult.detectedHeaderRow}
                   </span>
                 </div>
 
