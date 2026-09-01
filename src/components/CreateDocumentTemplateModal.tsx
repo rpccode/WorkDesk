@@ -26,6 +26,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<DocumentTemplate['category']>('Personalizado');
   const [content, setContent] = useState('');
+  const [htmlContent, setHtmlContent] = useState<string | undefined>(undefined);
+  const [isHtmlFormat, setIsHtmlFormat] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isReadingFile, setIsReadingFile] = useState(false);
@@ -67,6 +69,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
     try {
       const parsed = await parseDocumentTemplateFile(file);
       setContent(parsed.content);
+      setHtmlContent(parsed.htmlContent);
+      setIsHtmlFormat(parsed.isHtmlFormat ?? false);
       setUploadedFileName(file.name);
       if (!title.trim()) {
         setTitle(parsed.title);
@@ -76,7 +80,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
       addNotification({
         type: 'success',
         title: 'Archivo Word Importado',
-        message: `El contenido de "${file.name}" se cargó en la plantilla.`,
+        message: `El contenido de "${file.name}" se cargó preservando el formato original.`,
         show_toast: true,
       });
     } catch (err: any) {
@@ -130,6 +134,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
         description: description.trim() || 'Plantilla personalizada de consultoría',
         category,
         content,
+        htmlContent: isHtmlFormat ? htmlContent : undefined,
+        isHtmlFormat,
       });
 
       playNotificationSound('success');

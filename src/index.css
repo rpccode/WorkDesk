@@ -670,3 +670,136 @@ button:active {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* -----------------------------------------------------------------------
+   Word (.docx) HTML Preview — preserva formato original del documento
+   ------------------------------------------------------------------------ */
+.docx-html-preview {
+  font-size: 0.87rem;
+  line-height: 1.75;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.docx-html-preview p {
+  margin: 0.45rem 0;
+}
+
+.docx-html-preview h1 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 1.5rem 0 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.docx-html-preview h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 1.4rem 0 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.3rem;
+}
+
+.docx-html-preview h3 {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 1rem 0 0.35rem;
+}
+
+.docx-html-preview h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  margin: 0.85rem 0 0.3rem;
+}
+
+.docx-html-preview strong, .docx-html-preview b {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.docx-html-preview em, .docx-html-preview i {
+  font-style: italic;
+  color: #334155;
+}
+
+.docx-html-preview ul {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  padding: 0;
+  list-style: disc;
+}
+
+.docx-html-preview ol {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  padding: 0;
+  list-style: decimal;
+}
+
+.docx-html-preview li {
+  margin: 0.2rem 0;
+  line-height: 1.65;
+}
+
+.docx-html-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.82rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.docx-html-preview thead tr {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.docx-html-preview th {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid #334155;
+}
+
+.docx-html-preview td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.docx-html-preview tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.docx-html-preview tbody tr:hover {
+  background-color: #eff6ff;
+}
+
+.docx-html-preview blockquote {
+  margin: 0.85rem 0;
+  padding: 0.65rem 1rem;
+  background-color: #f8fafc;
+  border-left: 4px solid #2563eb;
+  border-radius: 0 4px 4px 0;
+  color: #334155;
+  font-style: italic;
+}
+
+.docx-html-preview a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.docx-html-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}

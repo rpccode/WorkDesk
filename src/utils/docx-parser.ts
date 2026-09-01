@@ -1,92 +1,71 @@
 import mammoth from 'mammoth';
 
 /**
- * Converts HTML produced by Mammoth into clean Markdown compatible with WorkDesk document generator.
+ * Convierte colores CSS de Word a nombres legibles.
  */
-function convertHtmlToMarkdown(html: string): string {
-  let md = html;
-
-  // Headings
-  md = md.replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n');
-  md = md.replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n');
-  md = md.replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n');
-  md = md.replace(/<h4>(.*?)<\/h4>/gi, '### $1\n\n');
-
-  // Bold & Italic
-  md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
-  md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
-  md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
-  md = md.replace(/<i>(.*?)<\/i>/gi, '*$1*');
-
-  // Lists
-  md = md.replace(/<li><p>(.*?)<\/p><\/li>/gi, '- $1\n');
-  md = md.replace(/<li>(.*?)<\/li>/gi, '- $1\n');
-  md = md.replace(/<ul>\s*/gi, '\n');
-  md = md.replace(/<\/ul>\s*/gi, '\n');
-  md = md.replace(/<ol>\s*/gi, '\n');
-  md = md.replace(/<\/ol>\s*/gi, '\n');
-
-  // Tables
-  md = md.replace(/<table>([\s\S]*?)<\/table>/gi, (_match, tableBody) => {
-    const rows = tableBody.match(/<tr>([\s\S]*?)<\/tr>/gi) || [];
-    if (rows.length === 0) return '';
-
-    let tableMd = '\n';
-    rows.forEach((rowHtml: string, index: number) => {
-      const cells = rowHtml.match(/<(td|th)[^>]*>([\s\S]*?)<\/(td|th)>/gi) || [];
-      const rowCells = cells.map((c: string) =>
-        c.replace(/<(td|th)[^>]*>/gi, '').replace(/<\/(td|th)>/gi, '').trim().replace(/\n/g, ' ')
-      );
-
-      tableMd += '| ' + rowCells.join(' | ') + ' |\n';
-
-      // Insert separator after first row
-      if (index === 0) {
-        tableMd += '| ' + rowCells.map(() => ':---').join(' | ') + ' |\n';
-      }
-    });
-
-    return tableMd + '\n';
-  });
-
-  // Paragraphs
-  md = md.replace(/<p>(.*?)<\/p>/gi, '$1\n\n');
-
-  // Line breaks
-  md = md.replace(/<br\s*\/?>/gi, '\n');
-
-  // Clean empty tags and excessive newlines
-  md = md.replace(/<[^>]+>/g, '');
-  md = md.replace(/\n{3,}/g, '\n\n');
-
-  return md.trim();
+function normalizeMammothHtml(html: string): string {
+  // Asegura que los párrafos vacíos en Word se conviertan en espacio
+  return html
+    .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
+    .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>');
 }
 
 /**
- * Parses a Word (.docx) file or text/markdown file into formatted text.
+ * Opciones extendidas de Mammoth para preservar formato avanzado del Word.
+ */
+const mammothOptions = {
+  styleMap: [
+    "p[style-name='Heading 1'] => h1:fresh",
+    "p[style-name='Heading 2'] => h2:fresh",
+    "p[style-name='Heading 3'] => h3:fresh",
+    "p[style-name='Heading 4'] => h4:fresh",
+    "p[style-name='Title'] => h1.doc-title:fresh",
+    "p[style-name='Subtitle'] => p.doc-subtitle:fresh",
+    "p[style-name='Quote'] => blockquote:fresh",
+    "p[style-name='Intense Quote'] => blockquote.intense:fresh",
+    "p[style-name='Caption'] => p.caption:fresh",
+    "table => table",
+    "tr => tr",
+    "td => td",
+    "th => th",
+  ],
+};
+
+/**
+ * Parses a Word (.docx) file preserving its original formatting as HTML.
+ * Falls back to markdown conversion for .txt and .md files.
  */
 export async function parseDocumentTemplateFile(file: File): Promise<{
   title: string;
   content: string;
+  htmlContent?: string;
+  isHtmlFormat?: boolean;
 }> {
   const fileName = file.name.replace(/\.[^/.]+$/, '');
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   if (extension === 'docx') {
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    const markdown = convertHtmlToMarkdown(result.value);
+    
+    // Use mammoth to get rich HTML with extended style mapping
+    const htmlResult = await mammoth.convertToHtml({ arrayBuffer }, mammothOptions);
+    const normalizedHtml = normalizeMammothHtml(htmlResult.value);
+
+    // Also extract plain text for storage/search purposes
+    const textResult = await mammoth.extractRawText({ arrayBuffer });
 
     return {
       title: fileName,
-      content: markdown || result.value,
+      content: textResult.value || normalizedHtml.replace(/<[^>]+>/g, ' '),
+      htmlContent: normalizedHtml,
+      isHtmlFormat: true,
     };
   } else {
-    // Text, Markdown, or other plain text formats
     const text = await file.text();
     return {
       title: fileName,
       content: text,
+      isHtmlFormat: false,
     };
   }
 }

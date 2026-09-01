@@ -6,6 +6,8 @@ export interface DocumentTemplate {
   description: string;
   category: 'Diagnóstico' | 'Minutas' | 'Propuestas' | 'Cierre' | 'Cartas' | 'Personalizado';
   content: string;
+  htmlContent?: string;      // Original Word HTML content (from .docx upload)
+  isHtmlFormat?: boolean;    // True when template was imported from Word
   isDefault?: boolean;
   createdAt?: string;
 }

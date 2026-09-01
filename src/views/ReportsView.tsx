@@ -654,6 +654,8 @@ export const ReportsView: React.FC = () => {
 
             <FormattedDocumentPreview
               markdownContent={renderedDocument}
+              htmlContent={activeGeneratorTemplate?.isHtmlFormat ? activeGeneratorTemplate.htmlContent : undefined}
+              isHtmlFormat={activeGeneratorTemplate?.isHtmlFormat || false}
               docTitle={activeGeneratorTemplate?.title || 'Documento'}
               docCategory={activeGeneratorTemplate?.category}
             />
