@@ -11,8 +11,39 @@ import type {
   ActiveTab,
   AppNotification,
   AddNotificationInput,
+  ConsultantProfile,
+  ConsultantPreferences,
 } from '../types';
 import { evaluateLiveAlerts, playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
+import {
+  DEFAULT_CONSULTANT_PROFILE,
+  DEFAULT_CONSULTANT_PREFERENCES,
+  applyAccentColor,
+} from '../utils/theme-manager';
+
+const PROFILE_KEY = 'workdesk_consultant_profile';
+const PREFERENCES_KEY = 'workdesk_consultant_preferences';
+
+function loadStoredProfile(): ConsultantProfile {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? { ...DEFAULT_CONSULTANT_PROFILE, ...JSON.parse(raw) } : DEFAULT_CONSULTANT_PROFILE;
+  } catch {
+    return DEFAULT_CONSULTANT_PROFILE;
+  }
+}
+
+function loadStoredPreferences(): ConsultantPreferences {
+  try {
+    const raw = localStorage.getItem(PREFERENCES_KEY);
+    const prefs = raw ? { ...DEFAULT_CONSULTANT_PREFERENCES, ...JSON.parse(raw) } : DEFAULT_CONSULTANT_PREFERENCES;
+    applyAccentColor(prefs.accent_color);
+    return prefs;
+  } catch {
+    applyAccentColor(DEFAULT_CONSULTANT_PREFERENCES.accent_color);
+    return DEFAULT_CONSULTANT_PREFERENCES;
+  }
+}
 
 interface WorkDeskState {
   // Navigation & UI
@@ -96,6 +127,13 @@ interface WorkDeskState {
   markAllNotificationsRead: () => void;
   clearAllNotifications: () => void;
   triggerLiveAlertsCheck: () => void;
+
+  // Consultant Profile & Personalization
+  consultantProfile: ConsultantProfile;
+  consultantPreferences: ConsultantPreferences;
+  updateConsultantProfile: (profile: Partial<ConsultantProfile>) => void;
+  updateConsultantPreferences: (prefs: Partial<ConsultantPreferences>) => void;
+  exportFullBackupJson: () => string;
 }
 
 export const useStore = create<WorkDeskState>((set, get) => ({
@@ -402,6 +440,53 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     const { commitments, cases, clients, addNotification } = get();
     const alerts = evaluateLiveAlerts(commitments, cases, clients);
     alerts.forEach((alert) => addNotification(alert));
+  },
+
+  // Consultant Profile & Personalization
+  consultantProfile: loadStoredProfile(),
+  consultantPreferences: loadStoredPreferences(),
+
+  updateConsultantProfile: (profileUpdate) => {
+    set((state) => {
+      const updated = { ...state.consultantProfile, ...profileUpdate };
+      try {
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving profile:', e);
+      }
+      return { consultantProfile: updated };
+    });
+  },
+
+  updateConsultantPreferences: (prefsUpdate) => {
+    set((state) => {
+      const updated = { ...state.consultantPreferences, ...prefsUpdate };
+      try {
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving preferences:', e);
+      }
+      if (prefsUpdate.accent_color) {
+        applyAccentColor(prefsUpdate.accent_color);
+      }
+      return { consultantPreferences: updated };
+    });
+  },
+
+  exportFullBackupJson: () => {
+    const state = get();
+    const backupData = {
+      version: '1.0',
+      exported_at: new Date().toISOString(),
+      consultant_profile: state.consultantProfile,
+      consultant_preferences: state.consultantPreferences,
+      clients: state.clients,
+      cases: state.cases,
+      commitments: state.commitments,
+      notes: state.notes,
+      followups: state.followups,
+    };
+    return JSON.stringify(backupData, null, 2);
   },
 
   // Master refresh

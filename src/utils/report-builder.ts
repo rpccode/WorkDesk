@@ -8,6 +8,8 @@ export interface WeeklyReportData {
   pendingCommitments: Commitment[];
   waitingCommitments: Commitment[];
   criticalCases: Case[];
+  consultantName?: string;
+  consultantRole?: string;
 }
 
 export function buildWeeklyReport(data: WeeklyReportData): string {
@@ -18,6 +20,8 @@ export function buildWeeklyReport(data: WeeklyReportData): string {
     pendingCommitments,
     waitingCommitments,
     criticalCases,
+    consultantName,
+    consultantRole,
   } = data;
 
   const totalActions =
@@ -26,8 +30,12 @@ export function buildWeeklyReport(data: WeeklyReportData): string {
     pendingCommitments.length +
     waitingCommitments.length;
 
+  const consultantHeader = consultantName
+    ? `**Elaborado por:** ${consultantName}${consultantRole ? ` (${consultantRole})` : ''}\n\n`
+    : '';
+
   if (totalActions === 0) {
-    return `# Informe Operativo Semanal — ${periodTitle}\n\n_No se registraron movimientos ni casos activos en este período._`;
+    return `# Informe Operativo Semanal — ${periodTitle}\n\n${consultantHeader}_No se registraron movimientos ni casos activos en este período._`;
   }
 
   const criticalSection =

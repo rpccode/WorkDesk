@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Layers,
   Bell,
+  Settings,
 } from 'lucide-react';
 import { DashboardView } from './views/DashboardView';
 import { CasesView } from './views/CasesView';
@@ -22,6 +23,7 @@ import { ClientsView } from './views/ClientsView';
 import { NotesView } from './views/NotesView';
 import { EmailBuilderView } from './views/EmailBuilderView';
 import { ReportsView } from './views/ReportsView';
+import { SettingsView } from './views/SettingsView';
 import { QuickCaptureModal } from './components/QuickCaptureModal';
 import { EmailAccountsModal } from './components/EmailAccountsModal';
 import { LiveToastContainer } from './components/LiveToastContainer';
@@ -135,6 +137,11 @@ export function App() {
       id: 'reports',
       label: 'Informe Ejecutivo',
       icon: <FileBarChart2 size={17} />,
+    },
+    {
+      id: 'settings',
+      label: 'Configuración',
+      icon: <Settings size={17} />,
     },
   ];
 
@@ -383,6 +390,7 @@ export function App() {
           {activeTab === 'notes'        && <NotesView />}
           {activeTab === 'emails'       && <EmailBuilderView />}
           {activeTab === 'reports'      && <ReportsView />}
+          {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
         </div>
       </main>
 

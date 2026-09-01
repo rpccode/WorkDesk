@@ -18,6 +18,7 @@ export interface TemplateData {
   clientCommitments?: Commitment[];
   nextSteps?: string;
   extraNotes?: string;
+  signature?: string;
 }
 
 export const EMAIL_TEMPLATES: EmailTemplate[] = [
@@ -137,8 +138,13 @@ Saludos,`;
 
 export function buildEmail(templateId: string, data: TemplateData): { subject: string; body: string } {
   const template = EMAIL_TEMPLATES.find((t) => t.id === templateId) || EMAIL_TEMPLATES[0];
+  let body = template.bodyTemplate(data);
+  if (data.signature) {
+    // Replace default trailing signature if custom signature provided
+    body = body.replace(/Saludos cordiales,$|Un cordial saludo,$|Saludos,$/m, '').trimEnd() + '\n\n' + data.signature;
+  }
   return {
     subject: template.subjectTemplate(data),
-    body: template.bodyTemplate(data),
+    body,
   };
 }

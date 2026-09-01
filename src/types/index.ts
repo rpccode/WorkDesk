@@ -75,7 +75,7 @@ export interface DashboardSummary {
   critical_cases: Case[];
 }
 
-export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports';
+export type ActiveTab = 'dashboard' | 'cases' | 'commitments' | 'calendar' | 'clients' | 'notes' | 'emails' | 'reports' | 'settings';
 
 export type EmailAccountProvider = 'smtp_imap' | 'microsoft_graph' | 'gmail_api';
 
@@ -199,4 +199,25 @@ export interface AddNotificationInput {
   action_label?: string;
   action_type?: 'open_case' | 'open_commitment' | 'open_email';
   show_toast?: boolean;
+}
+
+export type AccentColor = 'blue' | 'emerald' | 'indigo' | 'purple' | 'amber';
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export interface ConsultantProfile {
+  name: string;
+  role_title: string;
+  company: string;
+  email: string;
+  phone: string;
+  email_signature: string;
+}
+
+export interface ConsultantPreferences {
+  inactive_client_days: number;
+  enable_sound_alerts: boolean;
+  enable_desktop_notifications: boolean;
+  sync_interval_seconds: number;
+  accent_color: AccentColor;
+  theme_mode: ThemeMode;
 }

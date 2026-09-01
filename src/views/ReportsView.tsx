@@ -4,7 +4,7 @@ import { Copy, Check, Calendar, Download } from 'lucide-react';
 import { buildWeeklyReport } from '../utils/report-builder';
 
 export const ReportsView: React.FC = () => {
-  const { cases, commitments, fetchCases, fetchCommitments } = useStore();
+  const { cases, commitments, fetchCases, fetchCommitments, consultantProfile } = useStore();
   const [period, setPeriod] = useState('Semana en Curso');
   const [reportMarkdown, setReportMarkdown] = useState('');
   const [copied, setCopied] = useState(false);
@@ -28,10 +28,12 @@ export const ReportsView: React.FC = () => {
       completedCommitments,
       pendingCommitments,
       waitingCommitments,
+      consultantName: consultantProfile.name,
+      consultantRole: `${consultantProfile.role_title} • ${consultantProfile.company}`,
     });
 
     setReportMarkdown(md);
-  }, [cases, commitments, period]);
+  }, [cases, commitments, period, consultantProfile]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(reportMarkdown);

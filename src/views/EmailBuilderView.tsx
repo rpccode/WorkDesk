@@ -13,6 +13,7 @@ import {
 import { EMAIL_TEMPLATES, buildEmail } from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
 import { EmailAccountsModal } from '../components/EmailAccountsModal';
+import { formatSignature } from '../utils/theme-manager';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
 
@@ -28,6 +29,7 @@ export const EmailBuilderView: React.FC = () => {
     emailAccounts,
     fetchEmailAccounts,
     sendEmailDirect,
+    consultantProfile,
   } = useStore();
 
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseForEmail?.id || (cases[0]?.id || ''));
@@ -97,6 +99,8 @@ export const EmailBuilderView: React.FC = () => {
     const myCommitments = caseCommitments.filter((c) => c.owner === 'me');
     const clientCommitments = caseCommitments.filter((c) => c.owner !== 'me');
 
+    const customSignature = formatSignature(consultantProfile.email_signature, consultantProfile);
+
     const generated = buildEmail(selectedTemplateId, {
       clientName: currentCase.client_name,
       caseTitle: currentCase.title,
@@ -106,11 +110,12 @@ export const EmailBuilderView: React.FC = () => {
       clientCommitments,
       nextSteps: nextSteps || undefined,
       extraNotes: extraNotes || undefined,
+      signature: customSignature,
     });
 
     setSubject(generated.subject);
     setBody(generated.body);
-  }, [selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase]);
+  }, [selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase, consultantProfile]);
 
   const handleProviderChange = (provider: EmailProvider) => {
     setEmailProvider(provider);
