@@ -172,7 +172,7 @@ export const MyDayView: React.FC = () => {
   const selectedCase = cases.find((c) => c.id === selectedCaseId) || null;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px', margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── MORNING BRIEF HERO BANNER ────────────────────────────────────────── */}
       <div

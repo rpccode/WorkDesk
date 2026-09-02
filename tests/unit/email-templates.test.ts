@@ -43,4 +43,40 @@ describe('email-templates', () => {
       expect(res.body.length).toBeGreaterThan(20);
     });
   });
+
+  it('buildEmail works seamlessly with custom templates and placeholder interpolation', () => {
+    const customTpl = {
+      id: 'custom_1',
+      name: 'Plantilla de Pago',
+      category: 'personalizado' as const,
+      subjectPattern: 'Recordatorio de Factura: {{caseTitle}} para {{clientName}}',
+      bodyPattern: 'Hola {{recipientName}},\n\nFavor pagar {{caseTitle}}.\n\nCompromisos:\n{{myCommitments}}',
+      created_at: '2026-09-02T10:00:00Z',
+    };
+
+    const res = buildEmail(
+      'custom_1',
+      {
+        clientName: 'Banco Innova',
+        caseTitle: 'Servicio Cloud',
+        recipientName: 'Ana López',
+        myCommitments: [
+          {
+            id: 'cm1',
+            case_id: 'c1',
+            description: 'Enviar factura electrónica',
+            owner: 'me',
+            status: 'pending',
+            created_at: '2026-09-02',
+          },
+        ],
+      },
+      [customTpl]
+    );
+
+    expect(res.subject).toBe('Recordatorio de Factura: Servicio Cloud para Banco Innova');
+    expect(res.body).toContain('Hola Ana López,');
+    expect(res.body).toContain('Favor pagar Servicio Cloud.');
+    expect(res.body).toContain('Enviar factura electrónica');
+  });
 });

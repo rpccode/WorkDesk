@@ -12,12 +12,20 @@ import {
   Cpu,
   Bot,
 } from 'lucide-react';
-import { EMAIL_TEMPLATES, buildEmail } from '../utils/email-templates';
+import {
+  EMAIL_TEMPLATES,
+  buildEmail,
+  loadCustomTemplates,
+  deleteCustomTemplate,
+  type CustomEmailTemplate,
+} from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
 import { EmailAccountsModal } from '../components/EmailAccountsModal';
+import { EmailTemplateModal } from '../components/EmailTemplateModal';
 import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatSignature } from '../utils/theme-manager';
 import { generateContextualEmailAI } from '../services/ai-copilot';
+import { Plus, Trash2, Edit3 } from 'lucide-react';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
 
@@ -60,6 +68,10 @@ export const EmailBuilderView: React.FC = () => {
   const [autoLogFollowup, setAutoLogFollowup] = useState(true);
   const [isAccountsModalOpen, setIsAccountsModalOpen] = useState(false);
 
+  const [customTemplates, setCustomTemplates] = useState<CustomEmailTemplate[]>(() => loadCustomTemplates());
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<CustomEmailTemplate | null>(null);
+
   // Email provider preference for app/webmail fallback
   const [emailProvider, setEmailProvider] = useState<EmailProvider>(() => {
     return (localStorage.getItem(EMAIL_PROVIDER_KEY) as EmailProvider) || 'default';
@@ -67,6 +79,10 @@ export const EmailBuilderView: React.FC = () => {
 
   const currentCase = cases.find((c) => c.id === selectedCaseId);
   const currentClient = clients.find((cl) => cl.id === currentCase?.client_id);
+
+  const refreshCustomTemplates = () => {
+    setCustomTemplates(loadCustomTemplates());
+  };
 
   useEffect(() => {
     if (clients.length === 0) fetchClients();
@@ -115,21 +131,25 @@ export const EmailBuilderView: React.FC = () => {
 
     const customSignature = formatSignature(consultantProfile.email_signature, consultantProfile);
 
-    const generated = buildEmail(selectedTemplateId, {
-      clientName: currentCase.client_name,
-      caseTitle: currentCase.title,
-      caseDescription: currentCase.description,
-      recipientName: recipientName || undefined,
-      myCommitments,
-      clientCommitments,
-      nextSteps: nextSteps || undefined,
-      extraNotes: extraNotes || undefined,
-      signature: customSignature,
-    });
+    const generated = buildEmail(
+      selectedTemplateId,
+      {
+        clientName: currentCase.client_name,
+        caseTitle: currentCase.title,
+        caseDescription: currentCase.description,
+        recipientName: recipientName || undefined,
+        myCommitments,
+        clientCommitments,
+        nextSteps: nextSteps || undefined,
+        extraNotes: extraNotes || undefined,
+        signature: customSignature,
+      },
+      customTemplates
+    );
 
     setSubject(generated.subject);
     setBody(generated.body);
-  }, [mode, selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase, consultantProfile]);
+  }, [mode, selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase, consultantProfile, customTemplates]);
 
   const handleGenerateAIEmail = async () => {
     if (!aiInstruction.trim()) return;
@@ -402,10 +422,128 @@ export const EmailBuilderView: React.FC = () => {
           ) : (
             /* Traditional Templates Mode */
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                2. Tipo de Plantilla
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>
+                  2. Tipo de Plantilla
+                </label>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '0.2rem 0.5rem',
+                    color: 'var(--accent-primary)',
+                    fontWeight: 700,
+                    gap: '0.3rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  onClick={() => {
+                    setEditingTemplate(null);
+                    setIsTemplateModalOpen(true);
+                  }}
+                >
+                  <Plus size={12} /> Nueva / ✨ Con IA
+                </button>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                {/* Custom Templates */}
+                {customTemplates.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.25rem' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
+                      ⭐ Plantillas Personalizadas ({customTemplates.length})
+                    </span>
+                    {customTemplates.map((t) => {
+                      const isActive = selectedTemplateId === t.id;
+                      return (
+                        <div
+                          key={t.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            width: '100%',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSelectedTemplateId(t.id)}
+                            style={{
+                              flex: 1,
+                              textAlign: 'left',
+                              justifyContent: 'flex-start',
+                              fontSize: '0.82rem',
+                              padding: '0.5rem 0.75rem',
+                              fontWeight: isActive ? 700 : 500,
+                              background: isActive
+                                ? 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(147,51,234,0.15))'
+                                : 'var(--bg-surface-elevated)',
+                              border: `1px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                              borderRadius: 'var(--radius-md)',
+                              color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '7px',
+                                height: '7px',
+                                borderRadius: '50%',
+                                background: isActive ? 'var(--accent-primary)' : 'var(--accent-glow)',
+                                flexShrink: 0,
+                                display: 'inline-block',
+                              }}
+                            />
+                            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {t.name}
+                            </span>
+                            <span className="badge badge-neutral" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
+                              {t.category}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            style={{ padding: '0.4rem', color: 'var(--text-muted)' }}
+                            onClick={() => {
+                              setEditingTemplate(t);
+                              setIsTemplateModalOpen(true);
+                            }}
+                            title="Editar plantilla"
+                          >
+                            <Edit3 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            style={{ padding: '0.4rem', color: 'var(--status-critical)' }}
+                            onClick={() => {
+                              if (confirm(`¿Eliminar la plantilla "${t.name}"?`)) {
+                                deleteCustomTemplate(t.id);
+                                refreshCustomTemplates();
+                                if (selectedTemplateId === t.id) {
+                                  setSelectedTemplateId(EMAIL_TEMPLATES[0].id);
+                                }
+                              }
+                            }}
+                            title="Eliminar plantilla"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Built-in Templates */}
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
+                  📋 Plantillas Estándar
+                </span>
                 {EMAIL_TEMPLATES.map((t) => {
                   const isActive = selectedTemplateId === t.id;
                   return (
@@ -430,6 +568,9 @@ export const EmailBuilderView: React.FC = () => {
                         gap: '0.6rem',
                         whiteSpace: 'normal',
                         lineHeight: 1.3,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
                     >
                       <span style={{
@@ -744,6 +885,20 @@ export const EmailBuilderView: React.FC = () => {
       <EmailAccountsModal
         isOpen={isAccountsModalOpen}
         onClose={() => setIsAccountsModalOpen(false)}
+      />
+
+      {/* Custom Email Template Creator & Manager Modal */}
+      <EmailTemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => {
+          setIsTemplateModalOpen(false);
+          setEditingTemplate(null);
+        }}
+        initialTemplate={editingTemplate}
+        onTemplateSaved={(savedId) => {
+          refreshCustomTemplates();
+          setSelectedTemplateId(savedId);
+        }}
       />
     </div>
   );

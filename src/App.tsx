@@ -554,7 +554,7 @@ export function App() {
           background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
         }}
       >
-        <div style={{ maxWidth: '1300px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <UpdateChecker />
           {activeTab === 'my_day'       && <MyDayView />}
           {activeTab === 'inbox'        && <InboxView />}

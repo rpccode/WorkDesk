@@ -25,7 +25,7 @@ export interface WorkDeskContextData {
 export const DEFAULT_AI_CONFIG: AIConfig = {
   provider: 'gemini',
   apiKey: '',
-  model: 'gemini-2.0-flash',
+  model: 'gemini-2.5-flash',
   ollamaBaseUrl: 'http://localhost:11434',
   isConfigured: false,
 };
@@ -126,6 +126,15 @@ export async function callAI(
   }
 }
 
+export async function callAIGenerate(
+  config: AIConfig,
+  prompt: string,
+  systemContext: string = 'Eres un asistente inteligente para WorkDesk.',
+  temperature = 0.4
+): Promise<string> {
+  return callAI(prompt, systemContext, config, temperature);
+}
+
 // ── Provider Adapters ─────────────────────────────────────────────────────────
 
 async function callGemini(
@@ -134,8 +143,11 @@ async function callGemini(
   config: AIConfig,
   temperature: number
 ): Promise<string> {
-  const model = config.model || 'gemini-2.0-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+  let model = config.model?.trim() || 'gemini-2.5-flash';
+  // Auto-migrate deprecated 2.0-flash
+  if (model === 'gemini-2.0-flash' || model === 'models/gemini-2.0-flash') {
+    model = 'gemini-2.5-flash';
+  }
 
   const payload = {
     contents: [
@@ -150,11 +162,26 @@ async function callGemini(
     },
   };
 
-  const res = await fetch(url, {
+  let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+  let res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+
+  // If 404 on model name, try gemini-1.5-flash as robust fallback
+  if (res.status === 404 && model !== 'gemini-1.5-flash') {
+    const fallbackModel = 'gemini-1.5-flash';
+    const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${config.apiKey}`;
+    const fallbackRes = await fetch(fallbackUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (fallbackRes.ok) {
+      res = fallbackRes;
+    }
+  }
 
   if (!res.ok) {
     const errBody = await res.text();

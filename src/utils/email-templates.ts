@@ -194,7 +194,145 @@ Saludos,`;
   },
 ];
 
-export function buildEmail(templateId: string, data: TemplateData): { subject: string; body: string } {
+export const CUSTOM_TEMPLATES_KEY = 'workdesk_custom_email_templates_v1';
+
+export interface CustomEmailTemplate {
+  id: string;
+  name: string;
+  category: 'seguimiento' | 'minuta' | 'cierre' | 'escalacion' | 'personalizado';
+  subjectPattern: string;
+  bodyPattern: string;
+  created_at: string;
+}
+
+export interface PlaceholderInfo {
+  tag: string;
+  label: string;
+  description: string;
+  example: string;
+}
+
+export const AVAILABLE_PLACEHOLDERS: PlaceholderInfo[] = [
+  { tag: '{{clientName}}', label: 'Nombre del Cliente', description: 'Nombre del cliente o empresa del caso', example: 'Banco Innova' },
+  { tag: '{{recipientName}}', label: 'Nombre Destinatario', description: 'Persona a quien va dirigido el correo', example: 'Juan García' },
+  { tag: '{{caseTitle}}', label: 'Título del Caso', description: 'Título del caso activo', example: 'Auditoría de Procesos TI' },
+  { tag: '{{caseDescription}}', label: 'Descripción / Alcance', description: 'Contexto y descripción del caso', example: 'Revisión y optimización de servidores' },
+  { tag: '{{myCommitments}}', label: 'Mis Compromisos', description: 'Lista formateada de compromisos asumidos por nosotros', example: '• [Por nuestra parte] Enviar reporte (10/09)' },
+  { tag: '{{clientCommitments}}', label: 'Compromisos del Cliente', description: 'Lista formateada de compromisos y solicitudes al cliente', example: '• [Pendiente del cliente] Validar credenciales (12/09)' },
+  { tag: '{{nextSteps}}', label: 'Próxima Acción / Siguiente Paso', description: 'Siguiente hito o acción inmediata', example: 'Llamada de alineación el jueves a las 10am' },
+  { tag: '{{extraNotes}}', label: 'Notas Adicionales', description: 'Observaciones extras ingresadas en la pantalla', example: 'Se adjuntan los diagramas de flujo' },
+  { tag: '{{signature}}', label: 'Firma Profesional', description: 'Firma configurada del consultor', example: 'Ing. Roberto Pérez | Consultor Principal' },
+];
+
+/**
+ * Carga las plantillas personalizadas desde localStorage
+ */
+export function loadCustomTemplates(): CustomEmailTemplate[] {
+  try {
+    if (typeof localStorage === 'undefined') return [];
+    const raw = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Error loading custom email templates:', e);
+    return [];
+  }
+}
+
+/**
+ * Guarda o actualiza una plantilla personalizada
+ */
+export function saveCustomTemplate(template: Omit<CustomEmailTemplate, 'id' | 'created_at'> & { id?: string }): CustomEmailTemplate {
+  const all = loadCustomTemplates();
+  const id = template.id || `custom_tpl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const now = new Date().toISOString();
+
+  const item: CustomEmailTemplate = {
+    id,
+    name: template.name.trim(),
+    category: template.category || 'personalizado',
+    subjectPattern: template.subjectPattern.trim(),
+    bodyPattern: template.bodyPattern.trim(),
+    created_at: now,
+  };
+
+  const existingIndex = all.findIndex((t) => t.id === id);
+  let updated: CustomEmailTemplate[];
+  if (existingIndex >= 0) {
+    updated = all.map((t, idx) => (idx === existingIndex ? item : t));
+  } else {
+    updated = [...all, item];
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(updated));
+    }
+  } catch (e) {
+    console.error('Error saving custom email template:', e);
+  }
+
+  return item;
+}
+
+/**
+ * Elimina una plantilla personalizada
+ */
+export function deleteCustomTemplate(id: string): void {
+  const all = loadCustomTemplates();
+  const filtered = all.filter((t) => t.id !== id);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(filtered));
+    }
+  } catch (e) {
+    console.error('Error deleting custom email template:', e);
+  }
+}
+
+/**
+ * Reemplaza los placeholders en un texto de plantilla con los datos del caso
+ */
+export function interpolateTemplate(pattern: string, data: TemplateData): string {
+  const recipient = data.recipientName || data.clientName || 'Estimado/a';
+  const myItems = (data.myCommitments || [])
+    .map((c) => `  • [Por nuestra parte] ${c.description}${c.due_date ? ` (Fecha: ${formatDate(c.due_date)})` : ''}`)
+    .join('\n');
+  const clientItems = (data.clientCommitments || [])
+    .map((c) => `  • [Pendiente del cliente] ${c.description}${c.due_date ? ` (Fecha estimada: ${formatDate(c.due_date)})` : ''}`)
+    .join('\n');
+
+  return pattern
+    .replace(/\{\{clientName\}\}/g, data.clientName || '[Cliente]')
+    .replace(/\{\{recipientName\}\}/g, recipient)
+    .replace(/\{\{caseTitle\}\}/g, data.caseTitle || '[Caso]')
+    .replace(/\{\{caseDescription\}\}/g, data.caseDescription || '')
+    .replace(/\{\{myCommitments\}\}/g, myItems || '  • No hay compromisos pendientes de nuestro lado.')
+    .replace(/\{\{clientCommitments\}\}/g, clientItems || '  • No hay solicitudes pendientes de su parte.')
+    .replace(/\{\{nextSteps\}\}/g, data.nextSteps || '')
+    .replace(/\{\{extraNotes\}\}/g, data.extraNotes || '')
+    .replace(/\{\{signature\}\}/g, data.signature || '');
+}
+
+export function buildEmail(
+  templateId: string,
+  data: TemplateData,
+  customTemplates?: CustomEmailTemplate[]
+): { subject: string; body: string } {
+  // Check if it's a custom template
+  const customs = customTemplates || loadCustomTemplates();
+  const customTpl = customs.find((t) => t.id === templateId);
+  if (customTpl) {
+    let body = interpolateTemplate(customTpl.bodyPattern, data);
+    if (data.signature && !customTpl.bodyPattern.includes('{{signature}}')) {
+      body = body.replace(/Saludos cordiales,$|Un cordial saludo,$|Saludos,$/m, '').trimEnd() + '\n\n' + data.signature;
+    }
+    return {
+      subject: interpolateTemplate(customTpl.subjectPattern, data),
+      body,
+    };
+  }
+
+  // Fallback to built-in templates
   const template = EMAIL_TEMPLATES.find((t) => t.id === templateId) || EMAIL_TEMPLATES[0];
   let body = template.bodyTemplate(data);
   if (data.signature) {

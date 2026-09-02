@@ -231,7 +231,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   ];
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1100px', margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div
@@ -564,7 +564,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.35rem' }}>
                 {[
-                  { id: 'gemini', name: 'Google Gemini', badge: 'Recomendado / Gratis', defaultModel: 'gemini-2.0-flash' },
+                  { id: 'gemini', name: 'Google Gemini', badge: 'Recomendado / Gratis', defaultModel: 'gemini-2.5-flash' },
                   { id: 'openai', name: 'OpenAI (ChatGPT)', badge: 'GPT-4o mini', defaultModel: 'gpt-4o-mini' },
                   { id: 'anthropic', name: 'Anthropic Claude', badge: 'Claude 3.5 Haiku', defaultModel: 'claude-3-5-haiku-20241022' },
                   { id: 'ollama', name: 'Ollama Local', badge: '100% Offline', defaultModel: 'llama3' },
@@ -669,11 +669,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 type="text"
                 value={aiForm.model || ''}
                 onChange={(e) => handleAIChange('model', e.target.value)}
-                placeholder={aiForm.provider === 'gemini' ? 'gemini-2.0-flash' : aiForm.provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'}
+                placeholder={aiForm.provider === 'gemini' ? 'gemini-2.5-flash' : aiForm.provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'}
                 style={{ marginTop: '0.25rem', width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
               />
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
-                Ejemplos recomendados: <code>gemini-2.0-flash</code>, <code>gpt-4o-mini</code>, <code>claude-3-5-haiku-20241022</code>, <code>llama3:8b</code>.
+                Ejemplos recomendados: <code>gemini-2.5-flash</code>, <code>gpt-4o-mini</code>, <code>claude-3-5-haiku-20241022</code>, <code>llama3:8b</code>.
               </span>
             </div>
 

@@ -441,7 +441,7 @@ export const TicketsView: React.FC = () => {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '1400px', margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '3rem' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: '1.35rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>

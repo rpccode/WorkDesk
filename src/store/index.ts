@@ -51,7 +51,11 @@ const CASES_NEXT_ACTIONS_KEY = 'workdesk_cases_next_actions_v1';
 function loadStoredAIConfig(): AIConfig {
   try {
     const raw = localStorage.getItem(AI_CONFIG_KEY);
-    return raw ? { ...DEFAULT_AI_CONFIG, ...JSON.parse(raw) } : DEFAULT_AI_CONFIG;
+    const parsed = raw ? { ...DEFAULT_AI_CONFIG, ...JSON.parse(raw) } : DEFAULT_AI_CONFIG;
+    if (parsed.model === 'gemini-2.0-flash' || parsed.model === 'models/gemini-2.0-flash') {
+      parsed.model = 'gemini-2.5-flash';
+    }
+    return parsed;
   } catch {
     return DEFAULT_AI_CONFIG;
   }
