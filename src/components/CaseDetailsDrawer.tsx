@@ -21,8 +21,15 @@ import { CommitmentModal } from './CommitmentModal';
 import { FollowupModal } from './FollowupModal';
 import { CaseBriefModal } from './CaseBriefModal';
 import { MeetingPrepModal } from './MeetingPrepModal';
+import { EmailImportModal } from './EmailImportModal';
 import { formatDate, isOverdue } from '../utils/date';
 import { generateCaseSummaryAI, findSimilarCases } from '../services/ai-copilot';
+import {
+  generateICS,
+  triggerICSDownload,
+  generateGoogleCalendarUrl,
+  generateOutlookCalendarUrl,
+} from '../utils/calendar-sync';
 import type { Case, NextAction } from '../types';
 
 interface CaseDetailsDrawerProps {
@@ -58,6 +65,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
   const [isBriefModalOpen, setIsBriefModalOpen] = useState(false);
   const [isMeetingPrepOpen, setIsMeetingPrepOpen] = useState(false);
+  const [isEmailImportOpen, setIsEmailImportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes' | 'emails' | 'timeline' | 'similares'>('commitments');
 
   // AI Summary State
@@ -422,7 +430,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 onClose();
               }}
             >
-              <Mail size={13} /> Correo
+              <Mail size={13} /> Redactar
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+              onClick={() => setIsEmailImportOpen(true)}
+            >
+              <Mail size={13} /> 📎 Adjuntar Correo
             </button>
             {c.status !== 'closed' && (
               <button
@@ -599,6 +614,46 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             {/* TAB: COMMITMENTS */}
             {activeTab === 'commitments' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {caseCommitments.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem', gap: '0.35rem' }}
+                      onClick={() => {
+                        const events = caseCommitments
+                          .filter((cm) => cm.due_date)
+                          .map((cm) => ({
+                            id: cm.id,
+                            title: `[${c.title}] ${cm.description}`,
+                            description: `Compromiso de WorkDesk para el caso: ${c.title}\nResponsable: ${cm.owner === 'me' ? 'Mío' : cm.owner === 'client' ? 'Cliente' : 'Terceros'}`,
+                            startDate: cm.due_date!,
+                            clientName: c.client_name ?? undefined,
+                            status: cm.status === 'done' ? 'COMPLETED' : 'CONFIRMED',
+                          }));
+                        if (events.length === 0) {
+                          addNotification({
+                            type: 'info',
+                            title: 'Sin fechas de vencimiento',
+                            message: 'Asigna fecha a tus compromisos para exportarlos al calendario.',
+                            show_toast: true,
+                          });
+                          return;
+                        }
+                        const ics = generateICS(events, `Compromisos - ${c.title}`);
+                        triggerICSDownload(`compromisos-${c.id.slice(0, 8)}.ics`, ics);
+                        addNotification({
+                          type: 'success',
+                          title: 'Calendario Descargado',
+                          message: `Se exportaron ${events.length} compromisos a archivo .ics`,
+                          show_toast: true,
+                        });
+                      }}
+                    >
+                      <Calendar size={13} /> 📥 Exportar Todos a Calendario (.ics)
+                    </button>
+                  </div>
+                )}
+
                 {caseCommitments.length === 0 ? (
                   <div className="empty-state">
                     <CheckSquare size={32} />
@@ -624,8 +679,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                         opacity: comm.status === 'done' ? 0.65 : 1,
                       }}
                     >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <div style={{ flex: 1, minWidth: 0, marginRight: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                           <span className={`badge ${comm.owner === 'me' ? 'badge-low' : 'badge-medium'}`} style={{ fontSize: '0.68rem' }}>
                             {comm.owner === 'me' ? 'Mío' : comm.owner === 'client' ? 'Cliente' : 'Terceros'}
                           </span>
@@ -641,15 +696,69 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                             </span>
                           )}
                         </div>
-                        <p style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                        <p style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
                           {comm.description}
                         </p>
+
+                        {/* Calendar sync quick links */}
+                        {comm.due_date && comm.status !== 'done' && (
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              className="btn-ghost"
+                              style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', color: 'var(--accent-primary)' }}
+                              onClick={() => {
+                                const ics = generateICS([
+                                  {
+                                    id: comm.id,
+                                    title: comm.description,
+                                    description: `Caso: ${c.title}\nResponsable: ${comm.owner}`,
+                                    startDate: comm.due_date!,
+                                    clientName: c.client_name ?? undefined,
+                                  },
+                                ]);
+                                triggerICSDownload(`compromiso-${comm.id.slice(0, 6)}.ics`, ics);
+                              }}
+                              title="Descargar archivo .ics para Outlook/Apple/Google Calendar"
+                            >
+                              📥 .ics
+                            </button>
+                            <a
+                              href={generateGoogleCalendarUrl({
+                                title: comm.description,
+                                description: `Caso: ${c.title}`,
+                                startDate: comm.due_date,
+                              })}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-ghost"
+                              style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', textDecoration: 'none', color: 'var(--text-muted)' }}
+                              title="Crear evento en Google Calendar"
+                            >
+                              🌐 Google
+                            </a>
+                            <a
+                              href={generateOutlookCalendarUrl({
+                                title: comm.description,
+                                description: `Caso: ${c.title}`,
+                                startDate: comm.due_date,
+                              })}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-ghost"
+                              style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', textDecoration: 'none', color: 'var(--text-muted)' }}
+                              title="Crear evento en Outlook Calendar Web"
+                            >
+                              📧 Outlook
+                            </a>
+                          </div>
+                        )}
                       </div>
 
                       {comm.status !== 'done' && (
                         <button
                           className="btn-secondary"
-                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
+                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', flexShrink: 0 }}
                           onClick={() => markCommitmentDone(comm.id)}
                         >
                           <CheckCircle2 size={13} /> Listo
@@ -692,17 +801,51 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             {/* TAB: EMAILS */}
             {activeTab === 'emails' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {caseEmails.length} correo(s) vinculados
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                      onClick={() => setIsEmailImportOpen(true)}
+                    >
+                      <Mail size={13} /> 📎 Adjuntar / Importar Correo
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                      onClick={() => setCaseForEmail(c)}
+                    >
+                      <Mail size={13} /> Redactar
+                    </button>
+                  </div>
+                </div>
+
                 {caseEmails.length === 0 ? (
                   <div className="empty-state">
                     <Mail size={32} />
                     <p>No hay correos vinculados automáticamente a este caso.</p>
-                    <button
-                      className="btn-secondary"
-                      style={{ fontSize: '0.78rem', marginTop: '0.5rem' }}
-                      onClick={() => setCaseForEmail(c)}
-                    >
-                      <Mail size={13} /> Redactar Correo
-                    </button>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Puedes importar un correo (.eml o texto) o redactar uno nuevo directamente.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button
+                        className="btn-primary"
+                        style={{ fontSize: '0.78rem' }}
+                        onClick={() => setIsEmailImportOpen(true)}
+                      >
+                        <Mail size={13} /> 📎 Adjuntar Correo como Evidencia
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        style={{ fontSize: '0.78rem' }}
+                        onClick={() => setCaseForEmail(c)}
+                      >
+                        <Mail size={13} /> Redactar Correo
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   caseEmails.map((email) => (
@@ -899,6 +1042,19 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
         isOpen={isMeetingPrepOpen}
         onClose={() => setIsMeetingPrepOpen(false)}
         caseItem={c}
+      />
+
+      <EmailImportModal
+        isOpen={isEmailImportOpen}
+        onClose={() => {
+          setIsEmailImportOpen(false);
+          if (activeCase) {
+            fetchCaseEmails(activeCase.id);
+            fetchCommitments(activeCase.id);
+            fetchFollowups(activeCase.id);
+          }
+        }}
+        defaultCaseId={c.id}
       />
     </>
   );

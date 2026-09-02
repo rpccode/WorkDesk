@@ -298,6 +298,7 @@ interface WorkDeskState {
   sendEmailDirect: (input: import('../types').SendEmailInput) => Promise<import('../types').SendEmailResponse>;
   caseEmails: import('../types').CaseEmail[];
   fetchCaseEmails: (caseId: string) => Promise<void>;
+  addCaseEmail: (input: import('../types').SaveCaseEmailInput) => Promise<import('../types').CaseEmail>;
   syncInboxEmails: () => Promise<import('../types').SyncEmailsResult>;
   startOAuthLogin: (input: import('../types').StartOAuthInput) => Promise<import('../types').OAuthLoginResult>;
 
@@ -1014,6 +1015,13 @@ export const useStore = create<WorkDeskState>((set, get) => ({
     } catch (err) {
       console.error('Error fetching case emails:', err);
     }
+  },
+  addCaseEmail: async (input) => {
+    const saved = await api.saveCaseEmail(input);
+    set((state) => ({
+      caseEmails: [saved, ...state.caseEmails],
+    }));
+    return saved;
   },
   syncInboxEmails: async () => {
     const res = await api.syncInboxEmails();

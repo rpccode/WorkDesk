@@ -138,6 +138,7 @@ pub fn run() {
             commands::emails::test_email_connection,
             commands::emails::send_email_direct,
             commands::emails::get_case_emails,
+            commands::emails::save_case_email,
             commands::emails::sync_inbox_emails,
             // OAuth
             commands::oauth::start_oauth_login,

@@ -98,6 +98,8 @@ export const api = {
     invoke<import('../types').SendEmailResponse>('send_email_direct', { input }),
   getCaseEmails: (caseId: string) =>
     invoke<import('../types').CaseEmail[]>('get_case_emails', { caseId }),
+  saveCaseEmail: (input: import('../types').SaveCaseEmailInput) =>
+    invoke<import('../types').CaseEmail>('save_case_email', { input }),
   syncInboxEmails: () => invoke<import('../types').SyncEmailsResult>('sync_inbox_emails'),
   startOAuthLogin: (input: import('../types').StartOAuthInput) =>
     invoke<import('../types').OAuthLoginResult>('start_oauth_login', { input }),

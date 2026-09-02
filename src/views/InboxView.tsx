@@ -11,8 +11,10 @@ import {
   Building2,
   X,
   Sparkles,
+  Mail,
 } from 'lucide-react';
 import { CommitmentExtractorModal } from '../components/CommitmentExtractorModal';
+import { EmailImportModal } from '../components/EmailImportModal';
 import type { InboxItem, InboxSuggestedType } from '../types';
 
 export const InboxView: React.FC = () => {
@@ -30,6 +32,7 @@ export const InboxView: React.FC = () => {
   const [suggestedType, setSuggestedType] = useState<InboxSuggestedType>('task');
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'processed'>('unprocessed');
   const [isExtractorOpen, setIsExtractorOpen] = useState(false);
+  const [isEmailImportOpen, setIsEmailImportOpen] = useState(false);
 
   // Processing modal state
   const [processingItem, setProcessingItem] = useState<InboxItem | null>(null);
@@ -125,6 +128,18 @@ export const InboxView: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.85rem',
+              gap: '0.4rem',
+            }}
+            onClick={() => setIsEmailImportOpen(true)}
+          >
+            <Mail size={14} /> Importar Correo
+          </button>
           <button
             type="button"
             className="btn-secondary"
@@ -457,6 +472,12 @@ export const InboxView: React.FC = () => {
       <CommitmentExtractorModal
         isOpen={isExtractorOpen}
         onClose={() => setIsExtractorOpen(false)}
+      />
+
+      {/* Modal Importador de Correos */}
+      <EmailImportModal
+        isOpen={isEmailImportOpen}
+        onClose={() => setIsEmailImportOpen(false)}
       />
 
     </div>

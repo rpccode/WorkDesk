@@ -523,6 +523,66 @@ pub fn get_case_emails(db: State<'_, DbState>, case_id: String) -> Result<Vec<Ca
     Ok(emails)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SaveCaseEmailInput {
+    pub case_id: String,
+    pub account_id: Option<String>,
+    pub direction: String,
+    pub sender: String,
+    pub recipient: String,
+    pub subject: String,
+    pub body_text: String,
+    pub body_html: Option<String>,
+    pub message_id: Option<String>,
+    pub date: Option<String>,
+}
+
+#[tauri::command]
+pub fn save_case_email(
+    db: State<'_, DbState>,
+    input: SaveCaseEmailInput,
+) -> Result<CaseEmail, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let email_id = Uuid::new_v4().to_string();
+    let now = Utc::now().to_rfc3339();
+    let date = input.date.unwrap_or_else(|| now.clone());
+
+    conn.execute(
+        "INSERT INTO case_emails (id, case_id, account_id, direction, sender, recipient, subject, body_text, body_html, message_id, date, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+        params![
+            email_id,
+            input.case_id,
+            input.account_id,
+            input.direction,
+            input.sender,
+            input.recipient,
+            input.subject,
+            input.body_text,
+            input.body_html,
+            input.message_id,
+            date,
+            now
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(CaseEmail {
+        id: email_id,
+        case_id: input.case_id,
+        account_id: input.account_id,
+        direction: input.direction,
+        sender: input.sender,
+        recipient: input.recipient,
+        subject: input.subject,
+        body_text: input.body_text,
+        body_html: input.body_html,
+        message_id: input.message_id,
+        date,
+        created_at: now,
+    })
+}
+
 #[derive(Debug, Deserialize)]
 struct GraphMessageItem {
     pub id: Option<String>,

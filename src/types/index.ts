@@ -324,6 +324,19 @@ export interface CaseEmail {
   created_at: string;
 }
 
+export interface SaveCaseEmailInput {
+  case_id: string;
+  account_id?: string | null;
+  direction: 'inbound' | 'outbound';
+  sender: string;
+  recipient: string;
+  subject: string;
+  body_text: string;
+  body_html?: string | null;
+  message_id?: string | null;
+  date?: string;
+}
+
 export interface SendEmailInput {
   account_id?: string;
   case_id: string;
