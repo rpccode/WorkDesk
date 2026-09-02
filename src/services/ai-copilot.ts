@@ -25,7 +25,7 @@ export interface WorkDeskContextData {
 export const DEFAULT_AI_CONFIG: AIConfig = {
   provider: 'gemini',
   apiKey: '',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-1.5-flash',
   ollamaBaseUrl: 'http://localhost:11434',
   isConfigured: false,
 };
@@ -143,15 +143,17 @@ async function callGemini(
   config: AIConfig,
   temperature: number
 ): Promise<string> {
-  // Normalize deprecated model names
+  // Normalize deprecated model names to active stable ones
   const DEPRECATED: Record<string, string> = {
-    'gemini-2.0-flash': 'gemini-2.5-flash',
-    'models/gemini-2.0-flash': 'gemini-2.5-flash',
-    'gemini-2.0-flash-001': 'gemini-2.5-flash',
-    'gemini-2.0-flash-thinking-exp': 'gemini-2.5-flash',
+    'gemini-2.0-flash': 'gemini-1.5-flash',
+    'models/gemini-2.0-flash': 'gemini-1.5-flash',
+    'gemini-2.0-flash-001': 'gemini-1.5-flash',
+    'gemini-2.0-flash-thinking-exp': 'gemini-1.5-flash',
+    'gemini-pro': 'gemini-1.5-flash',
+    'gemini-1.0-pro': 'gemini-1.5-flash',
   };
 
-  let model = config.model?.trim() || 'gemini-2.5-flash';
+  let model = config.model?.trim() || 'gemini-1.5-flash';
   model = DEPRECATED[model] ?? model;
 
   const payload = {
@@ -177,7 +179,7 @@ async function callGemini(
 
   // Cascade fallback order when model is unavailable (404)
   if (!res.ok && res.status === 404) {
-    const fallbackChain = ['gemini-2.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-flash'];
+    const fallbackChain = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.5-flash', 'gemini-1.5-flash-8b'];
     for (const fb of fallbackChain) {
       if (fb === model) continue;
       const fbRes = await makeRequest(fb);
@@ -191,7 +193,7 @@ async function callGemini(
     // Provide a friendlier error message for model-not-found
     if (res.status === 404) {
       throw new Error(
-        `El modelo de Gemini "${model}" no está disponible. Ve a Configuración → Motor de IA y selecciona "Gemini 2.5 Flash".`
+        `El modelo de Gemini "${model}" no está activo en tu cuenta. Ve a Configuración → Motor de IA y selecciona "Gemini 1.5 Flash".`
       );
     }
     throw new Error(`Error Gemini (${res.status}): ${errBody}`);

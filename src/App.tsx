@@ -62,9 +62,12 @@ import type { ActiveTab } from './types';
     if (!raw) return;
     const cfg = JSON.parse(raw);
     const DEPRECATED: Record<string, string> = {
-      'gemini-2.0-flash': 'gemini-2.5-flash',
-      'models/gemini-2.0-flash': 'gemini-2.5-flash',
-      'gemini-2.0-flash-001': 'gemini-2.5-flash',
+      'gemini-2.0-flash': 'gemini-1.5-flash',
+      'models/gemini-2.0-flash': 'gemini-1.5-flash',
+      'gemini-2.0-flash-001': 'gemini-1.5-flash',
+      'gemini-2.0-flash-thinking-exp': 'gemini-1.5-flash',
+      'gemini-pro': 'gemini-1.5-flash',
+      'gemini-1.0-pro': 'gemini-1.5-flash',
     };
     if (cfg?.model && DEPRECATED[cfg.model]) {
       cfg.model = DEPRECATED[cfg.model];

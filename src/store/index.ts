@@ -48,14 +48,16 @@ const INBOX_STORAGE_KEY = 'workdesk_inbox_items_v1';
 const ACTIVITIES_STORAGE_KEY = 'workdesk_activities_v1';
 const CASES_NEXT_ACTIONS_KEY = 'workdesk_cases_next_actions_v1';
 
-/** Normalize any deprecated Gemini model name to the current recommended one */
+/** Normalize any deprecated Gemini model name to the current active stable one */
 function normalizeGeminiModel(model: string | undefined): string | undefined {
   if (!model) return model;
   const deprecated: Record<string, string> = {
-    'gemini-2.0-flash': 'gemini-2.5-flash',
-    'models/gemini-2.0-flash': 'gemini-2.5-flash',
-    'gemini-2.0-flash-001': 'gemini-2.5-flash',
-    'gemini-2.0-flash-thinking-exp': 'gemini-2.5-flash',
+    'gemini-2.0-flash': 'gemini-1.5-flash',
+    'models/gemini-2.0-flash': 'gemini-1.5-flash',
+    'gemini-2.0-flash-001': 'gemini-1.5-flash',
+    'gemini-2.0-flash-thinking-exp': 'gemini-1.5-flash',
+    'gemini-pro': 'gemini-1.5-flash',
+    'gemini-1.0-pro': 'gemini-1.5-flash',
   };
   return deprecated[model] ?? model;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
 import {
   User,
@@ -200,8 +200,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
     });
   };
 
+  useEffect(() => {
+    setAiForm(aiConfig);
+  }, [aiConfig]);
+
   const handleAIChange = <K extends keyof AIConfig>(field: K, value: AIConfig[K]) => {
     const updated = { ...aiForm, [field]: value };
+    setAiForm(updated);
+    updateAIConfig(updated);
+    triggerSavedFeedback();
+  };
+
+  const handleSelectProvider = (provId: AIProvider, defaultModel: string) => {
+    const updated: AIConfig = {
+      ...aiForm,
+      provider: provId,
+      model: defaultModel,
+    };
     setAiForm(updated);
     updateAIConfig(updated);
     triggerSavedFeedback();
@@ -615,22 +630,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.35rem' }}>
                 {[
-                  { id: 'gemini', name: 'Google Gemini', badge: 'Recomendado / Gratis', defaultModel: 'gemini-2.5-flash' },
+                  { id: 'gemini', name: 'Google Gemini', badge: 'Recomendado / Gratis', defaultModel: 'gemini-1.5-flash' },
                   { id: 'openai', name: 'OpenAI (ChatGPT)', badge: 'GPT-4o mini', defaultModel: 'gpt-4o-mini' },
-                  { id: 'anthropic', name: 'Anthropic Claude', badge: 'Claude 3.5 Haiku', defaultModel: 'claude-3-5-haiku-20241022' },
-                  { id: 'ollama', name: 'Ollama Local', badge: '100% Offline', defaultModel: 'llama3' },
+                  { id: 'anthropic', name: 'Anthropic Claude', badge: 'Claude 3.7 / 3.5', defaultModel: 'claude-3-7-sonnet-20250219' },
+                  { id: 'ollama', name: 'Ollama Local', badge: '100% Offline & Privado', defaultModel: 'llama3.3' },
                 ].map((prov) => {
                   const isSelected = aiForm.provider === prov.id;
                   return (
                     <button
                       key={prov.id}
                       type="button"
-                      onClick={() => {
-                        handleAIChange('provider', prov.id as AIProvider);
-                        if (!aiForm.model || aiForm.model.includes('gemini') || aiForm.model.includes('gpt') || aiForm.model.includes('claude') || aiForm.model.includes('llama')) {
-                          handleAIChange('model', prov.defaultModel);
-                        }
-                      }}
+                      onClick={() => handleSelectProvider(prov.id as AIProvider, prov.defaultModel)}
                       style={{
                         padding: '0.75rem',
                         borderRadius: 'var(--radius-md)',
@@ -715,41 +725,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
             {(() => {
               const MODEL_OPTIONS: Record<string, { id: string; label: string; tag?: string }[]> = {
                 gemini: [
-                  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', tag: '⚡ Rápido · Recomendado' },
-                  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', tag: '🧠 Avanzado · Preciso' },
-                  { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash Experimental', tag: '🔬 Experimental' },
-                  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', tag: '🔄 Estable' },
-                  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', tag: '💪 Potente' },
+                  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', tag: '⚡ Estable · Rápido · Recomendado' },
+                  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', tag: '🧠 Avanzado · Alta Precisión' },
+                  { id: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B', tag: '💨 Ultra Ligero' },
+                  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', tag: '🚀 Nueva Generación' },
+                  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', tag: '🔬 Nueva Generación Pro' },
                   { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
                 ],
+
                 openai: [
-                  { id: 'gpt-4o', label: 'GPT-4o', tag: '🧠 El más capaz' },
-                  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', tag: '⚡ Rápido · Económico · Recomendado' },
-                  { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', tag: '🔍 Contexto largo' },
-                  { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', tag: '🏃 Ultra rápido' },
-                  { id: 'o1-mini', label: 'o1 Mini', tag: '🤔 Razonamiento' },
+                  { id: 'gpt-4o', label: 'GPT-4o', tag: '🧠 Más Capaz' },
+                  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', tag: '⚡ Rápido · Recomendado' },
+                  { id: 'o3-mini', label: 'o3 Mini', tag: '🤔 Razonamiento Rápido' },
+                  { id: 'o1', label: 'o1', tag: '🧩 Razonamiento Profundo' },
+                  { id: 'o1-mini', label: 'o1 Mini', tag: '🔍 Razonamiento Compacto' },
+                  { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', tag: '📜 128k Contexto' },
                   { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
                 ],
                 anthropic: [
-                  { id: 'claude-opus-4-5', label: 'Claude Opus 4.5', tag: '🏆 El más poderoso' },
-                  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', tag: '⚖️ Equilibrado · Recomendado' },
-                  { id: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', tag: '🧠 Razonamiento extendido' },
-                  { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tag: '✨ Alta calidad' },
-                  { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', tag: '⚡ Rápido · Económico' },
+                  { id: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', tag: '🧠 Híbrido / Razonamiento · Más Reciente' },
+                  { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet v2', tag: '✨ Alta Calidad · Recomendado' },
+                  { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', tag: '⚡ Ultra Rápido y Económico' },
+                  { id: 'claude-3-opus-20240229', label: 'Claude 3 Opus', tag: '🏆 Máxima Precisión' },
                   { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
                 ],
                 ollama: [
-                  { id: 'llama3.1', label: 'Llama 3.1', tag: '⭐ Recomendado' },
-                  { id: 'llama3', label: 'Llama 3', tag: '🦙 Estable' },
-                  { id: 'llama3:8b', label: 'Llama 3 8B', tag: '💨 Ligero' },
-                  { id: 'mistral', label: 'Mistral', tag: '🌪️ Eficiente' },
-                  { id: 'mixtral', label: 'Mixtral 8x7B', tag: '🔀 Mezcla de expertos' },
-                  { id: 'codellama', label: 'CodeLlama', tag: '💻 Para código' },
-                  { id: 'phi3', label: 'Phi-3', tag: '🔬 Compacto · Microsoft' },
-                  { id: 'gemma2', label: 'Gemma 2', tag: '🌀 Google' },
+                  { id: 'llama3.3', label: 'Llama 3.3 70B', tag: '🦙 Meta · Más Potente' },
+                  { id: 'llama3.2', label: 'Llama 3.2 3B', tag: '💨 Ultra Rápido' },
+                  { id: 'llama3.1', label: 'Llama 3.1 8B', tag: '⭐ Recomendado' },
+                  { id: 'deepseek-r1', label: 'DeepSeek R1', tag: '🐋 Razonamiento Local' },
+                  { id: 'qwen2.5', label: 'Qwen 2.5', tag: '🌐 Multilingüe' },
+                  { id: 'mistral', label: 'Mistral 7B', tag: '🌪️ Eficiente' },
+                  { id: 'phi4', label: 'Phi-4 14B', tag: '🔬 Microsoft' },
+                  { id: 'gemma2', label: 'Gemma 2 9B', tag: '🌀 Google' },
                   { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
                 ],
               };
+
 
               const options = MODEL_OPTIONS[aiForm.provider] || MODEL_OPTIONS.gemini;
               const isCustom = !options.slice(0, -1).find((o) => o.id === aiForm.model);
