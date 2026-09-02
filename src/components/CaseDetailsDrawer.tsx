@@ -79,6 +79,15 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const [nextActionDueDate, setNextActionDueDate] = useState('');
   const [nextActionOwner, setNextActionOwner] = useState<'me' | 'client' | 'third_party' | 'team'>('me');
 
+  const similarCases = useMemo(() => {
+    try {
+      return activeCase ? findSimilarCases(activeCase, cases || [], notes || []) : [];
+    } catch (err) {
+      console.error('Error finding similar cases:', err);
+      return [];
+    }
+  }, [activeCase, cases, notes]);
+
   useEffect(() => {
     if (activeCase) {
       fetchCommitments(activeCase.id);
@@ -130,15 +139,6 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       show_toast: true,
     });
   };
-
-  const similarCases = useMemo(() => {
-    try {
-      return c ? findSimilarCases(c, cases || [], notes || []) : [];
-    } catch (err) {
-      console.error('Error finding similar cases:', err);
-      return [];
-    }
-  }, [c, cases, notes]);
 
   const handleGenerateAISummary = async () => {
     setIsGeneratingSummary(true);
