@@ -48,7 +48,53 @@ import { CopilotPanel } from './components/CopilotPanel';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import { backgroundEngine } from './services/background-service';
 import { api } from './api/tauri';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { logAppError } from './utils/error-logger';
 import type { ActiveTab } from './types';
+
+// ── Parche de migración automática ────────────────────────────────────────────
+// Se ejecuta UNA VEZ al importar el módulo, antes de que cualquier componente
+// monte, para corregir el modelo de Gemini deprecado en localStorage.
+(function patchDeprecatedGeminiModel() {
+  try {
+    const KEY = 'workdesk_ai_config_v1';
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const cfg = JSON.parse(raw);
+    const DEPRECATED: Record<string, string> = {
+      'gemini-2.0-flash': 'gemini-2.5-flash',
+      'models/gemini-2.0-flash': 'gemini-2.5-flash',
+      'gemini-2.0-flash-001': 'gemini-2.5-flash',
+    };
+    if (cfg?.model && DEPRECATED[cfg.model]) {
+      cfg.model = DEPRECATED[cfg.model];
+      localStorage.setItem(KEY, JSON.stringify(cfg));
+    }
+  } catch { /* silently ignore */ }
+})();
+
+(function attachGlobalErrorCapture() {
+  if (typeof window === 'undefined') return;
+
+  window.addEventListener('error', (event) => {
+    logAppError(event.error || event.message || 'Error de ventana no controlado', {
+      source: 'window.onerror',
+      stack: event.error?.stack,
+    });
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    logAppError(
+      reason instanceof Error ? reason : String(reason || 'Promesa rechazada no controlada'),
+      {
+        source: 'window.onunhandledrejection',
+        stack: reason instanceof Error ? reason.stack : undefined,
+      }
+    );
+  });
+})();
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function App() {
   const {
@@ -556,20 +602,22 @@ export function App() {
       >
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <UpdateChecker />
-          {activeTab === 'my_day'       && <MyDayView />}
-          {activeTab === 'inbox'        && <InboxView />}
-          {activeTab === 'waiting_on'   && <WaitingOnView />}
-          {activeTab === 'dashboard'    && <DashboardView />}
-          {activeTab === 'tickets'      && <TicketsView />}
-          {activeTab === 'cases'        && <CasesView />}
-          {activeTab === 'commitments'  && <CommitmentsView />}
-          {activeTab === 'calendar'     && <CalendarView />}
-          {activeTab === 'clients'      && <ClientsView />}
-          {activeTab === 'notes'        && <NotesView />}
-          {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
-          {activeTab === 'emails'       && <EmailBuilderView />}
-          {activeTab === 'reports'      && <ReportsView />}
-          {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
+          <ErrorBoundary fallbackTitle="Error al cargar la sección activa">
+            {activeTab === 'my_day'       && <MyDayView />}
+            {activeTab === 'inbox'        && <InboxView />}
+            {activeTab === 'waiting_on'   && <WaitingOnView />}
+            {activeTab === 'dashboard'    && <DashboardView />}
+            {activeTab === 'tickets'      && <TicketsView />}
+            {activeTab === 'cases'        && <CasesView />}
+            {activeTab === 'commitments'  && <CommitmentsView />}
+            {activeTab === 'calendar'     && <CalendarView />}
+            {activeTab === 'clients'      && <ClientsView />}
+            {activeTab === 'notes'        && <NotesView />}
+            {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
+            {activeTab === 'emails'       && <EmailBuilderView />}
+            {activeTab === 'reports'      && <ReportsView />}
+            {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
+          </ErrorBoundary>
         </div>
       </main>
 

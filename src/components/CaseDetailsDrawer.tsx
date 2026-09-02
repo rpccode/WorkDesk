@@ -22,6 +22,7 @@ import { FollowupModal } from './FollowupModal';
 import { CaseBriefModal } from './CaseBriefModal';
 import { MeetingPrepModal } from './MeetingPrepModal';
 import { EmailImportModal } from './EmailImportModal';
+import { ErrorBoundary } from './ErrorBoundary';
 import { formatDate, isOverdue } from '../utils/date';
 import { generateCaseSummaryAI, findSimilarCases } from '../services/ai-copilot';
 import {
@@ -94,9 +95,11 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   if (!isOpen || !activeCase) return null;
   const c = activeCase;
 
-  const caseCommitments = commitments.filter((item) => item.case_id === c.id);
-  const caseNotes = notes.filter((item) => item.case_id === c.id);
-  const caseActivities = activityEvents.filter((ev) => ev.case_id === c.id || ev.entity_id === c.id);
+  const caseCommitments = (commitments || []).filter((item) => item && item.case_id === c.id);
+  const caseNotes = (notes || []).filter((item) => item && item.case_id === c.id);
+  const caseActivities = (activityEvents || []).filter((ev) => ev && (ev.case_id === c.id || ev.entity_id === c.id));
+  const caseFollowups = (followups || []).filter((f) => f && f.case_id === c.id);
+  const caseEmailsList = caseEmails || [];
   const pendingCommitments = caseCommitments.filter((item) => item.status !== 'done');
 
   const handleCloseCase = async () => {
@@ -128,7 +131,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
     });
   };
 
-  const similarCases = useMemo(() => findSimilarCases(c, cases, notes), [c, cases, notes]);
+  const similarCases = useMemo(() => {
+    try {
+      return c ? findSimilarCases(c, cases || [], notes || []) : [];
+    } catch (err) {
+      console.error('Error finding similar cases:', err);
+      return [];
+    }
+  }, [c, cases, notes]);
 
   const handleGenerateAISummary = async () => {
     setIsGeneratingSummary(true);
@@ -524,7 +534,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               onClick={() => setActiveTab('followups')}
             >
               <MessageSquare size={14} />
-              Bitácora ({followups.filter((f) => f.case_id === c.id).length})
+              Bitácora ({caseFollowups.length})
             </button>
             <button
               className={`btn-ghost ${activeTab === 'emails' ? 'active' : ''}`}
@@ -539,7 +549,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               onClick={() => setActiveTab('emails')}
             >
               <Mail size={14} />
-              Correos ({caseEmails.length})
+              Correos ({caseEmailsList.length})
             </button>
             <button
               className={`btn-ghost ${activeTab === 'notes' ? 'active' : ''}`}
@@ -928,7 +938,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                           {ev.title}
                         </span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          {new Date(ev.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          {(() => {
+                            try {
+                              const d = new Date(ev.created_at);
+                              return isNaN(d.getTime()) ? (ev.created_at || '') : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+                            } catch {
+                              return ev.created_at || '';
+                            }
+                          })()}
                         </span>
                       </div>
                       {ev.description && (
@@ -1059,5 +1076,10 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
     </>
   );
 
-  return ReactDOM.createPortal(drawerContent, document.body);
+  return ReactDOM.createPortal(
+    <ErrorBoundary fallbackTitle="Error al abrir el detalle del caso">
+      {drawerContent}
+    </ErrorBoundary>,
+    document.body
+  );
 };

@@ -22,6 +22,9 @@ import {
   Eye,
   EyeOff,
   Cpu,
+  Terminal,
+  Trash2,
+  Copy,
 } from 'lucide-react';
 import { api } from '../api/tauri';
 import {
@@ -32,6 +35,13 @@ import { playNotificationSound, sendDesktopNotification } from '../utils/live-al
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import { CheckUpdatesButton } from '../components/UpdateChecker';
 import { callAI } from '../services/ai-copilot';
+import {
+  getErrorLogs,
+  clearErrorLogs,
+  downloadErrorLogsTxt,
+  copyErrorLogsToClipboard,
+  type AppErrorLogEntry,
+} from '../utils/error-logger';
 import type { AccentColor, ConsultantProfile, ConsultantPreferences, AIConfig, AIProvider } from '../types';
 
 interface SettingsViewProps {
@@ -67,6 +77,47 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [backupSuccess, setBackupSuccess] = useState<boolean>(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState<boolean>(false);
+  const [copiedLog, setCopiedLog] = useState<boolean>(false);
+  const [errorLogs, setErrorLogs] = useState<AppErrorLogEntry[]>(() => getErrorLogs());
+
+  const refreshErrorLogs = () => {
+    setErrorLogs(getErrorLogs());
+  };
+
+  const handleClearErrorLogs = () => {
+    clearErrorLogs();
+    setErrorLogs([]);
+    addNotification({
+      type: 'info',
+      title: 'Registro de errores vaciado',
+      message: 'Se limpió el historial de diagnóstico.',
+      show_toast: true,
+    });
+  };
+
+  const handleDownloadErrorLogs = () => {
+    downloadErrorLogsTxt(errorLogs);
+    addNotification({
+      type: 'success',
+      title: 'Log Descargado',
+      message: 'El archivo .txt con el registro de errores se ha descargado correctamente.',
+      show_toast: true,
+    });
+  };
+
+  const handleCopyErrorLogs = async () => {
+    const success = await copyErrorLogsToClipboard(errorLogs);
+    if (success) {
+      setCopiedLog(true);
+      setTimeout(() => setCopiedLog(false), 2000);
+      addNotification({
+        type: 'success',
+        title: 'Registro Copiado',
+        message: 'El log de errores y diagnóstico está listo para pegar.',
+        show_toast: true,
+      });
+    }
+  };
 
   const handleProfileChange = (field: keyof ConsultantProfile, value: string) => {
     const updated = { ...profileForm, [field]: value };
@@ -660,22 +711,153 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               </div>
             )}
 
-            {/* Modelo */}
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Identificador del Modelo
-              </label>
-              <input
-                type="text"
-                value={aiForm.model || ''}
-                onChange={(e) => handleAIChange('model', e.target.value)}
-                placeholder={aiForm.provider === 'gemini' ? 'gemini-2.5-flash' : aiForm.provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'}
-                style={{ marginTop: '0.25rem', width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
-              />
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
-                Ejemplos recomendados: <code>gemini-2.5-flash</code>, <code>gpt-4o-mini</code>, <code>claude-3-5-haiku-20241022</code>, <code>llama3:8b</code>.
-              </span>
-            </div>
+            {/* Modelo — Combobox con presets por proveedor */}
+            {(() => {
+              const MODEL_OPTIONS: Record<string, { id: string; label: string; tag?: string }[]> = {
+                gemini: [
+                  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', tag: '⚡ Rápido · Recomendado' },
+                  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', tag: '🧠 Avanzado · Preciso' },
+                  { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash Experimental', tag: '🔬 Experimental' },
+                  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', tag: '🔄 Estable' },
+                  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', tag: '💪 Potente' },
+                  { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
+                ],
+                openai: [
+                  { id: 'gpt-4o', label: 'GPT-4o', tag: '🧠 El más capaz' },
+                  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', tag: '⚡ Rápido · Económico · Recomendado' },
+                  { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', tag: '🔍 Contexto largo' },
+                  { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', tag: '🏃 Ultra rápido' },
+                  { id: 'o1-mini', label: 'o1 Mini', tag: '🤔 Razonamiento' },
+                  { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
+                ],
+                anthropic: [
+                  { id: 'claude-opus-4-5', label: 'Claude Opus 4.5', tag: '🏆 El más poderoso' },
+                  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', tag: '⚖️ Equilibrado · Recomendado' },
+                  { id: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', tag: '🧠 Razonamiento extendido' },
+                  { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tag: '✨ Alta calidad' },
+                  { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', tag: '⚡ Rápido · Económico' },
+                  { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
+                ],
+                ollama: [
+                  { id: 'llama3.1', label: 'Llama 3.1', tag: '⭐ Recomendado' },
+                  { id: 'llama3', label: 'Llama 3', tag: '🦙 Estable' },
+                  { id: 'llama3:8b', label: 'Llama 3 8B', tag: '💨 Ligero' },
+                  { id: 'mistral', label: 'Mistral', tag: '🌪️ Eficiente' },
+                  { id: 'mixtral', label: 'Mixtral 8x7B', tag: '🔀 Mezcla de expertos' },
+                  { id: 'codellama', label: 'CodeLlama', tag: '💻 Para código' },
+                  { id: 'phi3', label: 'Phi-3', tag: '🔬 Compacto · Microsoft' },
+                  { id: 'gemma2', label: 'Gemma 2', tag: '🌀 Google' },
+                  { id: 'custom', label: '✏️ Otro modelo (ingresar manualmente)', tag: '' },
+                ],
+              };
+
+              const options = MODEL_OPTIONS[aiForm.provider] || MODEL_OPTIONS.gemini;
+              const isCustom = !options.slice(0, -1).find((o) => o.id === aiForm.model);
+
+              return (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Modelo de IA
+                  </label>
+
+                  {/* Preset grid chips */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.4rem' }}>
+                    {options.slice(0, -1).map((opt) => {
+                      const isActive = aiForm.model === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => handleAIChange('model', opt.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1.5px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                            backgroundColor: isActive
+                              ? 'var(--accent-glow)'
+                              : 'var(--bg-surface-elevated)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.12s ease',
+                          }}
+                        >
+                          <span style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--border-medium)',
+                            flexShrink: 0,
+                          }} />
+                          <span style={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.82rem',
+                            fontWeight: isActive ? 700 : 500,
+                            color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
+                            flex: 1,
+                          }}>
+                            {opt.label}
+                          </span>
+                          {opt.tag && (
+                            <span style={{
+                              fontSize: '0.65rem',
+                              color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                              fontWeight: 500,
+                              flexShrink: 0,
+                            }}>
+                              {opt.tag}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+
+                    {/* Custom / free-text entry */}
+                    <div
+                      style={{
+                        border: `1.5px dashed ${isCustom ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        padding: '0.5rem 0.75rem',
+                        backgroundColor: isCustom ? 'var(--accent-glow)' : 'transparent',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.74rem', fontWeight: 700, color: isCustom ? 'var(--accent-primary)' : 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                        ✏️ Ingresar ID de modelo manualmente
+                      </div>
+                      <input
+                        type="text"
+                        value={isCustom ? (aiForm.model || '') : ''}
+                        onFocus={() => {
+                          if (!isCustom) handleAIChange('model', '');
+                        }}
+                        onChange={(e) => handleAIChange('model', e.target.value)}
+                        placeholder={
+                          aiForm.provider === 'gemini'
+                            ? 'ej: gemini-2.5-flash-8b'
+                            : aiForm.provider === 'openai'
+                            ? 'ej: gpt-4o-2024-11-20'
+                            : aiForm.provider === 'anthropic'
+                            ? 'ej: claude-3-opus-20240229'
+                            : 'ej: llama3:70b'
+                        }
+                        style={{
+                          width: '100%',
+                          fontFamily: 'monospace',
+                          fontSize: '0.82rem',
+                          backgroundColor: 'var(--bg-surface)',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'block' }}>
+                    Modelo seleccionado: <code style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{aiForm.model || '(ninguno)'}</code>
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Test Connection Button */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -1277,6 +1459,106 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               <div>
                 <CheckUpdatesButton />
               </div>
+            </div>
+
+            {/* Diagnóstico y Registro de Errores */}
+            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Terminal size={18} color="var(--accent-primary)" />
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Registro de Errores & Diagnóstico Técnico</h3>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+                    onClick={refreshErrorLogs}
+                  >
+                    Actualizar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ fontSize: '0.76rem', padding: '0.35rem 0.75rem', gap: '0.35rem' }}
+                    onClick={handleDownloadErrorLogs}
+                    disabled={errorLogs.length === 0}
+                  >
+                    <Download size={13} /> Exportar Log (.txt)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+                    onClick={handleCopyErrorLogs}
+                    disabled={errorLogs.length === 0}
+                  >
+                    {copiedLog ? <Check size={13} color="var(--status-low)" /> : <Copy size={13} />}
+                    {copiedLog ? '¡Copiado!' : 'Copiar Registro'}
+                  </button>
+                  {errorLogs.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-critical)' }}
+                      onClick={handleClearErrorLogs}
+                    >
+                      <Trash2 size={13} /> Limpiar
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Todos los errores no controlados, excepciones de interfaz y advertencias de renderizado quedan registrados aquí para facilitar el soporte técnico.
+              </p>
+
+              {errorLogs.length === 0 ? (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-subtle)',
+                    textAlign: 'center',
+                    color: 'var(--status-low)',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ No se registran errores recientes en la aplicación. Todo funciona con normalidad.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '240px', overflowY: 'auto' }}>
+                  {errorLogs.map((log, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        borderRadius: 'var(--radius-sm)',
+                        borderLeft: '3px solid var(--status-critical)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.78rem',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.2rem', fontSize: '0.7rem' }}>
+                        <span>#{idx + 1}</span>
+                        <span>{new Date(log.timestamp).toLocaleString()}</span>
+                      </div>
+                      <div style={{ color: 'var(--status-critical)', fontWeight: 700 }}>
+                        {log.message}
+                      </div>
+                      {log.stack && (
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginTop: '0.3rem', whiteSpace: 'pre-wrap', maxHeight: '60px', overflow: 'hidden' }}>
+                          {log.stack}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>

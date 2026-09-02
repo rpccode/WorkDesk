@@ -48,13 +48,33 @@ const INBOX_STORAGE_KEY = 'workdesk_inbox_items_v1';
 const ACTIVITIES_STORAGE_KEY = 'workdesk_activities_v1';
 const CASES_NEXT_ACTIONS_KEY = 'workdesk_cases_next_actions_v1';
 
+/** Normalize any deprecated Gemini model name to the current recommended one */
+function normalizeGeminiModel(model: string | undefined): string | undefined {
+  if (!model) return model;
+  const deprecated: Record<string, string> = {
+    'gemini-2.0-flash': 'gemini-2.5-flash',
+    'models/gemini-2.0-flash': 'gemini-2.5-flash',
+    'gemini-2.0-flash-001': 'gemini-2.5-flash',
+    'gemini-2.0-flash-thinking-exp': 'gemini-2.5-flash',
+  };
+  return deprecated[model] ?? model;
+}
+
 function loadStoredAIConfig(): AIConfig {
   try {
     const raw = localStorage.getItem(AI_CONFIG_KEY);
-    const parsed = raw ? { ...DEFAULT_AI_CONFIG, ...JSON.parse(raw) } : DEFAULT_AI_CONFIG;
-    if (parsed.model === 'gemini-2.0-flash' || parsed.model === 'models/gemini-2.0-flash') {
-      parsed.model = 'gemini-2.5-flash';
+    const parsed: AIConfig = raw ? { ...DEFAULT_AI_CONFIG, ...JSON.parse(raw) } : DEFAULT_AI_CONFIG;
+
+    const originalModel = parsed.model;
+    parsed.model = normalizeGeminiModel(parsed.model);
+
+    // Write migrated value back to localStorage immediately
+    if (parsed.model !== originalModel) {
+      try {
+        localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(parsed));
+      } catch { /* ignore */ }
     }
+
     return parsed;
   } catch {
     return DEFAULT_AI_CONFIG;

@@ -143,11 +143,16 @@ async function callGemini(
   config: AIConfig,
   temperature: number
 ): Promise<string> {
+  // Normalize deprecated model names
+  const DEPRECATED: Record<string, string> = {
+    'gemini-2.0-flash': 'gemini-2.5-flash',
+    'models/gemini-2.0-flash': 'gemini-2.5-flash',
+    'gemini-2.0-flash-001': 'gemini-2.5-flash',
+    'gemini-2.0-flash-thinking-exp': 'gemini-2.5-flash',
+  };
+
   let model = config.model?.trim() || 'gemini-2.5-flash';
-  // Auto-migrate deprecated 2.0-flash
-  if (model === 'gemini-2.0-flash' || model === 'models/gemini-2.0-flash') {
-    model = 'gemini-2.5-flash';
-  }
+  model = DEPRECATED[model] ?? model;
 
   const payload = {
     contents: [
@@ -162,29 +167,33 @@ async function callGemini(
     },
   };
 
-  let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
-  let res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  const makeRequest = (m: string) =>
+    fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${config.apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+    );
 
-  // If 404 on model name, try gemini-1.5-flash as robust fallback
-  if (res.status === 404 && model !== 'gemini-1.5-flash') {
-    const fallbackModel = 'gemini-1.5-flash';
-    const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${config.apiKey}`;
-    const fallbackRes = await fetch(fallbackUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (fallbackRes.ok) {
-      res = fallbackRes;
+  let res = await makeRequest(model);
+
+  // Cascade fallback order when model is unavailable (404)
+  if (!res.ok && res.status === 404) {
+    const fallbackChain = ['gemini-2.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-flash'];
+    for (const fb of fallbackChain) {
+      if (fb === model) continue;
+      const fbRes = await makeRequest(fb);
+      if (fbRes.ok) { res = fbRes; break; }
     }
   }
 
   if (!res.ok) {
-    const errBody = await res.text();
+    let errBody = '';
+    try { errBody = await res.text(); } catch { /* ignore */ }
+    // Provide a friendlier error message for model-not-found
+    if (res.status === 404) {
+      throw new Error(
+        `El modelo de Gemini "${model}" no está disponible. Ve a Configuración → Motor de IA y selecciona "Gemini 2.5 Flash".`
+      );
+    }
     throw new Error(`Error Gemini (${res.status}): ${errBody}`);
   }
 
