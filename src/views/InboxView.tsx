@@ -10,7 +10,9 @@ import {
   FileText,
   Building2,
   X,
+  Sparkles,
 } from 'lucide-react';
+import { CommitmentExtractorModal } from '../components/CommitmentExtractorModal';
 import type { InboxItem, InboxSuggestedType } from '../types';
 
 export const InboxView: React.FC = () => {
@@ -27,6 +29,7 @@ export const InboxView: React.FC = () => {
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [suggestedType, setSuggestedType] = useState<InboxSuggestedType>('task');
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'processed'>('unprocessed');
+  const [isExtractorOpen, setIsExtractorOpen] = useState(false);
 
   // Processing modal state
   const [processingItem, setProcessingItem] = useState<InboxItem | null>(null);
@@ -121,9 +124,24 @@ export const InboxView: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.85rem',
+              border: '1px solid var(--accent-border, rgba(59,130,246,0.4))',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
+              color: 'var(--accent-primary)',
+              fontWeight: 700,
+            }}
+            onClick={() => setIsExtractorOpen(true)}
+          >
+            <Sparkles size={14} /> ✨ Extraer con IA
+          </button>
           <span className="badge" style={{ backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)', fontWeight: 800, fontSize: '0.78rem' }}>
-            {unprocessedItems.length} Pendientes de clasificar
+            {unprocessedItems.length} Pendientes
           </span>
         </div>
       </div>
@@ -434,6 +452,12 @@ export const InboxView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal Extractor de Compromisos IA */}
+      <CommitmentExtractorModal
+        isOpen={isExtractorOpen}
+        onClose={() => setIsExtractorOpen(false)}
+      />
 
     </div>
   );

@@ -14,11 +14,14 @@ import {
   Building2,
   Mail,
   ShieldAlert,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
 import { CommitmentModal } from '../components/CommitmentModal';
 import { calculateClientHealth } from '../utils/client-health';
+import { generateMorningBriefAI } from '../services/ai-copilot';
 import type { Case, NextAction } from '../types';
 
 export const MyDayView: React.FC = () => {
@@ -27,7 +30,10 @@ export const MyDayView: React.FC = () => {
     commitments,
     clients,
     tickets,
+    notes,
+    inboxItems,
     consultantProfile,
+    aiConfig,
     setActiveTab,
     setSelectedCaseId,
     selectedCaseId,
@@ -43,6 +49,10 @@ export const MyDayView: React.FC = () => {
   const [nextActionDesc, setNextActionDesc] = useState('');
   const [nextActionDate, setNextActionDate] = useState('');
   const [nextActionOwner, setNextActionOwner] = useState<'me' | 'client' | 'third_party' | 'team'>('me');
+
+  // AI Morning Brief state
+  const [aiBrief, setAiBrief] = useState<string | null>(null);
+  const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const activeCases = useMemo(() => cases.filter((c) => c.status !== 'closed'), [cases]);
@@ -130,6 +140,35 @@ export const MyDayView: React.FC = () => {
     });
   };
 
+  const handleGenerateBrief = async () => {
+    setIsGeneratingBrief(true);
+    try {
+      const brief = await generateMorningBriefAI(
+        {
+          cases,
+          commitments,
+          clients,
+          tickets,
+          notes,
+          inboxItems,
+          userName: consultantProfile.name,
+          userRole: consultantProfile.role_title,
+        },
+        aiConfig
+      );
+      setAiBrief(brief);
+    } catch (err: any) {
+      addNotification({
+        type: 'critical',
+        title: 'Error AI Morning Brief',
+        message: err.message || 'No se pudo generar el brief con la IA.',
+        show_toast: true,
+      });
+    } finally {
+      setIsGeneratingBrief(false);
+    }
+  };
+
   const selectedCase = cases.find((c) => c.id === selectedCaseId) || null;
 
   return (
@@ -177,6 +216,23 @@ export const MyDayView: React.FC = () => {
           <button
             type="button"
             className="btn-secondary"
+            style={{
+              fontSize: '0.84rem',
+              padding: '0.65rem 1rem',
+              border: '1px solid var(--accent-border, rgba(59,130,246,0.4))',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(147,51,234,0.15) 100%)',
+              color: 'var(--accent-primary)',
+              fontWeight: 700,
+            }}
+            onClick={handleGenerateBrief}
+            disabled={isGeneratingBrief}
+          >
+            <Sparkles size={15} className={isGeneratingBrief ? 'animate-spin' : ''} />
+            {isGeneratingBrief ? 'Generando...' : aiBrief ? 'Actualizar Brief IA' : '✨ Morning Brief IA'}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
             style={{ fontSize: '0.84rem', padding: '0.65rem 1rem' }}
             onClick={() => setIsCommitmentModalOpen(true)}
           >
@@ -192,6 +248,59 @@ export const MyDayView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ── AI MORNING BRIEF ACCORDION / CARD ─────────────────────────────────── */}
+      {aiBrief && (
+        <div
+          className="glass-card animate-fade-in"
+          style={{
+            padding: '1.5rem',
+            border: '1px solid var(--accent-border, rgba(59,130,246,0.35))',
+            backgroundColor: 'var(--bg-surface-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Sparkles size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>
+                Morning Brief Ejecutivo — Dirección de Jornada
+              </h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                onClick={handleGenerateBrief}
+                disabled={isGeneratingBrief}
+              >
+                <RefreshCw size={12} className={isGeneratingBrief ? 'animate-spin' : ''} /> Regenerar
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                onClick={() => setAiBrief(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: '0.86rem',
+              lineHeight: 1.6,
+              color: 'var(--text-primary)',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {aiBrief}
+          </div>
+        </div>
+      )}
 
       {/* ── ATENCIÓN URGENTE / ANOMALÍAS ─────────────────────────────────────── */}
       {(overdueCommitments.length > 0 || casesWithoutNextAction.length > 0 || criticalCases.length > 0 || criticalRiskClients.length > 0) && (

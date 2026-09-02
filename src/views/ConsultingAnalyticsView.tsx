@@ -10,12 +10,15 @@ import {
   BarChart3,
   ArrowRight,
   ShieldAlert,
+  Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { calculateConsultantAnalytics } from '../utils/consultant-analytics';
 import { calculateClientHealth } from '../utils/client-health';
+import { detectAbandonedAndRiskCases } from '../services/ai-copilot';
 
 export const ConsultingAnalyticsView: React.FC = () => {
-  const { clients, cases, commitments, tickets, setActiveTab } = useStore();
+  const { clients, cases, commitments, tickets, setActiveTab, setSelectedCaseId } = useStore();
 
   const analytics = useMemo(() => {
     return calculateConsultantAnalytics(clients, cases, commitments);
@@ -28,6 +31,11 @@ export const ConsultingAnalyticsView: React.FC = () => {
   const criticalClients = clientHealthReports.filter((r) => r.level === 'critical');
   const warningClients = clientHealthReports.filter((r) => r.level === 'warning');
   const healthyClients = clientHealthReports.filter((r) => r.level === 'healthy');
+
+  // AI Abandoned Cases and Risks
+  const caseRisks = useMemo(() => {
+    return detectAbandonedAndRiskCases(cases, commitments, tickets, clients);
+  }, [cases, commitments, tickets, clients]);
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px', margin: '0 auto', paddingBottom: '3rem' }}>
@@ -270,6 +278,117 @@ export const ConsultingAnalyticsView: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* ── RADAR DE CASOS ABANDONADOS & RIESGOS IA ─────────────────── */}
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <Sparkles size={18} color="var(--accent-primary)" />
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>
+                Radar de Casos Abandonados & Riesgos Operacionales (IA)
+              </h3>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0.1rem 0 0' }}>
+                Detección proactiva de proyectos a la deriva, inactividad prolongada y compromisos encadenados sin cerrar
+              </p>
+            </div>
+          </div>
+          <span className="badge" style={{ backgroundColor: caseRisks.length > 0 ? 'var(--status-critical-bg)' : 'var(--status-low-bg)', color: caseRisks.length > 0 ? 'var(--status-critical)' : 'var(--status-low)', fontWeight: 800, fontSize: '0.74rem' }}>
+            {caseRisks.length} Casos con Alerta
+          </span>
+        </div>
+
+        {caseRisks.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+            🎉 <strong>Excelente control operativo:</strong> Todos los casos tienen actividad reciente, compromisos al día y Próximas Acciones definidas.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '0.85rem' }}>
+            {caseRisks.map((risk) => {
+              const borderCol = risk.riskLevel === 'critical' ? 'var(--status-critical)' : risk.riskLevel === 'high' ? 'var(--status-high)' : 'var(--status-medium)';
+              const bgCol = risk.riskLevel === 'critical' ? 'rgba(239,68,68,0.06)' : risk.riskLevel === 'high' ? 'rgba(249,115,22,0.06)' : 'rgba(245,158,11,0.06)';
+
+              return (
+                <div
+                  key={risk.caseId}
+                  className="glass-card card-hover"
+                  style={{
+                    padding: '1.1rem 1.25rem',
+                    borderLeft: `4px solid ${borderCol}`,
+                    backgroundColor: bgCol,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        {risk.clientName}
+                      </span>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0.1rem 0 0', color: 'var(--text-primary)' }}>
+                        {risk.caseTitle}
+                      </h4>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '4px',
+                        backgroundColor: borderCol,
+                        color: '#ffffff',
+                      }}
+                    >
+                      {risk.riskLevel.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Factores de riesgo */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.2rem' }}>
+                    {risk.reasons.map((r, rIdx) => (
+                      <div key={rIdx} style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <AlertTriangle size={12} color={borderCol} />
+                        <span>{r}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sugerencia IA */}
+                  <div
+                    style={{
+                      marginTop: 'auto',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--bg-surface)',
+                      fontSize: '0.74rem',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span>💡 <strong>Acción:</strong> {risk.suggestedAction}</span>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        setSelectedCaseId(risk.caseId);
+                        setActiveTab('cases');
+                      }}
+                    >
+                      Abrir <ArrowRight size={11} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
     </div>

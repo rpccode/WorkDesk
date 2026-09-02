@@ -17,6 +17,11 @@ import {
   Radio,
   Power,
   Layers,
+  Sparkles,
+  Bot,
+  Eye,
+  EyeOff,
+  Cpu,
 } from 'lucide-react';
 import { api } from '../api/tauri';
 import {
@@ -26,18 +31,21 @@ import {
 import { playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import { CheckUpdatesButton } from '../components/UpdateChecker';
-import type { AccentColor, ConsultantProfile, ConsultantPreferences } from '../types';
+import { callAI } from '../services/ai-copilot';
+import type { AccentColor, ConsultantProfile, ConsultantPreferences, AIConfig, AIProvider } from '../types';
 
 interface SettingsViewProps {
   onOpenEmailAccountsModal?: () => void;
 }
 
-type SettingsTab = 'perfil' | 'segundo_plano' | 'apariencia' | 'cuentas' | 'datos';
+type SettingsTab = 'perfil' | 'ai_copilot' | 'segundo_plano' | 'apariencia' | 'cuentas' | 'datos';
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsModal }) => {
   const {
     consultantProfile,
     consultantPreferences,
+    aiConfig,
+    updateAIConfig,
     updateConsultantProfile,
     updateConsultantPreferences,
     exportFullBackupJson,
@@ -52,6 +60,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   const [activeTab, setActiveTab] = useState<SettingsTab>('perfil');
   const [profileForm, setProfileForm] = useState<ConsultantProfile>(consultantProfile);
   const [preferencesForm, setPreferencesForm] = useState<ConsultantPreferences>(consultantPreferences);
+  const [aiForm, setAiForm] = useState<AIConfig>(aiConfig);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTestingAI, setIsTestingAI] = useState(false);
+  const [aiTestResult, setAiTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [backupSuccess, setBackupSuccess] = useState<boolean>(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState<boolean>(false);
@@ -137,11 +149,62 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
     });
   };
 
+  const handleAIChange = <K extends keyof AIConfig>(field: K, value: AIConfig[K]) => {
+    const updated = { ...aiForm, [field]: value };
+    setAiForm(updated);
+    updateAIConfig(updated);
+    triggerSavedFeedback();
+  };
+
+  const handleTestAIConnection = async () => {
+    setIsTestingAI(true);
+    setAiTestResult(null);
+    try {
+      const response = await callAI(
+        'Responde exactamente con la frase "Conexión a WorkDesk AI Copilot exitosa." en una sola línea.',
+        'Eres un asistente de verificación de conectividad.',
+        aiForm,
+        0.1
+      );
+      setAiTestResult({
+        success: true,
+        message: response.includes('exitosa') ? '✓ Conexión establecida correctamente.' : `Respuesta del modelo: ${response.slice(0, 100)}`,
+      });
+      playNotificationSound('success');
+      addNotification({
+        type: 'success',
+        title: 'IA Conectada',
+        message: `El proveedor ${aiForm.provider.toUpperCase()} respondió exitosamente.`,
+        show_toast: true,
+      });
+    } catch (err: any) {
+      setAiTestResult({
+        success: false,
+        message: err.message || 'Error al conectar con la API de IA.',
+      });
+      playNotificationSound('critical');
+      addNotification({
+        type: 'critical',
+        title: 'Error de Conexión IA',
+        message: err.message || 'No se pudo validar la API Key.',
+        show_toast: true,
+      });
+    } finally {
+      setIsTestingAI(false);
+    }
+  };
+
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     {
       id: 'perfil',
       label: 'Perfil & Firma',
       icon: <User size={16} />,
+    },
+    {
+      id: 'ai_copilot',
+      label: 'AI Copilot',
+      icon: <Sparkles size={16} />,
+      badge: aiConfig.isConfigured ? 'Conectado' : 'Sin configurar',
     },
     {
       id: 'segundo_plano',
@@ -479,7 +542,234 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
         </div>
       )}
 
-      {/* ── TAB 2: SEGUNDO PLANO & ALERTAS ──────────────────────────── */}
+      {/* ── TAB: AI COPILOT ─────────────────────────────────────────── */}
+      {activeTab === 'ai_copilot' && (
+        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.5rem' }}>
+          
+          {/* Configuración del Proveedor y API Key */}
+          <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <Sparkles size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Motor de Inteligencia Artificial</h3>
+            </div>
+
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
+              WorkDesk se conecta directamente con tu proveedor de IA preferido para potenciar resúmenes, extracción de compromisos, preparación de reuniones y redacción contextual.
+            </p>
+
+            {/* Selector de Proveedor */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Proveedor de IA
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.35rem' }}>
+                {[
+                  { id: 'gemini', name: 'Google Gemini', badge: 'Recomendado / Gratis', defaultModel: 'gemini-2.0-flash' },
+                  { id: 'openai', name: 'OpenAI (ChatGPT)', badge: 'GPT-4o mini', defaultModel: 'gpt-4o-mini' },
+                  { id: 'anthropic', name: 'Anthropic Claude', badge: 'Claude 3.5 Haiku', defaultModel: 'claude-3-5-haiku-20241022' },
+                  { id: 'ollama', name: 'Ollama Local', badge: '100% Offline', defaultModel: 'llama3' },
+                ].map((prov) => {
+                  const isSelected = aiForm.provider === prov.id;
+                  return (
+                    <button
+                      key={prov.id}
+                      type="button"
+                      onClick={() => {
+                        handleAIChange('provider', prov.id as AIProvider);
+                        if (!aiForm.model || aiForm.model.includes('gemini') || aiForm.model.includes('gpt') || aiForm.model.includes('claude') || aiForm.model.includes('llama')) {
+                          handleAIChange('model', prov.defaultModel);
+                        }
+                      }}
+                      style={{
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                        backgroundColor: isSelected ? 'var(--accent-glow)' : 'var(--bg-surface-elevated)',
+                        color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{prov.name}</div>
+                      <div style={{ fontSize: '0.68rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
+                        {prov.badge}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* API Key Input (if not Ollama) */}
+            {aiForm.provider !== 'ollama' ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    API Key ({aiForm.provider.toUpperCase()})
+                  </label>
+                  {aiForm.provider === 'gemini' && (
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textDecoration: 'none' }}
+                    >
+                      Obtener clave gratis en Google AI Studio ↗
+                    </a>
+                  )}
+                </div>
+                <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={aiForm.apiKey || ''}
+                    onChange={(e) => handleAIChange('apiKey', e.target.value)}
+                    placeholder={aiForm.provider === 'gemini' ? 'AIzaSy...' : 'sk-...'}
+                    style={{ width: '100%', paddingRight: '2.5rem', fontFamily: 'monospace', fontSize: '0.82rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
+                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  URL Base de Ollama
+                </label>
+                <input
+                  type="text"
+                  value={aiForm.ollamaBaseUrl || 'http://localhost:11434'}
+                  onChange={(e) => handleAIChange('ollamaBaseUrl', e.target.value)}
+                  placeholder="http://localhost:11434"
+                  style={{ marginTop: '0.25rem', width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
+                />
+              </div>
+            )}
+
+            {/* Modelo */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Identificador del Modelo
+              </label>
+              <input
+                type="text"
+                value={aiForm.model || ''}
+                onChange={(e) => handleAIChange('model', e.target.value)}
+                placeholder={aiForm.provider === 'gemini' ? 'gemini-2.0-flash' : aiForm.provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'}
+                style={{ marginTop: '0.25rem', width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
+              />
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                Ejemplos recomendados: <code>gemini-2.0-flash</code>, <code>gpt-4o-mini</code>, <code>claude-3-5-haiku-20241022</code>, <code>llama3:8b</code>.
+              </span>
+            </div>
+
+            {/* Test Connection Button */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleTestAIConnection}
+                disabled={isTestingAI || (!aiForm.apiKey && aiForm.provider !== 'ollama')}
+                style={{ justifyContent: 'center', gap: '0.5rem' }}
+              >
+                {isTestingAI ? (
+                  <>
+                    <Cpu size={16} className="animate-spin" /> Verificando conexión...
+                  </>
+                ) : (
+                  <>
+                    <Bot size={16} /> Probar Conexión con la IA
+                  </>
+                )}
+              </button>
+
+              {aiTestResult && (
+                <div
+                  style={{
+                    padding: '0.6rem 0.8rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    backgroundColor: aiTestResult.success ? 'var(--status-low-bg)' : 'var(--status-high-bg)',
+                    border: `1px solid ${aiTestResult.success ? 'var(--status-low-border)' : 'var(--status-high-border)'}`,
+                    color: aiTestResult.success ? 'var(--status-low)' : 'var(--status-high)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  {aiTestResult.success ? <Check size={15} /> : <ShieldCheck size={15} />}
+                  <span>{aiTestResult.message}</span>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* Capacidades & Prompts del Copilot */}
+          <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <Bot size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Capacidades Activas en WorkDesk</h3>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { title: '🌅 Morning Brief Diario', desc: 'Resumen ejecutivo diario con foco de jornada y bloqueos urgentes en Mi Día.' },
+                { title: '📋 Extracción de Compromisos', desc: 'Transforma notas o correos desestructurados en compromisos rastreables.' },
+                { title: '📄 Resumen & Minuta de Caso', desc: 'Sintetiza el estado de cualquier caso para directores y clientes.' },
+                { title: '🗓️ Preparación de Reunión', desc: 'Genera guías con agenda, preguntas incisivas y puntos a destrabar.' },
+                { title: '✉️ Redacción Contextual de Correos', desc: 'Escribe correos en tonos Formal, Firme o Técnico con un click.' },
+                { title: '⚠️ Radar de Casos Abandonados', desc: 'Detecta casos a la deriva o sin actividad reciente.' },
+                { title: '🔗 Casos Similares', desc: 'Encuentra antecedentes y soluciones de casos pasados.' },
+                { title: '💬 Copilot Q&A (Ctrl + I)', desc: 'Chat asistente que razona sobre toda tu información en tiempo real.' },
+              ].map((cap, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{cap.title}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>{cap.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                marginTop: 'auto',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--accent-glow)',
+                border: '1px solid var(--accent-border)',
+                fontSize: '0.74rem',
+                color: 'var(--accent-primary)',
+              }}
+            >
+              🔒 <strong>Privacidad:</strong> Tus datos operacionales solo se envían al proveedor de IA configurado en el momento exacto que solicitas una acción. Las claves se almacenan localmente en tu equipo.
+            </div>
+
+          </div>
+
+        </div>
+      )}
       {activeTab === 'segundo_plano' && (
         <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.5rem' }}>
           

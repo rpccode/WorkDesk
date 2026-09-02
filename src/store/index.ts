@@ -20,8 +20,11 @@ import type {
   InboxSuggestedType,
   ActivityEvent,
   NextAction,
+  AIConfig,
+  CopilotMessage,
 } from '../types';
 import { evaluateLiveAlerts, playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
+import { DEFAULT_AI_CONFIG } from '../services/ai-copilot';
 import {
   DEFAULT_CONSULTANT_PROFILE,
   DEFAULT_CONSULTANT_PREFERENCES,
@@ -30,6 +33,8 @@ import {
 
 const PROFILE_KEY = 'workdesk_consultant_profile';
 const PREFERENCES_KEY = 'workdesk_consultant_preferences';
+const AI_CONFIG_KEY = 'workdesk_ai_config_v1';
+const COPILOT_HISTORY_KEY = 'workdesk_copilot_history_v1';
 const CLIENTS_METADATA_KEY = 'workdesk_clients_metadata';
 const CLIENTS_CACHE_KEY = 'workdesk_clients_cache_v1';
 const CASES_CACHE_KEY = 'workdesk_cases_cache_v1';
@@ -42,6 +47,15 @@ const NOTIFICATIONS_CACHE_KEY = 'workdesk_notifications_cache_v1';
 const INBOX_STORAGE_KEY = 'workdesk_inbox_items_v1';
 const ACTIVITIES_STORAGE_KEY = 'workdesk_activities_v1';
 const CASES_NEXT_ACTIONS_KEY = 'workdesk_cases_next_actions_v1';
+
+function loadStoredAIConfig(): AIConfig {
+  try {
+    const raw = localStorage.getItem(AI_CONFIG_KEY);
+    return raw ? { ...DEFAULT_AI_CONFIG, ...JSON.parse(raw) } : DEFAULT_AI_CONFIG;
+  } catch {
+    return DEFAULT_AI_CONFIG;
+  }
+}
 
 function getStoredCache<T>(key: string, fallback: T): T {
   try {
@@ -308,6 +322,15 @@ interface WorkDeskState {
   updateConsultantProfile: (profile: Partial<ConsultantProfile>) => void;
   updateConsultantPreferences: (prefs: Partial<ConsultantPreferences>) => void;
   exportFullBackupJson: () => string;
+
+  // AI Copilot
+  isCopilotOpen: boolean;
+  setCopilotOpen: (open: boolean) => void;
+  aiConfig: AIConfig;
+  updateAIConfig: (config: Partial<AIConfig>) => void;
+  copilotMessages: CopilotMessage[];
+  addCopilotMessage: (msg: Omit<CopilotMessage, 'id' | 'timestamp'>) => void;
+  clearCopilotHistory: () => void;
 }
 
 export const useStore = create<WorkDeskState>((set, get) => ({
@@ -1083,6 +1106,43 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   // Consultant Profile & Personalization
   consultantProfile: loadStoredProfile(),
   consultantPreferences: loadStoredPreferences(),
+
+  // AI Copilot
+  isCopilotOpen: false,
+  setCopilotOpen: (open) => set({ isCopilotOpen: open }),
+  aiConfig: loadStoredAIConfig(),
+  updateAIConfig: (configUpdate) => {
+    set((state) => {
+      const updated: AIConfig = {
+        ...state.aiConfig,
+        ...configUpdate,
+        isConfigured: !!((configUpdate.apiKey ?? state.aiConfig.apiKey) || (configUpdate.provider === 'ollama' || state.aiConfig.provider === 'ollama')),
+      };
+      try {
+        localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving AI config:', e);
+      }
+      return { aiConfig: updated };
+    });
+  },
+  copilotMessages: getStoredCache<CopilotMessage[]>(COPILOT_HISTORY_KEY, []),
+  addCopilotMessage: (msg) => {
+    set((state) => {
+      const newMsg: CopilotMessage = {
+        ...msg,
+        id: `copilot-msg-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        timestamp: new Date().toISOString(),
+      };
+      const updated = [...state.copilotMessages, newMsg];
+      saveStoredCache(COPILOT_HISTORY_KEY, updated.slice(-50)); // keep last 50
+      return { copilotMessages: updated };
+    });
+  },
+  clearCopilotHistory: () => {
+    saveStoredCache(COPILOT_HISTORY_KEY, []);
+    set({ copilotMessages: [] });
+  },
 
   updateConsultantProfile: (profileUpdate) => {
     set((state) => {

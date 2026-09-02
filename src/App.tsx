@@ -20,6 +20,7 @@ import {
   Clock,
   Search,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import { MyDayView } from './views/MyDayView';
 import { WaitingOnView } from './views/WaitingOnView';
@@ -43,6 +44,7 @@ import { NotificationCenterModal } from './components/NotificationCenterModal';
 import { BackgroundStatusWidget } from './components/BackgroundStatusWidget';
 import { DesktopMiniWidget } from './components/DesktopMiniWidget';
 import { UpdateChecker } from './components/UpdateChecker';
+import { CopilotPanel } from './components/CopilotPanel';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import { backgroundEngine } from './services/background-service';
 import { api } from './api/tauri';
@@ -59,6 +61,8 @@ export function App() {
     tickets,
     consultantPreferences,
     setNotificationCenterOpen,
+    isCopilotOpen,
+    setCopilotOpen,
   } = useStore();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -96,6 +100,10 @@ export function App() {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         setIsCommandCenterOpen((prev) => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        setCopilotOpen(!isCopilotOpen);
       }
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
@@ -376,7 +384,7 @@ export function App() {
               backgroundColor: 'rgba(59,130,246,0.06)',
               color: 'var(--text-secondary)',
               fontSize: '0.75rem',
-              marginBottom: '0.4rem',
+              marginBottom: '0.25rem',
               cursor: 'pointer',
             }}
             onClick={() => setIsCommandCenterOpen(true)}
@@ -387,6 +395,35 @@ export function App() {
             </div>
             <span style={{ fontSize: '0.62rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
               Ctrl+K
+            </span>
+          </button>
+
+          {/* AI Copilot Launcher Button */}
+          <button
+            type="button"
+            className="card-hover"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.45rem 0.65rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
+              color: 'var(--accent-primary)',
+              fontSize: '0.75rem',
+              marginBottom: '0.4rem',
+              cursor: 'pointer',
+            }}
+            onClick={() => setCopilotOpen(!isCopilotOpen)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Sparkles size={13} color="var(--accent-primary)" />
+              <span style={{ fontWeight: 700 }}>AI Copilot</span>
+            </div>
+            <span style={{ fontSize: '0.62rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
+              Ctrl+I
             </span>
           </button>
 
@@ -547,6 +584,7 @@ export function App() {
         onClose={() => setIsEmailModalOpen(false)}
       />
       <NotificationCenterModal />
+      <CopilotPanel />
       <LiveToastContainer />
     </div>
   );

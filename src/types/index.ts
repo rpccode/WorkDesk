@@ -413,10 +413,42 @@ export interface ConsultantPreferences {
   accent_color: AccentColor;
   theme_mode: ThemeMode;
   // Background Services & Watchdog
-  enable_background_watchdog: boolean;
-  enable_background_email_sync: boolean;
-  enable_auto_drafts: boolean;
+  enable_background_watchdog?: boolean;
+  enable_background_email_sync?: boolean;
+  enable_auto_drafts?: boolean;
   background_check_interval_seconds: number;
   close_to_tray: boolean;
+}
+
+export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'ollama';
+
+export interface AIConfig {
+  provider: AIProvider;
+  apiKey?: string;
+  model?: string;
+  ollamaBaseUrl?: string;
+  systemPromptModifier?: string;
+  isConfigured: boolean;
+}
+
+export interface CopilotMessage {
+  id: string;
+  sender: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  suggestedActions?: {
+    label: string;
+    actionType: 'navigate' | 'open_modal' | 'copy_text' | 'fill_email';
+    payload?: any;
+  }[];
+}
+
+export interface ExtractedCommitmentDraft {
+  description: string;
+  owner: 'me' | 'client' | 'third_party';
+  ownerName?: string;
+  dueDate?: string;
+  priority?: 'normal' | 'urgent';
+  confidence: number;
 }
 

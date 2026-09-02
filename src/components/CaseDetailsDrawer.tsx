@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { useStore } from '../store';
 import {
@@ -13,11 +13,16 @@ import {
   Edit3,
   Activity,
   AlertTriangle,
+  Sparkles,
+  Calendar,
+  Layers,
 } from 'lucide-react';
 import { CommitmentModal } from './CommitmentModal';
 import { FollowupModal } from './FollowupModal';
 import { CaseBriefModal } from './CaseBriefModal';
+import { MeetingPrepModal } from './MeetingPrepModal';
 import { formatDate, isOverdue } from '../utils/date';
+import { generateCaseSummaryAI, findSimilarCases } from '../services/ai-copilot';
 import type { Case, NextAction } from '../types';
 
 interface CaseDetailsDrawerProps {
@@ -33,6 +38,9 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
     commitments,
     followups,
     notes,
+    tickets,
+    cases,
+    aiConfig,
     caseEmails,
     activityEvents,
     fetchCommitments,
@@ -49,7 +57,12 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
   const [isBriefModalOpen, setIsBriefModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes' | 'emails' | 'timeline'>('commitments');
+  const [isMeetingPrepOpen, setIsMeetingPrepOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'commitments' | 'followups' | 'notes' | 'emails' | 'timeline' | 'similares'>('commitments');
+
+  // AI Summary State
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // Next action inline editing state
   const [isEditingNextAction, setIsEditingNextAction] = useState(false);
@@ -105,6 +118,31 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       message: `Próximo paso guardado para "${c.title}".`,
       show_toast: true,
     });
+  };
+
+  const similarCases = useMemo(() => findSimilarCases(c, cases, notes), [c, cases, notes]);
+
+  const handleGenerateAISummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+      const summary = await generateCaseSummaryAI(
+        c,
+        commitments,
+        notes,
+        tickets,
+        aiConfig
+      );
+      setAiSummary(summary);
+    } catch (err: any) {
+      addNotification({
+        type: 'critical',
+        title: 'Error Generando Resumen IA',
+        message: err.message || 'No se pudo generar el resumen del caso.',
+        show_toast: true,
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
   };
 
   const handleCompleteNextAction = () => {
@@ -323,52 +361,115 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               padding: '0.75rem 1.5rem',
               borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
-              gap: '0.5rem',
+              gap: '0.45rem',
               backgroundColor: 'var(--bg-surface)',
               flexWrap: 'wrap',
             }}
           >
             <button
               className="btn-primary"
-              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
               onClick={() => setIsCommitmentModalOpen(true)}
             >
-              <Plus size={14} /> Nuevo Compromiso
+              <Plus size={13} /> + Compromiso
             </button>
             <button
               className="btn-secondary"
-              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
               onClick={() => setIsFollowupModalOpen(true)}
             >
-              <Plus size={14} /> Registrar Actividad
+              <Plus size={13} /> Actividad
             </button>
             <button
               className="btn-secondary"
-              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', color: 'var(--accent-primary)' }}
+              style={{
+                fontSize: '0.76rem',
+                padding: '0.35rem 0.65rem',
+                border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
+                color: 'var(--accent-primary)',
+                fontWeight: 700,
+              }}
+              onClick={handleGenerateAISummary}
+              disabled={isGeneratingSummary}
+            >
+              <Sparkles size={13} className={isGeneratingSummary ? 'animate-spin' : ''} />
+              {isGeneratingSummary ? 'Resumiendo...' : '✨ Resumen IA'}
+            </button>
+            <button
+              className="btn-secondary"
+              style={{
+                fontSize: '0.76rem',
+                padding: '0.35rem 0.65rem',
+                color: 'var(--accent-primary)',
+              }}
+              onClick={() => setIsMeetingPrepOpen(true)}
+            >
+              <Calendar size={13} /> ✨ Preparar Reunión
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
               onClick={() => setIsBriefModalOpen(true)}
             >
-              <FileText size={14} /> Minuta Ejecutiva
+              <FileText size={13} /> Minuta Word
             </button>
             <button
               className="btn-secondary"
-              style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
               onClick={() => {
                 setCaseForEmail(c);
                 onClose();
               }}
             >
-              <Mail size={14} /> Redactar Correo
+              <Mail size={13} /> Correo
             </button>
             {c.status !== 'closed' && (
               <button
                 className="btn-secondary"
-                style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', color: 'var(--status-low)', marginLeft: 'auto' }}
+                style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-low)', marginLeft: 'auto' }}
                 onClick={handleCloseCase}
               >
-                <CheckCircle2 size={14} /> Cerrar Caso
+                <CheckCircle2 size={13} /> Cerrar
               </button>
             )}
           </div>
+
+          {/* AI Summary Inline Accordion */}
+          {aiSummary && (
+            <div
+              className="animate-fade-in"
+              style={{
+                padding: '1rem 1.5rem',
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderBottom: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary)', fontWeight: 800, fontSize: '0.82rem' }}>
+                  <Sparkles size={15} /> Resumen Ejecutivo del Caso (IA)
+                </div>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}
+                  onClick={() => setAiSummary(null)}
+                >
+                  Cerrar
+                </button>
+              </div>
+              <div
+                style={{
+                  fontSize: '0.82rem',
+                  lineHeight: 1.55,
+                  color: 'var(--text-primary)',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {aiSummary}
+              </div>
+            </div>
+          )}
 
           {/* Navigation Tabs */}
           <div
@@ -453,7 +554,22 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               onClick={() => setActiveTab('timeline')}
             >
               <Activity size={14} />
-              Timeline
+              Línea de Tiempo ({caseActivities.length})
+            </button>
+            <button
+              className={`btn-ghost ${activeTab === 'similares' ? 'active' : ''}`}
+              style={{
+                borderRadius: 0,
+                borderBottom: activeTab === 'similares' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                padding: '0.75rem 0.85rem',
+                fontSize: '0.8rem',
+                fontWeight: activeTab === 'similares' ? 700 : 500,
+                color: activeTab === 'similares' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              }}
+              onClick={() => setActiveTab('similares')}
+            >
+              <Layers size={14} />
+              Similares IA ({similarCases.length})
             </button>
           </div>
 
@@ -682,6 +798,79 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 )}
               </div>
             )}
+            {/* TAB: SIMILARES IA */}
+            {activeTab === 'similares' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ padding: '0.6rem 0.8rem', backgroundColor: 'var(--accent-glow)', borderRadius: 'var(--radius-md)', fontSize: '0.76rem', color: 'var(--accent-primary)', border: '1px solid var(--accent-border)' }}>
+                  💡 <strong>Casos Similares:</strong> Analiza casos abiertos y cerrados con problemáticas, clientes o patrones parecidos para reutilizar soluciones previas.
+                </div>
+
+                {similarCases.length === 0 ? (
+                  <div className="empty-state">
+                    <Layers size={32} />
+                    <p>No se encontraron otros casos con patrones o palabras clave similares.</p>
+                  </div>
+                ) : (
+                  similarCases.map((sim, idx) => (
+                    <div
+                      key={idx}
+                      className="glass-card"
+                      style={{
+                        padding: '1rem 1.2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.4rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {sim.caseItem.client_name || 'Sin cliente'}
+                        </span>
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: 'var(--accent-glow)',
+                            color: 'var(--accent-primary)',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {Math.round(sim.score * 100)}% Similitud
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0 }}>
+                        {sim.caseItem.title}
+                      </h4>
+
+                      {sim.caseItem.description && (
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                          {sim.caseItem.description.slice(0, 160)}...
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                        {sim.matchingPoints.map((pt, pIdx) => (
+                          <span
+                            key={pIdx}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--bg-surface-elevated)',
+                              border: '1px solid var(--border-subtle)',
+                              color: 'var(--text-muted)',
+                            }}
+                          >
+                            ✓ {pt}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -703,6 +892,12 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       <CaseBriefModal
         isOpen={isBriefModalOpen}
         onClose={() => setIsBriefModalOpen(false)}
+        caseItem={c}
+      />
+
+      <MeetingPrepModal
+        isOpen={isMeetingPrepOpen}
+        onClose={() => setIsMeetingPrepOpen(false)}
         caseItem={c}
       />
     </>

@@ -9,12 +9,15 @@ import {
   CheckCircle2,
   Settings2,
   AlertCircle,
+  Cpu,
+  Bot,
 } from 'lucide-react';
 import { EMAIL_TEMPLATES, buildEmail } from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
 import { EmailAccountsModal } from '../components/EmailAccountsModal';
 import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatSignature } from '../utils/theme-manager';
+import { generateContextualEmailAI } from '../services/ai-copilot';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
 
@@ -31,6 +34,8 @@ export const EmailBuilderView: React.FC = () => {
     fetchEmailAccounts,
     sendEmailDirect,
     consultantProfile,
+    aiConfig,
+    addNotification,
   } = useStore();
 
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseForEmail?.id || (cases[0]?.id || ''));
@@ -40,6 +45,12 @@ export const EmailBuilderView: React.FC = () => {
   const [recipientName, setRecipientName] = useState('');
   const [extraNotes, setExtraNotes] = useState('');
   const [nextSteps, setNextSteps] = useState('');
+
+  // AI Contextual Email State
+  const [mode, setMode] = useState<'template' | 'ai'>('template');
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiTone, setAiTone] = useState<'formal' | 'assertive' | 'technical' | 'urgent'>('assertive');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -88,8 +99,10 @@ export const EmailBuilderView: React.FC = () => {
     }
   }, [currentClient]);
 
-  // Rebuild preview whenever inputs change
+  // Rebuild preview whenever inputs change (only in template mode)
   useEffect(() => {
+    if (mode === 'ai') return; // Do not overwrite AI generated content
+
     if (!currentCase) {
       setSubject('');
       setBody('Selecciona un caso para generar la plantilla.');
@@ -116,7 +129,39 @@ export const EmailBuilderView: React.FC = () => {
 
     setSubject(generated.subject);
     setBody(generated.body);
-  }, [selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase, consultantProfile]);
+  }, [mode, selectedCaseId, selectedTemplateId, recipientName, extraNotes, nextSteps, commitments, currentCase, consultantProfile]);
+
+  const handleGenerateAIEmail = async () => {
+    if (!aiInstruction.trim()) return;
+    setIsGeneratingAI(true);
+    try {
+      const generated = await generateContextualEmailAI(
+        aiInstruction,
+        currentCase || null,
+        currentClient || null,
+        aiTone,
+        aiConfig,
+        consultantProfile.name
+      );
+      setSubject(generated.subject);
+      setBody(generated.body);
+      addNotification({
+        type: 'success',
+        title: 'Correo Redactado con IA',
+        message: 'El asunto y cuerpo se han actualizado con éxito.',
+        show_toast: true,
+      });
+    } catch (err: any) {
+      addNotification({
+        type: 'critical',
+        title: 'Error Redactando Correo con IA',
+        message: err.message || 'No se pudo generar el correo.',
+        show_toast: true,
+      });
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const handleProviderChange = (provider: EmailProvider) => {
     setEmailProvider(provider);
@@ -224,9 +269,48 @@ export const EmailBuilderView: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(440px, 1.3fr)', gap: '1.5rem' }}>
         {/* Left Form */}
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={18} color="var(--accent-primary)" /> Configuración de Plantilla
-          </h3>
+          
+          {/* Mode Switcher */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '0.3rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => setMode('template')}
+              style={{
+                padding: '0.45rem',
+                fontSize: '0.78rem',
+                fontWeight: mode === 'template' ? 700 : 500,
+                backgroundColor: mode === 'template' ? 'var(--accent-primary)' : 'transparent',
+                color: mode === 'template' ? '#ffffff' : 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              📋 Plantillas
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('ai')}
+              style={{
+                padding: '0.45rem',
+                fontSize: '0.78rem',
+                fontWeight: mode === 'ai' ? 700 : 500,
+                backgroundColor: mode === 'ai' ? 'var(--accent-primary)' : 'transparent',
+                color: mode === 'ai' ? '#ffffff' : 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.3rem',
+              }}
+            >
+              <Sparkles size={13} /> Redactar con IA
+            </button>
+          </div>
 
           <div>
             <SearchableCaseSelect
@@ -238,51 +322,131 @@ export const EmailBuilderView: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              2. Tipo de Plantilla
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              {EMAIL_TEMPLATES.map((t) => {
-                const isActive = selectedTemplateId === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setSelectedTemplateId(t.id)}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      justifyContent: 'flex-start',
-                      fontSize: '0.82rem',
-                      padding: '0.5rem 0.85rem',
-                      fontWeight: isActive ? 600 : 500,
-                      background: isActive
-                        ? 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05))'
-                        : 'transparent',
-                      border: `1px solid ${isActive ? 'rgba(37,99,235,0.3)' : 'var(--border-subtle)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                      transition: 'var(--transition-fast)',
-                      gap: '0.6rem',
-                      whiteSpace: 'normal',
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    <span style={{
-                      width: '7px',
-                      height: '7px',
-                      borderRadius: '50%',
-                      background: isActive ? 'var(--accent-primary)' : 'var(--border-medium)',
-                      flexShrink: 0,
-                      display: 'inline-block',
-                    }} />
-                    {t.name}
-                  </button>
-                );
-              })}
+          {mode === 'ai' ? (
+            /* AI Drafter Panel */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-border, rgba(59,130,246,0.3))' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary)', fontWeight: 700, fontSize: '0.82rem' }}>
+                <Bot size={16} /> Instrucción para el Redactor IA
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                  Tono del Correo
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
+                  {[
+                    { id: 'assertive', label: '⚡ Firme / Destrabe' },
+                    { id: 'formal', label: '👔 Ejecutivo Formal' },
+                    { id: 'technical', label: '🛠️ Técnico / Detallado' },
+                    { id: 'urgent', label: '🚨 Urgente / Crítico' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAiTone(t.id as any)}
+                      style={{
+                        padding: '0.4rem 0.5rem',
+                        fontSize: '0.72rem',
+                        fontWeight: aiTone === t.id ? 700 : 500,
+                        backgroundColor: aiTone === t.id ? 'var(--accent-glow)' : 'var(--bg-surface)',
+                        color: aiTone === t.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        border: `1px solid ${aiTone === t.id ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                  ¿Qué necesitas comunicar o exigir?
+                </label>
+                <textarea
+                  rows={4}
+                  value={aiInstruction}
+                  onChange={(e) => setAiInstruction(e.target.value)}
+                  placeholder="Ej. Exigir la entrega de las credenciales del servidor antes del viernes o el pase a producción se retrasará una semana..."
+                  style={{ width: '100%', fontSize: '0.8rem', lineHeight: 1.4 }}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleGenerateAIEmail}
+                disabled={!aiInstruction.trim() || isGeneratingAI}
+                style={{
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.82rem',
+                  padding: '0.65rem',
+                  background: 'linear-gradient(135deg, var(--accent-primary) 0%, #7c3aed 100%)',
+                }}
+              >
+                {isGeneratingAI ? (
+                  <>
+                    <Cpu size={15} className="animate-spin" /> Redactando correo...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={15} /> Generar Correo con IA
+                  </>
+                )}
+              </button>
             </div>
-          </div>
+          ) : (
+            /* Traditional Templates Mode */
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                2. Tipo de Plantilla
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                {EMAIL_TEMPLATES.map((t) => {
+                  const isActive = selectedTemplateId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setSelectedTemplateId(t.id)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        fontSize: '0.82rem',
+                        padding: '0.5rem 0.85rem',
+                        fontWeight: isActive ? 600 : 500,
+                        background: isActive
+                          ? 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05))'
+                          : 'transparent',
+                        border: `1px solid ${isActive ? 'rgba(37,99,235,0.3)' : 'var(--border-subtle)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        transition: 'var(--transition-fast)',
+                        gap: '0.6rem',
+                        whiteSpace: 'normal',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      <span style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: isActive ? 'var(--accent-primary)' : 'var(--border-medium)',
+                        flexShrink: 0,
+                        display: 'inline-block',
+                      }} />
+                      {t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Account Selector if configured */}
           {emailAccounts.length > 0 && (
