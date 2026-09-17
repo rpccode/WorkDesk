@@ -1,0 +1,18 @@
+{
+  "bundle": {
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "<PEGA_AQUÍ_EL_CONTENIDO_DE_updater.key.pub>",
+      "endpoints": [
+        "https://github.com/<USUARIO_O_ORG>/<REPOSITORIO>/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

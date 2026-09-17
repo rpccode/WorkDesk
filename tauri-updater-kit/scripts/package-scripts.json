@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "tauri": "tauri",
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "publish": "node scripts/release.js --publish",
+    "publish:patch": "node scripts/release.js patch --publish",
+    "publish:minor": "node scripts/release.js minor --publish",
+    "publish:major": "node scripts/release.js major --publish"
+  }
+}
