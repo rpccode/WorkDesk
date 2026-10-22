@@ -17,8 +17,15 @@ export const QuickCaptureModal: React.FC = () => {
   React.useEffect(() => {
     if (isQuickCaptureOpen) {
       setError(null);
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setQuickCaptureOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isQuickCaptureOpen]);
+  }, [isQuickCaptureOpen, setQuickCaptureOpen]);
 
   if (!isQuickCaptureOpen) return null;
 
@@ -83,17 +90,11 @@ export const QuickCaptureModal: React.FC = () => {
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-capture-title"
+      style={{ padding: '1.5rem' }}
       onClick={() => setQuickCaptureOpen(false)}
     >
       <div
@@ -103,23 +104,28 @@ export const QuickCaptureModal: React.FC = () => {
           maxWidth: '560px',
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-focus)',
-          boxShadow: 'var(--shadow-glow), var(--shadow-lg)',
-          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-medium)',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-xl)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.4rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Zap size={18} />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Captura Rápida</h3>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--bg-main)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+            <h3 id="quick-capture-title" style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Captura Rápida</h3>
+            <kbd style={{ fontSize: '0.7rem' }}>
               Ctrl+N / Alt+N
-            </span>
+            </kbd>
           </div>
-          <button onClick={() => setQuickCaptureOpen(false)} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button
+            type="button"
+            className="btn-icon btn-sm btn-ghost"
+            onClick={() => setQuickCaptureOpen(false)}
+            aria-label="Cerrar modal"
+          >
             <X size={18} />
           </button>
         </div>

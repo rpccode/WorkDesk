@@ -41,7 +41,7 @@ export const ConsultingAnalyticsView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ padding: '1.5rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
             <TrendingUp size={22} />
@@ -56,11 +56,10 @@ export const ConsultingAnalyticsView: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.6rem' }}>
+        <div className="page-actions">
           <button
             type="button"
             className="btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }}
             onClick={() => setActiveTab('my_day')}
           >
             ← Volver a Mi Día
@@ -69,7 +68,7 @@ export const ConsultingAnalyticsView: React.FC = () => {
       </div>
 
       {/* ── Top KPIs Row ────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+      <div className="kpi-grid">
         
         {/* On-Time SLA */}
         <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--status-low)' }}>

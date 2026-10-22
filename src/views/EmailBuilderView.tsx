@@ -263,26 +263,27 @@ export const EmailBuilderView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
             Generador & Envío de Correos
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.2rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.2rem 0 0 0' }}>
             Envía directo en segundo plano, abre en webmail y sincroniza el seguimiento con tus clientes
           </p>
         </div>
 
-        <button
-          className="btn-secondary"
-          style={{ fontSize: '0.83rem', gap: '0.45rem' }}
-          onClick={() => setIsAccountsModalOpen(true)}
-        >
-          <Settings2 size={15} color="var(--accent-primary)" />
-          {emailAccounts.length > 0
-            ? `Cuentas Vinculadas (${emailAccounts.length})`
-            : 'Vincular Cuenta de Correo'}
-        </button>
+        <div className="page-actions">
+          <button
+            className="btn-secondary"
+            onClick={() => setIsAccountsModalOpen(true)}
+          >
+            <Settings2 size={15} color="var(--accent-primary)" />
+            {emailAccounts.length > 0
+              ? `Cuentas Vinculadas (${emailAccounts.length})`
+              : 'Vincular Cuenta de Correo'}
+          </button>
+        </div>
       </div>
 
       {/* Grid: Left Settings, Right Live Preview */}

@@ -51,6 +51,19 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  React.useEffect(() => {
     if (isOpen) {
       if (clientToEdit) {
         setName(clientToEdit.name);
@@ -194,18 +207,11 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
+      className="modal-overlay"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="client-modal-title"
     >
       <div
         className="glass-card animate-fade-in"
@@ -224,16 +230,21 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Users size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+            <h3 id="client-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
               {clientToEdit ? 'Editar Ficha del Cliente' : 'Nuevo Cliente'}
             </h3>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={onClose}
+            className="btn-icon"
+            aria-label="Cerrar modal"
+            style={{ color: 'var(--text-muted)' }}
+          >
             <X size={18} />
           </button>
         </div>
@@ -568,10 +579,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
           <button
             type="submit"
             form="client-form"
-            className="btn-primary"
+            className={`btn-primary ${isSaving ? 'btn-loading' : ''}`}
             disabled={isSaving}
           >
-            <Check size={16} />
+            {!isSaving && <Check size={16} />}
             {isSaving ? 'Guardando...' : clientToEdit ? 'Actualizar Cliente' : 'Guardar Cliente'}
           </button>
         </div>

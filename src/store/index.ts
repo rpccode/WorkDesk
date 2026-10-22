@@ -29,6 +29,7 @@ import {
   DEFAULT_CONSULTANT_PROFILE,
   DEFAULT_CONSULTANT_PREFERENCES,
   applyAccentColor,
+  applyThemeMode,
 } from '../utils/theme-manager';
 
 const PROFILE_KEY = 'workdesk_consultant_profile';
@@ -200,9 +201,11 @@ function loadStoredPreferences(): ConsultantPreferences {
     const raw = localStorage.getItem(PREFERENCES_KEY);
     const prefs = raw ? { ...DEFAULT_CONSULTANT_PREFERENCES, ...JSON.parse(raw) } : DEFAULT_CONSULTANT_PREFERENCES;
     applyAccentColor(prefs.accent_color);
+    applyThemeMode(prefs.theme_mode || 'light');
     return prefs;
   } catch {
     applyAccentColor(DEFAULT_CONSULTANT_PREFERENCES.accent_color);
+    applyThemeMode(DEFAULT_CONSULTANT_PREFERENCES.theme_mode);
     return DEFAULT_CONSULTANT_PREFERENCES;
   }
 }
@@ -1200,6 +1203,9 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       }
       if (prefsUpdate.accent_color) {
         applyAccentColor(prefsUpdate.accent_color);
+      }
+      if (prefsUpdate.theme_mode) {
+        applyThemeMode(prefsUpdate.theme_mode);
       }
       return { consultantPreferences: updated };
     });

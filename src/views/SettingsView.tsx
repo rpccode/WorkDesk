@@ -25,6 +25,9 @@ import {
   Terminal,
   Trash2,
   Copy,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 import { api } from '../api/tauri';
 import {
@@ -42,7 +45,7 @@ import {
   copyErrorLogsToClipboard,
   type AppErrorLogEntry,
 } from '../utils/error-logger';
-import type { AccentColor, ConsultantProfile, ConsultantPreferences, AIConfig, AIProvider } from '../types';
+import type { AccentColor, ConsultantProfile, ConsultantPreferences, AIConfig, AIProvider, ThemeMode } from '../types';
 
 interface SettingsViewProps {
   onOpenEmailAccountsModal?: () => void;
@@ -300,17 +303,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '1.5rem 1.75rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: 0 }}>
@@ -333,23 +326,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
           </p>
         </div>
 
-        {savedSuccess && (
-          <div
-            className="animate-fade-in badge"
-            style={{
-              backgroundColor: 'var(--status-low-bg)',
-              color: 'var(--status-low)',
-              border: '1px solid var(--status-low-border)',
-              padding: '0.4rem 0.8rem',
-              fontSize: '0.78rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-            }}
-          >
-            <Check size={14} /> Cambios guardados automáticamente
-          </div>
-        )}
+        <div className="page-actions">
+          {savedSuccess && (
+            <div
+              className="animate-fade-in badge"
+              style={{
+                backgroundColor: 'var(--status-low-bg)',
+                color: 'var(--status-low)',
+                border: '1px solid var(--status-low-border)',
+                padding: '0.4rem 0.8rem',
+                fontSize: '0.78rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <Check size={14} /> Cambios guardados automáticamente
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Navigation Tabs ─────────────────────────────────────────── */}
@@ -1190,15 +1185,96 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
       {activeTab === 'apariencia' && (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
+          {/* Selector de Modo de Tema */}
           <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-              <Palette size={18} color="var(--accent-primary)" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Paleta de Acento & Personalización Visual</h3>
+              <Sun size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Modo de Visualización de la Interfaz</h3>
             </div>
 
             <div>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
-                Selecciona la tonalidad institucional que aplicará a botones, badges, halos de foco y widgets principales.
+                Elige el tema base de WorkDesk. Tanto el modo claro como el modo oscuro cuentan con un sistema de tokens unificado y alto contraste accesible.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {[
+                  {
+                    id: 'light' as ThemeMode,
+                    title: 'Modo Claro',
+                    badge: 'Predeterminado',
+                    desc: 'Superficies limpias y contraste óptimo para jornadas diurnas de consultoría.',
+                    icon: <Sun size={20} />,
+                  },
+                  {
+                    id: 'dark' as ThemeMode,
+                    title: 'Modo Oscuro',
+                    badge: 'Slate Pro',
+                    desc: 'Tonos pizarra profundos sin reflejos para sesiones prolongadas y confort visual.',
+                    icon: <Moon size={20} />,
+                  },
+                  {
+                    id: 'system' as ThemeMode,
+                    title: 'Automático',
+                    badge: 'Sincronizado',
+                    desc: 'Se adapta automáticamente a la configuración de tema de tu sistema operativo.',
+                    icon: <Monitor size={20} />,
+                  },
+                ].map((option) => {
+                  const isCurrent = (preferencesForm.theme_mode || 'light') === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className="card-hover"
+                      style={{
+                        padding: '1.1rem 1.25rem',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: isCurrent ? 'var(--bg-surface-elevated)' : 'var(--bg-main)',
+                        border: isCurrent ? '2px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.6rem',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        boxShadow: isCurrent ? 'var(--shadow-md)' : 'none',
+                        transition: 'var(--transition-fast)',
+                      }}
+                      onClick={() => handlePreferenceChange('theme_mode', option.id)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                          {option.icon}
+                          <span style={{ fontSize: '0.92rem', fontWeight: 800 }}>{option.title}</span>
+                        </div>
+                        {isCurrent ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary)', fontSize: '0.72rem', fontWeight: 800 }}>
+                            <Check size={14} /> Activo
+                          </div>
+                        ) : (
+                          <span className="badge" style={{ fontSize: '0.65rem' }}>{option.badge}</span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                        {option.desc}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Paleta de Acento */}
+          <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <Palette size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Color de Acento Institucional</h3>
+            </div>
+
+            <div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                Selecciona la tonalidad corporativa que aplicará a botones de acción, badges, anillos de foco y widgets principales.
               </p>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
@@ -1209,6 +1285,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     <button
                       key={key}
                       type="button"
+                      className="card-hover"
                       style={{
                         padding: '1rem',
                         borderRadius: 'var(--radius-md)',

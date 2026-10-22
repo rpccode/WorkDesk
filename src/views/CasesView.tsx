@@ -70,33 +70,26 @@ export const CasesView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+      <div className="page-header">
+        <div className="page-title-group">
+          <h1 className="page-title">
             Gestión de Casos &amp; Proyectos
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+          <p className="page-subtitle">
             Expedientes de consultoría, hitos y control de entregables
           </p>
         </div>
 
-        <button className="btn-primary" onClick={() => setIsNewCaseModalOpen(true)}>
-          <Plus size={16} /> Nuevo Caso
-        </button>
+        <div className="page-actions">
+          <button type="button" className="btn-primary" onClick={() => setIsNewCaseModalOpen(true)}>
+            <Plus size={16} /> Nuevo Caso
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '0.85rem 1.25rem',
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+      <div className="toolbar">
+        <div className="toolbar-search">
           <Search
             size={16}
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
@@ -106,33 +99,35 @@ export const CasesView: React.FC = () => {
             placeholder="Buscar por caso, cliente o descripción..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', paddingLeft: '2.4rem' }}
+            style={{ paddingLeft: '2.4rem' }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>ESTADO:</span>
-          <select value={caseFilter} onChange={(e) => setCaseFilter(e.target.value)}>
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos únicamente</option>
-            <option value="closed">Cerrados</option>
-          </select>
-        </div>
+        <div className="toolbar-filters">
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>ESTADO:</span>
+            <select value={caseFilter} onChange={(e) => setCaseFilter(e.target.value)} style={{ width: 'auto' }}>
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos únicamente</option>
+              <option value="closed">Cerrados</option>
+            </select>
+          </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>PRIORIDAD:</span>
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
-            <option value="all">Todas</option>
-            <option value="critical">🚨 Crítica</option>
-            <option value="high">Alta</option>
-            <option value="medium">Media</option>
-            <option value="low">Baja</option>
-          </select>
-        </div>
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>PRIORIDAD:</span>
+            <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ width: 'auto' }}>
+              <option value="all">Todas</option>
+              <option value="critical">🚨 Crítica</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+          </div>
 
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-          {filteredCases.length} caso{filteredCases.length !== 1 ? 's' : ''}
-        </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 'auto' }} className="tabular-nums">
+            {filteredCases.length} caso{filteredCases.length !== 1 ? 's' : ''}
+          </span>
+        </div>
       </div>
 
       {/* Grid of Cases */}
@@ -161,13 +156,11 @@ export const CasesView: React.FC = () => {
           pagination.paginatedItems.map((c) => (
             <div
               key={c.id}
-              className="glass-card"
+              className="glass-card card-hover"
               style={{
                 padding: '1.35rem',
                 display: 'flex',
                 flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
               onClick={() => setSelectedCase(c)}
             >
@@ -207,9 +200,9 @@ export const CasesView: React.FC = () => {
                   style={{
                     margin: '0.25rem 0 0.75rem',
                     padding: '0.45rem 0.65rem',
-                    borderRadius: '6px',
-                    backgroundColor: 'rgba(59,130,246,0.08)',
-                    border: '1px solid rgba(59,130,246,0.25)',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--accent-glow)',
+                    border: '1px solid var(--border-subtle)',
                     fontSize: '0.78rem',
                     display: 'flex',
                     alignItems: 'center',

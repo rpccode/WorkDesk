@@ -59,6 +59,38 @@ export const ACCENT_PALETTES: Record<
   },
 };
 
+let systemThemeMediaListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+/**
+ * Applies theme mode (light, dark, system) to Document root via data-theme attribute.
+ */
+export function applyThemeMode(mode: 'light' | 'dark' | 'system'): void {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+
+  // Clean up previous system listener if any
+  if (systemThemeMediaListener && typeof window !== 'undefined' && window.matchMedia) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    media.removeEventListener('change', systemThemeMediaListener);
+    systemThemeMediaListener = null;
+  }
+
+  if (mode === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateSystem = (isDark: boolean) => {
+      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    };
+    updateSystem(media.matches);
+
+    systemThemeMediaListener = (e: MediaQueryListEvent) => {
+      updateSystem(e.matches);
+    };
+    media.addEventListener('change', systemThemeMediaListener);
+  } else {
+    root.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+  }
+}
+
 /**
  * Applies custom accent color directly to Document root CSS variables.
  */
@@ -67,6 +99,7 @@ export function applyAccentColor(accent: AccentColor): void {
   const palette = ACCENT_PALETTES[accent] || ACCENT_PALETTES.blue;
   const root = document.documentElement;
   root.style.setProperty('--accent-primary', palette.hex);
+  root.style.setProperty('--accent-primary-hover', palette.hoverHex);
   root.style.setProperty('--accent-hover', palette.hoverHex);
   root.style.setProperty('--accent-glow', palette.glowRgba);
 }

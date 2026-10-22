@@ -56,33 +56,26 @@ export const CommitmentsView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Control de Compromisos & Entregas
+      <div className="page-header">
+        <div className="page-title-group">
+          <h1 className="page-title">
+            Control de Compromisos &amp; Entregas
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+          <p className="page-subtitle">
             Todo lo prometido a clientes y lo que clientes deben entregarte
           </p>
         </div>
 
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} /> Nuevo Compromiso
-        </button>
+        <div className="page-actions">
+          <button type="button" className="btn-primary" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} /> Nuevo Compromiso
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs & Search */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '0.85rem 1.25rem',
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+      <div className="toolbar">
+        <div className="toolbar-search">
           <Search
             size={16}
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
@@ -92,38 +85,38 @@ export const CommitmentsView: React.FC = () => {
             placeholder="Buscar por compromiso, caso o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', paddingLeft: '2.4rem' }}
+            style={{ paddingLeft: '2.4rem' }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.4rem', backgroundColor: 'var(--bg-main)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
+        <div className="toolbar-filters">
           <button
+            type="button"
             onClick={() => setCommitmentFilter('all')}
-            className={commitmentFilter === 'all' ? 'btn-primary' : 'btn-secondary'}
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', border: 'none' }}
+            className={commitmentFilter === 'all' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
           >
             Todos
           </button>
           <button
+            type="button"
             onClick={() => setCommitmentFilter('pending')}
-            className={commitmentFilter === 'pending' ? 'btn-primary' : 'btn-secondary'}
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', border: 'none' }}
+            className={commitmentFilter === 'pending' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
           >
-            <Clock size={14} /> Mis Pendientes
+            <Clock size={13} /> Mis Pendientes
           </button>
           <button
+            type="button"
             onClick={() => setCommitmentFilter('waiting')}
-            className={commitmentFilter === 'waiting' ? 'btn-primary' : 'btn-secondary'}
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', border: 'none' }}
+            className={commitmentFilter === 'waiting' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
           >
-            <UserCheck size={14} /> Me deben responder
+            <UserCheck size={13} /> Me deben responder
           </button>
           <button
+            type="button"
             onClick={() => setCommitmentFilter('done')}
-            className={commitmentFilter === 'done' ? 'btn-primary' : 'btn-secondary'}
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', border: 'none' }}
+            className={commitmentFilter === 'done' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
           >
-            <CheckCircle2 size={14} /> Completados
+            <CheckCircle2 size={13} /> Completados
           </button>
         </div>
       </div>

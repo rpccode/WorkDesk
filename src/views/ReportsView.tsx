@@ -268,18 +268,18 @@ export const ReportsView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Top Header & Main Navigation Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
             Centro de Documentos
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
             Catálogo de plantillas, redactor con autocompletado y editor especializado de formatos Word y PDF
           </p>
         </div>
 
         {/* 4 Dedicated Screens / Tabs */}
-        <div style={{ display: 'flex', backgroundColor: 'var(--bg-main)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: '0.2rem' }}>
+        <div className="page-actions" style={{ backgroundColor: 'var(--bg-main)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
           <button
             type="button"
             className={`btn-ghost ${activeTab === 'library' ? 'active' : ''}`}

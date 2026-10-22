@@ -165,77 +165,52 @@ export const CalendarView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       
       {/* ── Top Header & Controls ───────────────────────────────────── */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '1.2rem 1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="page-header">
         {/* Left: Month Navigator & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <button className="btn-secondary" style={{ padding: '0.45rem' }} onClick={handlePrev} title="Anterior">
+            <button type="button" className="btn-icon btn-sm btn-secondary" onClick={handlePrev} aria-label="Mes anterior">
               <ChevronLeft size={16} />
             </button>
-            <button className="btn-secondary" style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', fontWeight: 600 }} onClick={handleToday}>
+            <button type="button" className="btn-secondary btn-sm" onClick={handleToday}>
               Hoy
             </button>
-            <button className="btn-secondary" style={{ padding: '0.45rem' }} onClick={handleNext} title="Siguiente">
+            <button type="button" className="btn-icon btn-sm btn-secondary" onClick={handleNext} aria-label="Mes siguiente">
               <ChevronRight size={16} />
             </button>
           </div>
 
           <div>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, textTransform: 'capitalize', letterSpacing: '-0.02em' }}>
+            <h1 className="page-title" style={{ fontSize: '1.35rem', textTransform: 'capitalize' }}>
               {formatMonthYear(year, month)}
-            </h2>
-            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+            </h1>
+            <p className="page-subtitle tabular-nums">
               {filteredCommitments.length} compromiso(s) programado(s)
             </p>
           </div>
         </div>
 
         {/* Right: View switcher & New Commitment CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="page-actions">
           {/* Mode Switcher */}
-          <div style={{ display: 'flex', backgroundColor: 'var(--bg-main)', padding: '0.2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '0.2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
             <button
-              className={`btn-ghost ${viewMode === 'month' ? 'active' : ''}`}
-              style={{
-                fontSize: '0.78rem',
-                padding: '0.35rem 0.75rem',
-                backgroundColor: viewMode === 'month' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'month' ? 'white' : 'var(--text-secondary)',
-              }}
+              type="button"
+              className={viewMode === 'month' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}
               onClick={() => setViewMode('month')}
             >
               Mes
             </button>
             <button
-              className={`btn-ghost ${viewMode === 'week' ? 'active' : ''}`}
-              style={{
-                fontSize: '0.78rem',
-                padding: '0.35rem 0.75rem',
-                backgroundColor: viewMode === 'week' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'week' ? 'white' : 'var(--text-secondary)',
-              }}
+              type="button"
+              className={viewMode === 'week' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}
               onClick={() => setViewMode('week')}
             >
               Semana
             </button>
             <button
-              className={`btn-ghost ${viewMode === 'agenda' ? 'active' : ''}`}
-              style={{
-                fontSize: '0.78rem',
-                padding: '0.35rem 0.75rem',
-                backgroundColor: viewMode === 'agenda' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'agenda' ? 'white' : 'var(--text-secondary)',
-              }}
+              type="button"
+              className={viewMode === 'agenda' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}
               onClick={() => setViewMode('agenda')}
             >
               Agenda
@@ -243,11 +218,14 @@ export const CalendarView: React.FC = () => {
           </div>
 
           <button
-            className="btn-primary"
-            style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem', fontWeight: 600 }}
-            onClick={() => handleOpenAddCommitment()}
+            type="button"
+            className="btn-primary btn-sm"
+            onClick={() => {
+              setPrefilledDate(undefined);
+              setIsCommitmentModalOpen(true);
+            }}
           >
-            <Plus size={15} /> Nuevo Compromiso
+            <Plus size={14} /> + Compromiso
           </button>
         </div>
       </div>

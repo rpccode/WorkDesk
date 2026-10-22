@@ -55,6 +55,19 @@ export const TicketModal: React.FC<TicketModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     if (ticketToEdit) {
       setTicketNumber(ticketToEdit.ticket_number || '');
       setClientId(ticketToEdit.client_id);
@@ -211,18 +224,11 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
+      className="modal-overlay"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ticket-modal-title"
     >
       <div
         className="glass-card animate-fade-in"
@@ -263,7 +269,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               <Tag size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+              <h3 id="ticket-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 {ticketToEdit ? `Editar Ticket: ${ticketToEdit.ticket_number}` : 'Nuevo Ticket de Servicio & Soporte'}
               </h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
@@ -273,7 +279,9 @@ export const TicketModal: React.FC<TicketModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
+            className="btn-icon"
+            aria-label="Cerrar modal"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X size={18} />
           </button>
@@ -559,8 +567,13 @@ export const TicketModal: React.FC<TicketModalProps> = ({
           <button type="button" className="btn-secondary" onClick={onClose}>
             Cancelar
           </button>
-          <button type="submit" form="ticket-form" className="btn-primary" disabled={isSaving}>
-            <Check size={16} />
+          <button
+            type="submit"
+            form="ticket-form"
+            className={`btn-primary ${isSaving ? 'btn-loading' : ''}`}
+            disabled={isSaving}
+          >
+            {!isSaving && <Check size={16} />}
             {isSaving ? 'Guardando...' : ticketToEdit ? 'Actualizar Ticket' : 'Crear Ticket'}
           </button>
         </div>

@@ -98,8 +98,16 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       setNextActionDueDate(activeCase.next_action?.due_date || '');
       setNextActionOwner(activeCase.next_action?.owner_type || 'me');
       setIsEditingNextAction(false);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [activeCase]);
+  }, [activeCase, onClose]);
 
   if (!isOpen || !activeCase) return null;
   const c = activeCase;
@@ -193,19 +201,18 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const drawerContent = (
     <>
       <div
+        className="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="case-drawer-title"
         style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.65)',
-          backdropFilter: 'blur(8px)',
-          zIndex: 9980,
-          display: 'flex',
           justifyContent: 'flex-end',
+          alignItems: 'stretch',
         }}
         onClick={onClose}
       >
         <div
-          className="glass-card animate-fade-in"
+          className="glass-card animate-slide-right"
           style={{
             width: '100%',
             maxWidth: '640px',
@@ -234,7 +241,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               <span
                 style={{
                   fontSize: '0.72rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--accent-primary)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
@@ -242,7 +249,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               >
                 {c.client_name || 'Sin Cliente Asociado'}
               </span>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.2rem' }}>{c.title}</h2>
+              <h2 id="case-drawer-title" style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.2rem' }}>{c.title}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
                 {getPriorityBadge(c.priority)}
                 <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>
@@ -251,8 +258,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               </div>
             </div>
 
-            <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)' }}>
-              <X size={20} />
+            <button
+              type="button"
+              className="btn-icon btn-sm btn-ghost"
+              onClick={onClose}
+              aria-label="Cerrar panel de caso"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <X size={18} />
             </button>
           </div>
 
@@ -260,8 +273,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
           <div
             style={{
               padding: '1rem 1.5rem',
-              backgroundColor: 'rgba(37,99,235,0.06)',
-              borderBottom: '1px solid rgba(59,130,246,0.25)',
+              backgroundColor: 'var(--accent-glow)',
+              borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.6rem',

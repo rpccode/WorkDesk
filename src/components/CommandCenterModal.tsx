@@ -217,6 +217,9 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
         justifyContent: 'center',
         paddingTop: '12vh',
       }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Centro de Comandos y Búsqueda Global"
       onClick={onClose}
     >
       <div
@@ -228,8 +231,8 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-          border: '1px solid rgba(59,130,246,0.3)',
+          boxShadow: 'var(--shadow-lg)',
+          border: '1px solid var(--border-medium)',
         }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
@@ -335,8 +338,8 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
             color: 'var(--text-muted)',
           }}
         >
-          <span>Navega con <strong>↑</strong> <strong>↓</strong> y presiona <strong>Enter</strong></span>
-          <span>Command Center • WorkDesk 0.3</span>
+          <span>Navega con <kbd>↑</kbd> <kbd>↓</kbd> y presiona <kbd>Enter</kbd></span>
+          <span>Centro de Comandos • WorkDesk</span>
         </div>
       </div>
     </div>

@@ -179,8 +179,9 @@ export const MyDayView: React.FC = () => {
         className="glass-card"
         style={{
           padding: '1.75rem 2rem',
-          background: 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(17,24,39,0.9) 100%)',
-          border: '1px solid rgba(59,130,246,0.3)',
+          background: 'linear-gradient(135deg, var(--accent-glow) 0%, var(--bg-surface) 100%)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-sm)',
           borderRadius: 'var(--radius-lg)',
           display: 'flex',
           justifyContent: 'space-between',

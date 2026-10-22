@@ -102,41 +102,38 @@ export const DashboardView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
 
       {/* ── Page Header ──────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ fontSize: '1.7rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+      <div className="page-header">
+        <div className="page-title-group">
+          <h1 className="page-title">
             Centro de Operaciones
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.865rem', marginTop: '0.25rem' }}>
+          <p className="page-subtitle">
             Visión ejecutiva de compromisos, casos críticos y entregables
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.55rem', alignItems: 'center' }}>
-          <button className="btn-ghost" style={{ fontSize: '0.83rem' }} onClick={() => setQuickCaptureOpen(true)}>
-            <Zap size={15} color="var(--accent-primary)" /> Captura Rápida
+        <div className="page-actions">
+          <button type="button" className="btn-ghost btn-sm" onClick={() => setQuickCaptureOpen(true)}>
+            <Zap size={14} color="var(--accent-primary)" /> Captura Rápida
           </button>
-          <button className="btn-secondary" style={{ fontSize: '0.83rem' }} onClick={() => setIsCommitmentModalOpen(true)}>
-            <Plus size={15} /> Compromiso
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setIsCommitmentModalOpen(true)}>
+            <Plus size={14} /> Compromiso
           </button>
-          <button className="btn-primary" style={{ fontSize: '0.83rem' }} onClick={() => setIsCaseModalOpen(true)}>
-            <Plus size={15} /> Nuevo Caso
+          <button type="button" className="btn-primary btn-sm" onClick={() => setIsCaseModalOpen(true)}>
+            <Plus size={14} /> Nuevo Caso
           </button>
         </div>
       </div>
 
       {/* ── KPI Grid ─────────────────────────────────────────── */}
-      <div
-        className="stagger-children"
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}
-      >
+      <div className="kpi-grid stagger-children">
         <KpiCard
           label="Compromisos Vencidos"
           value={summary?.overdue_commitments_count || 0}
           sub="Requieren atención inmediata"
           icon={<AlertTriangle />}
           accentColor="var(--status-critical)"
-          glowColor="rgba(244, 63, 94, 0.25)"
+          glowColor="var(--status-critical-bg)"
           urgent
         />
         <KpiCard
@@ -145,7 +142,7 @@ export const DashboardView: React.FC = () => {
           sub="Bajo mi responsabilidad"
           icon={<Clock />}
           accentColor="var(--accent-primary)"
-          glowColor="var(--accent-glow-strong)"
+          glowColor="var(--accent-glow)"
         />
         <KpiCard
           label="Me Deben Responder"
@@ -153,7 +150,7 @@ export const DashboardView: React.FC = () => {
           sub="En espera de clientes/terceros"
           icon={<UserCheck />}
           accentColor="var(--status-medium)"
-          glowColor="rgba(251, 191, 36, 0.25)"
+          glowColor="var(--status-medium-bg)"
         />
         <KpiCard
           label="Casos Activos"
@@ -165,7 +162,7 @@ export const DashboardView: React.FC = () => {
           }
           icon={<Briefcase />}
           accentColor="var(--status-low)"
-          glowColor="rgba(52, 211, 153, 0.25)"
+          glowColor="var(--status-low-bg)"
         />
       </div>
 

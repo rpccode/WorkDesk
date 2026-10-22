@@ -112,50 +112,43 @@ export const InboxView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ padding: '1.5rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
-            <Inbox size={22} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: 0 }}>
-              Bandeja de Entrada (Inbox GTD)
-            </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
-              Captura rápida sin fricción para registrar ideas o tareas y procesarlas después
-            </p>
+      <div className="page-header">
+        <div className="page-title-group">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+              <Inbox size={20} />
+            </div>
+            <div>
+              <h1 className="page-title">
+                Bandeja de Entrada (Inbox GTD)
+              </h1>
+              <p className="page-subtitle">
+                Captura rápida sin fricción para registrar ideas o tareas y procesarlas después
+              </p>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        <div className="page-actions">
           <button
             type="button"
-            className="btn-secondary"
-            style={{
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.85rem',
-              gap: '0.4rem',
-            }}
+            className="btn-secondary btn-sm"
             onClick={() => setIsEmailImportOpen(true)}
           >
             <Mail size={14} /> Importar Correo
           </button>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-secondary btn-sm"
             style={{
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.85rem',
-              border: '1px solid var(--accent-border, rgba(59,130,246,0.4))',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
+              border: '1px solid var(--accent-primary)',
               color: 'var(--accent-primary)',
-              fontWeight: 700,
             }}
             onClick={() => setIsExtractorOpen(true)}
           >
-            <Sparkles size={14} /> ✨ Extraer con IA
+            <Sparkles size={14} /> Extraer con IA
           </button>
-          <span className="badge" style={{ backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)', fontWeight: 800, fontSize: '0.78rem' }}>
+          <span className="badge badge-neutral tabular-nums">
             {unprocessedItems.length} Pendientes
           </span>
         </div>

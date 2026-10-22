@@ -54,8 +54,16 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       }
       setError(null);
       setFieldErrors({});
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, caseToEdit, clients]);
+  }, [isOpen, caseToEdit, clients, onClose]);
 
   if (!isOpen) return null;
 
@@ -153,17 +161,11 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="case-modal-title"
+      style={{ padding: '1.5rem' }}
       onClick={onClose}
     >
       <div
@@ -173,22 +175,28 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           maxWidth: '580px',
           padding: '1.75rem',
           backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid var(--border-medium)',
           boxShadow: 'var(--shadow-lg)',
-          borderRadius: 'var(--radius-lg)',
+          borderRadius: 'var(--radius-xl)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Briefcase size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+            <h3 id="case-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
               {caseToEdit ? 'Editar Caso / Proyecto' : 'Nuevo Caso / Proyecto'}
             </h3>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button
+            type="button"
+            className="btn-icon btn-sm btn-ghost"
+            onClick={onClose}
+            aria-label="Cerrar modal"
+            style={{ color: 'var(--text-muted)' }}
+          >
             <X size={18} />
           </button>
         </div>

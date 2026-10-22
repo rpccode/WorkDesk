@@ -63,26 +63,27 @@ export const WaitingOnView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ padding: '1.5rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'rgba(245,158,11,0.12)', color: 'var(--status-medium)' }}>
-            <Clock size={22} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: 0 }}>
-              Esperando de Otros & Bloqueos
-            </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
-              Control de dependencias, validaciones pendientes de clientes y días transcurridos
-            </p>
+      <div className="page-header">
+        <div className="page-title-group">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--status-medium-bg)', color: 'var(--status-medium)' }}>
+              <Clock size={20} />
+            </div>
+            <div>
+              <h1 className="page-title">
+                Esperando de Otros &amp; Bloqueos
+              </h1>
+              <p className="page-subtitle">
+                Control de dependencias, validaciones pendientes de clientes y días transcurridos
+              </p>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div className="page-actions">
           <button
             type="button"
-            className="btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }}
+            className="btn-secondary btn-sm"
             onClick={() => setActiveTab('my_day')}
           >
             ← Volver a Mi Día

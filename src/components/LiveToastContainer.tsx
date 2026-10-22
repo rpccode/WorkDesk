@@ -60,13 +60,15 @@ const LiveToastItem: React.FC<LiveToastItemProps> = ({ toast, onDismiss, onActio
 
   return (
     <div
+      role={toast.type === 'critical' ? 'alert' : 'status'}
+      aria-live={toast.type === 'critical' ? 'assertive' : 'polite'}
       className="glass-card animate-slide-up"
       style={{
         width: '360px',
         padding: '0.9rem 1.1rem',
         backgroundColor: 'var(--bg-surface-elevated)',
         borderLeft: `4px solid ${getBorderColor(toast.type)}`,
-        boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
+        boxShadow: 'var(--shadow-md)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.4rem',
@@ -84,10 +86,11 @@ const LiveToastItem: React.FC<LiveToastItemProps> = ({ toast, onDismiss, onActio
           </span>
         </div>
         <button
-          className="btn-ghost"
-          style={{ padding: '0.2rem', color: 'var(--text-muted)' }}
+          type="button"
+          className="btn-icon btn-sm btn-ghost"
+          style={{ width: '24px', height: '24px', color: 'var(--text-muted)' }}
           onClick={() => onDismiss(toast.id)}
-          title="Cerrar alerta"
+          aria-label="Cerrar alerta"
         >
           <X size={14} />
         </button>
@@ -141,7 +144,7 @@ export const LiveToastContainer: React.FC = () => {
         position: 'fixed',
         top: '1.25rem',
         right: '1.25rem',
-        zIndex: 9999,
+        zIndex: 'var(--z-toast, 2000)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.65rem',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useStore } from './store';
 import {
   LayoutDashboard,
@@ -298,8 +298,8 @@ export function App() {
         style={{
           width: '252px',
           height: '100%',
-          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          borderRight: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)',
+          borderRight: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-xs)',
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
@@ -642,3 +642,4 @@ export function App() {
 }
 
 export default App;
+

@@ -29,6 +29,19 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  React.useEffect(() => {
     if (isOpen) {
       setDescription('');
       setOwner('me');
@@ -107,18 +120,11 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
+      className="modal-overlay"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="commitment-modal-title"
     >
       <div
         className="glass-card animate-fade-in"
@@ -138,9 +144,16 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
             <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <CheckSquare size={20} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Nuevo Compromiso / Entrega</h3>
+            <h3 id="commitment-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+              Nuevo Compromiso / Entrega
+            </h3>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={onClose}
+            className="btn-icon"
+            aria-label="Cerrar modal"
+            style={{ color: 'var(--text-muted)' }}
+          >
             <X size={18} />
           </button>
         </div>
@@ -250,10 +263,10 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className={`btn-primary ${isSaving ? 'btn-loading' : ''}`}
               disabled={isSaving}
             >
-              <Check size={16} />
+              {!isSaving && <Check size={16} />}
               {isSaving ? 'Guardando...' : 'Crear Compromiso'}
             </button>
           </div>

@@ -232,36 +232,37 @@ export const ClientsView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Cartera de Clientes & Matriz de Complejidad
+      <div className="page-header">
+        <div className="page-title-group">
+          <h1 className="page-title">
+            Cartera de Clientes &amp; Matriz de Complejidad
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+          <p className="page-subtitle">
             Diagnóstico corporativo, dotación, sucursales y clasificación de cuentas consultivas
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div className="page-actions">
           {clients.length > 0 && (
             <button
-              className="btn-ghost"
-              style={{ fontSize: '0.82rem', color: 'var(--status-critical)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              type="button"
+              className="btn-ghost btn-sm"
+              style={{ color: 'var(--status-critical)' }}
               onClick={handleDeleteAll}
               title="Borrar todos los clientes para cargarlos de nuevo"
             >
-              <Trash2 size={15} /> Vaciar Cartera ({clients.length})
+              <Trash2 size={14} /> Vaciar Cartera ({clients.length})
             </button>
           )}
           <button
-            className="btn-secondary"
-            style={{ fontSize: '0.82rem', fontWeight: 600 }}
+            type="button"
+            className="btn-secondary btn-sm"
             onClick={() => setIsBulkImportOpen(true)}
           >
-            <FileSpreadsheet size={16} /> Carga Masiva (Excel / CSV)
+            <FileSpreadsheet size={15} color="var(--status-low)" /> Carga Masiva (Excel / CSV)
           </button>
-          <button className="btn-primary" onClick={() => setIsClientModalOpen(true)}>
-            <Plus size={16} /> Nuevo Cliente
+          <button type="button" className="btn-primary btn-sm" onClick={() => setIsClientModalOpen(true)}>
+            <Plus size={15} /> Nuevo Cliente
           </button>
         </div>
       </div>
@@ -323,10 +324,10 @@ export const ClientsView: React.FC = () => {
       </div>
 
       {/* Control Bar: Search + Category + Complexity + View Mode */}
-      <div className="glass-card" style={{ padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="toolbar">
         {/* Search & Filters */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '300px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+          <div className="toolbar-search">
             <Search
               size={16}
               style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
@@ -336,7 +337,7 @@ export const ClientsView: React.FC = () => {
               placeholder="Buscar cliente, empresa o rubro..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', paddingLeft: '2.4rem', fontSize: '0.85rem' }}
+              style={{ paddingLeft: '2.4rem' }}
             />
           </div>
 

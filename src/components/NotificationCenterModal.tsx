@@ -30,6 +30,18 @@ export const NotificationCenterModal: React.FC = () => {
 
   const [filterType, setFilterType] = useState<string>('all');
 
+  React.useEffect(() => {
+    if (isNotificationCenterOpen) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setNotificationCenterOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isNotificationCenterOpen, setNotificationCenterOpen]);
+
   if (!isNotificationCenterOpen) return null;
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -87,19 +99,18 @@ export const NotificationCenterModal: React.FC = () => {
 
   const modalContent = (
     <div
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="alert-center-title"
       style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99990,
-        display: 'flex',
         justifyContent: 'flex-end',
+        alignItems: 'stretch',
       }}
       onClick={() => setNotificationCenterOpen(false)}
     >
       <div
-        className="glass-card animate-fade-in"
+        className="glass-card animate-slide-right"
         style={{
           width: '100%',
           maxWidth: '460px',
@@ -125,21 +136,23 @@ export const NotificationCenterModal: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
               <Bell size={18} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Centro de Alertas</h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+              <h3 id="alert-center-title" style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Centro de Alertas</h3>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
                 {unreadCount > 0 ? `${unreadCount} alerta(s) sin leer` : 'Todo al día'}
               </p>
             </div>
           </div>
 
           <button
-            className="btn-ghost"
-            style={{ padding: '0.35rem', color: 'var(--text-muted)' }}
+            type="button"
+            className="btn-icon btn-sm btn-ghost"
+            style={{ color: 'var(--text-muted)' }}
             onClick={() => setNotificationCenterOpen(false)}
+            aria-label="Cerrar panel de alertas"
           >
             <X size={18} />
           </button>

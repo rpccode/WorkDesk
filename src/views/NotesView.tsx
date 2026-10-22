@@ -56,13 +56,15 @@ export const NotesView: React.FC = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-          Notas Rápidas & Bitácora Libre
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          Captura ideas, recordatorios y apuntes rápidos vinculados a tus casos
-        </p>
+      <div className="page-header">
+        <div>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
+            Notas Rápidas & Bitácora Libre
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+            Captura ideas, recordatorios y apuntes rápidos vinculados a tus casos
+          </p>
+        </div>
       </div>
 
       {/* Quick Entry Box */}
@@ -96,16 +98,7 @@ export const NotesView: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '0.85rem 1.25rem',
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="toolbar">
         <div style={{ position: 'relative', flex: '1 1 280px' }}>
           <Search
             size={16}
@@ -142,23 +135,18 @@ export const NotesView: React.FC = () => {
       {/* Notes Feed */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
         {pagination.paginatedItems.length === 0 ? (
-          <div
-            className="glass-card"
-            style={{
-              gridColumn: '1 / -1',
-              padding: '3.5rem 1rem',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-            }}
-          >
-            <FileText size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No hay notas registradas</p>
+          <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
+            <div className="empty-state-icon">
+              <FileText size={32} />
+            </div>
+            <p className="empty-state-title">No hay notas registradas</p>
+            <p className="empty-state-desc">Usa el formulario superior para crear apuntes rápidos o registrar ideas de consultoría.</p>
           </div>
         ) : (
           pagination.paginatedItems.map((n) => (
             <div
               key={n.id}
-              className="glass-card"
+              className="glass-card card-hover"
               style={{
                 padding: '1.25rem',
                 display: 'flex',
@@ -193,14 +181,10 @@ export const NotesView: React.FC = () => {
                 <span>{formatDate(n.created_at)}</span>
                 <button
                   onClick={() => deleteNote(n.id)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    padding: '0.2rem',
-                    cursor: 'pointer',
-                  }}
+                  className="btn-icon"
+                  style={{ color: 'var(--text-muted)' }}
                   title="Eliminar nota"
+                  aria-label="Eliminar nota"
                 >
                   <Trash2 size={14} />
                 </button>

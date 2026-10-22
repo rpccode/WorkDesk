@@ -444,52 +444,58 @@ export const TicketsView: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '3rem' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ padding: '1.35rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
-            <Tag size={22} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: 0 }}>
-              Centro de Tickets &amp; Soporte
-            </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
-              Control, trazabilidad y nivel de servicio (SLA) por cliente
-            </p>
+      <div className="page-header">
+        <div className="page-title-group">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+              <Tag size={20} />
+            </div>
+            <div>
+              <h1 className="page-title">
+                Centro de Tickets &amp; Soporte
+              </h1>
+              <p className="page-subtitle">
+                Control, trazabilidad y nivel de servicio (SLA) por cliente
+              </p>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div className="page-actions">
           {someSelected && (
             <>
-              <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
-                <Layers size={15} /> Editar {selectedIds.size} seleccionados
+              <button type="button" className="btn-secondary btn-sm" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
+                <Layers size={14} /> Editar {selectedIds.size} seleccionados
               </button>
-              <button type="button" className="btn-danger" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={handleBulkDelete} disabled={isBulkSaving}>
-                <Trash2 size={15} /> Eliminar ({selectedIds.size})
+              <button type="button" className="btn-danger btn-sm" onClick={handleBulkDelete} disabled={isBulkSaving}>
+                <Trash2 size={14} /> Eliminar ({selectedIds.size})
               </button>
             </>
           )}
-          <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }} onClick={() => setIsBulkImportOpen(true)}>
-            <FileSpreadsheet size={15} color="var(--status-low)" /> Carga Masiva (Excel / CSV)
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setIsBulkImportOpen(true)}>
+            <FileSpreadsheet size={14} color="var(--status-low)" /> Carga Masiva (Excel / CSV)
           </button>
-          <button type="button" className="btn-secondary" style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem' }} onClick={handleExportToExcel}>
-            <Download size={15} /> {someSelected ? `Exportar ${selectedIds.size}` : 'Exportar'}
+          <button type="button" className="btn-secondary btn-sm" onClick={handleExportToExcel}>
+            <Download size={14} /> {someSelected ? `Exportar ${selectedIds.size}` : 'Exportar'}
           </button>
           {tickets.length > 0 && !someSelected && (
             <button
               type="button"
-              className="btn-danger"
-              style={{ fontSize: '0.82rem', padding: '0.55rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              className="btn-ghost btn-sm"
+              style={{ color: 'var(--status-critical)' }}
               onClick={handleDeleteAllTickets}
               disabled={isBulkSaving}
-              title="Eliminar todos los tickets registrados"
+              title="Borrar todos los tickets de la base de datos"
             >
-              <Trash2 size={15} /> Borrar Todo ({tickets.length})
+              <Trash2 size={14} /> Borrar Todo
             </button>
           )}
-          <button type="button" className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.55rem 1.1rem' }} onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}>
-            <Plus size={16} /> + Nuevo Ticket
+          <button
+            type="button"
+            className="btn-primary btn-sm"
+            onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}
+          >
+            <Plus size={14} /> Nuevo Ticket
           </button>
         </div>
       </div>
