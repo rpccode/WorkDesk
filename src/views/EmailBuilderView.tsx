@@ -20,7 +20,6 @@ import {
   type CustomEmailTemplate,
 } from '../utils/email-templates';
 import { launchEmailClient, type EmailProvider } from '../utils/email-launcher';
-import { EmailAccountsModal } from '../components/EmailAccountsModal';
 import { EmailTemplateModal } from '../components/EmailTemplateModal';
 import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatSignature } from '../utils/theme-manager';
@@ -45,6 +44,7 @@ export const EmailBuilderView: React.FC = () => {
     consultantProfile,
     aiConfig,
     addNotification,
+    setEmailAccountsOpen,
   } = useStore();
 
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseForEmail?.id || (cases[0]?.id || ''));
@@ -67,7 +67,6 @@ export const EmailBuilderView: React.FC = () => {
   const [isSendingDirect, setIsSendingDirect] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{ success: boolean; text: string } | null>(null);
   const [autoLogFollowup, setAutoLogFollowup] = useState(true);
-  const [isAccountsModalOpen, setIsAccountsModalOpen] = useState(false);
 
   const [customTemplates, setCustomTemplates] = useState<CustomEmailTemplate[]>(() => loadCustomTemplates());
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -267,7 +266,7 @@ export const EmailBuilderView: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
-            Generador & Envío de Correos
+            Correos
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.2rem 0 0 0' }}>
             Envía directo en segundo plano, abre en webmail y sincroniza el seguimiento con tus clientes
@@ -277,7 +276,7 @@ export const EmailBuilderView: React.FC = () => {
         <div className="page-actions">
           <button
             className="btn-secondary"
-            onClick={() => setIsAccountsModalOpen(true)}
+            onClick={() => setEmailAccountsOpen(true)}
           >
             <Settings2 size={15} color="var(--accent-primary)" />
             {emailAccounts.length > 0
@@ -890,12 +889,6 @@ export const EmailBuilderView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Email Accounts Setup Modal */}
-      <EmailAccountsModal
-        isOpen={isAccountsModalOpen}
-        onClose={() => setIsAccountsModalOpen(false)}
-      />
 
       {/* Custom Email Template Creator & Manager Modal */}
       <EmailTemplateModal

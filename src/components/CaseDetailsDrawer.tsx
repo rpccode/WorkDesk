@@ -405,7 +405,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
               onClick={() => setIsCommitmentModalOpen(true)}
             >
-              <Plus size={13} /> + Compromiso
+              <Plus size={13} /> Nuevo compromiso
             </button>
             <button
               className="btn-secondary"
@@ -456,7 +456,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 onClose();
               }}
             >
-              <Mail size={13} /> Redactar
+              <Mail size={13} /> Redactar correo
             </button>
             <button
               className="btn-secondary"
@@ -689,7 +689,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                       style={{ fontSize: '0.78rem', marginTop: '0.5rem' }}
                       onClick={() => setIsCommitmentModalOpen(true)}
                     >
-                      <Plus size={13} /> Añadir Compromiso
+                      <Plus size={13} /> Nuevo compromiso
                     </button>
                   </div>
                 ) : (
@@ -844,7 +844,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                       style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                       onClick={() => setCaseForEmail(c)}
                     >
-                      <Mail size={13} /> Redactar
+                      <Mail size={13} /> Redactar correo
                     </button>
                   </div>
                 </div>
@@ -869,7 +869,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                         style={{ fontSize: '0.78rem' }}
                         onClick={() => setCaseForEmail(c)}
                       >
-                        <Mail size={13} /> Redactar Correo
+                        <Mail size={13} /> Redactar correo Correo
                       </button>
                     </div>
                   </div>

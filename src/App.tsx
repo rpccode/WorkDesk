@@ -1,25 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from './store';
 import {
-  LayoutDashboard,
-  Tag,
-  Briefcase,
-  CheckSquare,
-  Calendar,
-  Users,
-  FileText,
   Mail,
-  FileBarChart2,
   Zap,
   RefreshCw,
   Layers,
   Bell,
-  Settings,
-  Sun,
-  Inbox,
-  Clock,
   Search,
-  TrendingUp,
   Sparkles,
 } from 'lucide-react';
 import { MyDayView } from './views/MyDayView';
@@ -51,6 +38,7 @@ import { backgroundEngine } from './services/background-service';
 import { api } from './api/tauri';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { logAppError } from './utils/error-logger';
+import { DESTINATIONS } from './navigation/destinations';
 import type { ActiveTab } from './types';
 
 // ── Parche de migración automática ────────────────────────────────────────────
@@ -111,13 +99,14 @@ export function App() {
     tickets,
     consultantPreferences,
     setNotificationCenterOpen,
+    isEmailAccountsOpen,
+    setEmailAccountsOpen,
     isCopilotOpen,
     setCopilotOpen,
   } = useStore();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('');
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMiniWidgetMode, setIsMiniWidgetMode] = useState(false);
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
@@ -129,12 +118,23 @@ export function App() {
   const waitingCount = commitments.filter((c) => c.status !== 'done' && c.owner !== 'me').length;
 
   const toggleMiniWidgetMode = async (enable?: boolean) => {
-    const next = enable !== undefined ? enable : !isMiniWidgetMode;
+    // Se lee del ref y no del estado: el handler de teclado está en un
+    // useEffect con deps [], así que el estado del cierre quedaba congelado
+    // en el valor de montaje y el atajo solo entraba, nunca salía.
+    const current = isMiniWidgetModeRef.current;
+    const next = enable !== undefined ? enable : !current;
+    isMiniWidgetModeRef.current = next;
     setIsMiniWidgetMode(next);
     try {
       await api.toggleMiniWidget(next);
     } catch (_) {}
   };
+
+  // Refs espejo para que los handlers globales lean el valor actual.
+  const isMiniWidgetModeRef = useRef(isMiniWidgetMode);
+  const isCopilotOpenRef = useRef(isCopilotOpen);
+  useEffect(() => { isMiniWidgetModeRef.current = isMiniWidgetMode; }, [isMiniWidgetMode]);
+  useEffect(() => { isCopilotOpenRef.current = isCopilotOpen; }, [isCopilotOpen]);
 
   useEffect(() => {
     refreshAll();
@@ -153,7 +153,9 @@ export function App() {
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) {
         e.preventDefault();
-        setCopilotOpen(!isCopilotOpen);
+        const next = !isCopilotOpenRef.current;
+        isCopilotOpenRef.current = next;
+        setCopilotOpen(next);
       }
       if ((e.ctrlKey || e.metaKey || e.altKey) && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
@@ -191,95 +193,35 @@ export function App() {
     badge?: number;
     badgeCritical?: boolean;
     section?: string;
-  }[] = [
-    // Operaciones Personales
-    {
-      id: 'my_day',
-      label: 'Mi Día',
-      icon: <Sun size={17} />,
-      section: 'Operaciones',
-    },
-    {
-      id: 'inbox',
-      label: 'Bandeja (Inbox)',
-      icon: <Inbox size={17} />,
-      badge: unprocessedInboxCount > 0 ? unprocessedInboxCount : undefined,
-    },
-    {
-      id: 'waiting_on',
-      label: 'Esperando de Otros',
-      icon: <Clock size={17} />,
-      badge: waitingCount > 0 ? waitingCount : undefined,
-    },
+  }[] = DESTINATIONS.map((dest) => ({
+    id: dest.id,
+    label: dest.label,
+    icon: dest.icon,
+    section: dest.section,
+    ...badgeFor(dest.id),
+  }));
 
-    // Gestión
-    {
-      id: 'cases',
-      label: 'Casos & Proyectos',
-      icon: <Briefcase size={17} />,
-      badge: dashboardSummary?.active_cases_count,
-      section: 'Gestión',
-    },
-    {
-      id: 'commitments',
-      label: 'Compromisos',
-      icon: <CheckSquare size={17} />,
-      badge: dashboardSummary?.overdue_commitments_count
-        ? dashboardSummary.overdue_commitments_count
-        : dashboardSummary?.pending_commitments_count,
-      badgeCritical: !!(dashboardSummary?.overdue_commitments_count),
-    },
-    {
-      id: 'tickets',
-      label: 'Tickets & Soporte',
-      icon: <Tag size={17} />,
-      badge: openTicketsCount > 0 ? openTicketsCount : undefined,
-      badgeCritical: hasCriticalTickets,
-    },
-    {
-      id: 'clients',
-      label: 'Clientes',
-      icon: <Users size={17} />,
-    },
-
-    // Herramientas & Reportes
-    {
-      id: 'calendar',
-      label: 'Calendario',
-      icon: <Calendar size={17} />,
-      section: 'Herramientas',
-    },
-    {
-      id: 'analytics',
-      label: 'Analíticas & SLA',
-      icon: <TrendingUp size={17} />,
-    },
-    {
-      id: 'reports',
-      label: 'Documentos & Word',
-      icon: <FileBarChart2 size={17} />,
-    },
-    {
-      id: 'emails',
-      label: 'Correos',
-      icon: <Mail size={17} />,
-    },
-    {
-      id: 'notes',
-      label: 'Notas & Bitácora',
-      icon: <FileText size={17} />,
-    },
-    {
-      id: 'dashboard',
-      label: 'Dashboard KPIs',
-      icon: <LayoutDashboard size={17} />,
-    },
-    {
-      id: 'settings',
-      label: 'Configuración',
-      icon: <Settings size={17} />,
-    },
-  ];
+  function badgeFor(id: ActiveTab): { badge?: number; badgeCritical?: boolean } {
+    switch (id) {
+      case 'inbox':
+        return { badge: unprocessedInboxCount > 0 ? unprocessedInboxCount : undefined };
+      case 'waiting_on':
+        return { badge: waitingCount > 0 ? waitingCount : undefined };
+      case 'cases':
+        return { badge: dashboardSummary?.active_cases_count };
+      case 'commitments':
+        return {
+          badge: dashboardSummary?.overdue_commitments_count
+            ? dashboardSummary.overdue_commitments_count
+            : dashboardSummary?.pending_commitments_count,
+          badgeCritical: !!dashboardSummary?.overdue_commitments_count,
+        };
+      case 'tickets':
+        return { badge: openTicketsCount > 0 ? openTicketsCount : undefined, badgeCritical: hasCriticalTickets };
+      default:
+        return {};
+    }
+  }
 
   if (isMiniWidgetMode) {
     return (
@@ -486,16 +428,21 @@ export function App() {
 
           {navItems.map((item, idx) => {
             const isActive = activeTab === item.id;
+            // El separador de sección se dibuja cuando cambia la sección, no
+            // cuando el índice es 0: con el registro, cada destino lleva la
+            // suya y el primero de cada grupo abre su bloque.
+            const prevSection = idx > 0 ? navItems[idx - 1].section : undefined;
+            const isFirstOfSection = item.section !== prevSection;
             return (
               <React.Fragment key={item.id}>
-                {item.section && (
+                {isFirstOfSection && item.section && (
                   <span style={{
                     fontSize: '0.69rem',
                     fontWeight: 800,
                     color: 'var(--text-muted)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
-                    padding: idx === 0 ? '0.2rem 0.6rem 0.25rem' : '0.65rem 0.6rem 0.25rem',
+                    padding: isFirstOfSection ? '0.2rem 0.6rem 0.25rem' : '0.65rem 0.6rem 0.25rem',
                   }}>
                     {item.section}
                   </span>
@@ -580,7 +527,7 @@ export function App() {
                 padding: '0.35rem 0.5rem',
                 color: 'var(--text-muted)',
               }}
-              onClick={() => setIsEmailModalOpen(true)}
+              onClick={() => setEmailAccountsOpen(true)}
               title="Configuración de cuentas de correo"
             >
               <Mail size={12} />
@@ -612,8 +559,10 @@ export function App() {
           }}
         >
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <UpdateChecker />
+            {/* Orden por urgencia: los datos obsoletos afectan a lo que el
+                usuario ve; el aviso de actualización es informativo. */}
             <StaleDataBanner />
+            <UpdateChecker />
             <ErrorBoundary fallbackTitle="Error al cargar la sección activa">
               {activeTab === 'my_day'       && <MyDayView />}
               {activeTab === 'inbox'        && <InboxView />}
@@ -628,7 +577,7 @@ export function App() {
               {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
               {activeTab === 'emails'       && <EmailBuilderView />}
               {activeTab === 'reports'      && <ReportsView />}
-              {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
+              {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setEmailAccountsOpen(true)} />}
             </ErrorBoundary>
           </div>
         </main>
@@ -644,8 +593,8 @@ export function App() {
         onClose={() => setIsCommandCenterOpen(false)}
       />
       <EmailAccountsModal
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
+        isOpen={isEmailAccountsOpen}
+        onClose={() => setEmailAccountsOpen(false)}
       />
       <NotificationCenterModal />
       <CopilotPanel />

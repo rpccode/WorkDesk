@@ -236,7 +236,7 @@ export const ClientsView: React.FC = () => {
       <div className="page-header">
         <div className="page-title-group">
           <h1 className="page-title">
-            Cartera de Clientes &amp; Matriz de Complejidad
+            Clientes
           </h1>
           <p className="page-subtitle">
             Diagnóstico corporativo, dotación, sucursales y clasificación de cuentas consultivas

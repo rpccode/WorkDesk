@@ -225,7 +225,7 @@ export const CalendarView: React.FC = () => {
               setIsCommitmentModalOpen(true);
             }}
           >
-            <Plus size={14} /> + Compromiso
+            <Plus size={14} /> Nuevo compromiso
           </button>
         </div>
       </div>
@@ -684,7 +684,7 @@ export const CalendarView: React.FC = () => {
                       handleOpenAddCommitment(d);
                     }}
                   >
-                    <Plus size={14} /> Añadir Compromiso
+                    <Plus size={14} /> Nuevo compromiso
                   </button>
                 </div>
               ) : (

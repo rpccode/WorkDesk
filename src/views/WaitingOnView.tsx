@@ -71,7 +71,7 @@ export const WaitingOnView: React.FC = () => {
             </div>
             <div>
               <h1 className="page-title">
-                Esperando de Otros &amp; Bloqueos
+                Esperando de Otros
               </h1>
               <p className="page-subtitle">
                 Control de dependencias, validaciones pendientes de clientes y días transcurridos

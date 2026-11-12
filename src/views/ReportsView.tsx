@@ -271,7 +271,7 @@ export const ReportsView: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
-            Centro de Documentos
+            Documentos & Word
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
             Catálogo de plantillas, redactor con autocompletado y editor especializado de formatos Word y PDF
@@ -428,8 +428,11 @@ export const ReportsView: React.FC = () => {
                 <tbody>
                   {filteredTemplates.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        No se encontraron plantillas coincidentes.
+                      <td colSpan={5} style={{ padding: 0 }}>
+                        <div className="empty-state">
+                          <p className="empty-state-title">No se encontraron plantillas coincidentes</p>
+                          <p className="empty-state-desc">Cambia el filtro o crea una plantilla nueva.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (

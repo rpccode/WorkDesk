@@ -120,7 +120,7 @@ export const InboxView: React.FC = () => {
             </div>
             <div>
               <h1 className="page-title">
-                Bandeja de Entrada (Inbox GTD)
+                Bandeja
               </h1>
               <p className="page-subtitle">
                 Captura rápida sin fricción para registrar ideas o tareas y procesarlas después
@@ -242,10 +242,12 @@ export const InboxView: React.FC = () => {
       {/* ── Items List ──────────────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {activeTab === 'unprocessed' && unprocessedItems.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-            <CheckCircle2 size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: 'var(--status-low-text)' }} />
-            <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>¡Bandeja de entrada limpia (Inbox Zero)!</p>
-            <p style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>No tienes elementos pendientes por clasificar.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <CheckCircle2 size={40} color="var(--status-low-text)" />
+            </div>
+            <p className="empty-state-title">¡Bandeja de entrada limpia (Inbox Zero)!</p>
+            <p className="empty-state-desc">No tienes elementos pendientes por clasificar.</p>
           </div>
         )}
 

@@ -50,9 +50,12 @@ export const ConsultingAnalyticsView: React.FC = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Consulting Intelligence
             </span>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: '0.1rem 0 0' }}>
-              Analíticas de Productividad & Radar de Riesgo
-            </h2>
+            <h1 className="page-title" style={{ fontSize: '1.45rem', letterSpacing: '-0.025em', margin: '0.1rem 0 0' }}>
+              Analíticas &amp; SLA
+            </h1>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+              Productividad, cuellos de botella y radar de riesgo de abandono
+            </p>
           </div>
         </div>
 

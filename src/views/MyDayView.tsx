@@ -199,11 +199,14 @@ export const MyDayView: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Personal Operations Center • Mi Día
+                Personal Operations Center
               </span>
-              <h2 style={{ fontSize: '1.65rem', fontWeight: 900, letterSpacing: '-0.025em', margin: '0.1rem 0 0' }}>
+              <h1 className="page-title" style={{ fontSize: '1.65rem', fontWeight: 900, letterSpacing: '-0.025em', margin: '0.1rem 0 0' }}>
+                Mi Día
+              </h1>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
                 Buenos días, {consultantProfile.name.split(' ')[0]}
-              </h2>
+              </p>
             </div>
           </div>
 
@@ -239,7 +242,7 @@ export const MyDayView: React.FC = () => {
             style={{ fontSize: '0.84rem', padding: '0.65rem 1rem' }}
             onClick={() => setIsCommitmentModalOpen(true)}
           >
-            <Plus size={15} /> + Compromiso
+            <Plus size={15} /> Nuevo compromiso
           </button>
           <button
             type="button"
@@ -247,7 +250,7 @@ export const MyDayView: React.FC = () => {
             style={{ fontSize: '0.84rem', padding: '0.65rem 1.25rem' }}
             onClick={() => setIsCaseModalOpen(true)}
           >
-            <Zap size={15} /> + Nuevo Caso
+            <Zap size={15} /> Nuevo caso
           </button>
         </div>
       </div>

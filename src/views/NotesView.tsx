@@ -60,7 +60,7 @@ export const NotesView: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
-            Notas Rápidas & Bitácora Libre
+            Notas & Bitácora
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
             Captura ideas, recordatorios y apuntes rápidos vinculados a tus casos

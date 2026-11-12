@@ -74,7 +74,7 @@ export const CasesView: React.FC = () => {
       <div className="page-header">
         <div className="page-title-group">
           <h1 className="page-title">
-            Gestión de Casos &amp; Proyectos
+            Casos &amp; Proyectos
           </h1>
           <p className="page-subtitle">
             Expedientes de consultoría, hitos y control de entregables
@@ -83,7 +83,7 @@ export const CasesView: React.FC = () => {
 
         <div className="page-actions">
           <button type="button" className="btn-primary" onClick={() => setIsNewCaseModalOpen(true)}>
-            <Plus size={16} /> Nuevo Caso
+            <Plus size={16} /> Nuevo caso
           </button>
         </div>
       </div>
@@ -141,19 +141,22 @@ export const CasesView: React.FC = () => {
           </div>
         ) : pagination.paginatedItems.length === 0 ? (
           <div
-            className="glass-card"
+            className="empty-state"
             style={{
               gridColumn: '1 / -1',
-              padding: '3.5rem 1rem',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <Briefcase size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No se encontraron casos con los filtros aplicados</p>
+            <div className="empty-state-icon">
+              <Briefcase size={40} />
+            </div>
+            <p className="empty-state-title">No se encontraron casos con los filtros aplicados</p>
+            <p className="empty-state-desc">Ajusta los filtros o crea un caso nuevo para empezar.</p>
             <button
               className="btn-primary"
-              style={{ marginTop: '1rem' }}
+              style={{ marginTop: '0.25rem' }}
               onClick={() => setIsNewCaseModalOpen(true)}
             >
               <Plus size={16} /> Crear nuevo caso
@@ -279,7 +282,7 @@ export const CasesView: React.FC = () => {
                     }}
                     title="Redactar correo con este caso"
                   >
-                    <Mail size={13} /> Correo
+                    <Mail size={13} /> Redactar correo
                   </button>
                   <button
                     className="btn-secondary"

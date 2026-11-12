@@ -36,9 +36,8 @@ export const UpdateChecker: React.FC<Props> = ({
         setUpdateInfo(result);
         setState('done');
       } else {
+        // Sin novedades no hay nada que avisar: el estado "none" no se pinta.
         setState('none');
-        // Hide "no updates" banner after 3s
-        setTimeout(() => setState('idle'), 3000);
       }
     } catch (err: any) {
       const msg = String(err);
@@ -72,23 +71,10 @@ export const UpdateChecker: React.FC<Props> = ({
   if (dismissed) return null;
 
   // ── Render states ─────────────────────────────────────────────────────────
-  if (state === 'idle') return null;
-
-  if (state === 'checking') {
-    return (
-      <UpdateBanner color="var(--text-muted)" icon={<RefreshCw size={15} className="spin" />}>
-        Buscando actualizaciones...
-      </UpdateBanner>
-    );
-  }
-
-  if (state === 'none') {
-    return (
-      <UpdateBanner color="var(--status-low)" icon={<CheckCircle size={15} />}>
-        WorkDesk está actualizado ✓
-      </UpdateBanner>
-    );
-  }
+  // Solo se avisa cuando hay algo que requiere acción: una actualización
+  // instalada o un fallo de verificación. Los estados "buscando" y "ya
+  // actualizado" reservaban una fila sobre el contenido en cada arranque.
+  if (state === 'idle' || state === 'checking' || state === 'none') return null;
 
   if (state === 'done') {
     return (

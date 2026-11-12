@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import {
   User,
@@ -72,6 +72,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('perfil');
+  // La fila de pestañas puede desbordarse en ventanas estrechas: se detecta
+  // para marcar el scroll con un degradado solo cuando hace falta.
+  const tabsRowRef = useRef<HTMLDivElement>(null);
+  const [tabsOverflowing, setTabsOverflowing] = useState(false);
+
+  const handleTabsScroll = () => {
+    const row = tabsRowRef.current;
+    if (!row) return;
+    const overflowing = row.scrollWidth > row.clientWidth + 1;
+    const atEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 2;
+    setTabsOverflowing(overflowing && !atEnd);
+  };
+
+  useEffect(() => {
+    handleTabsScroll();
+    window.addEventListener('resize', handleTabsScroll);
+    return () => window.removeEventListener('resize', handleTabsScroll);
+  }, []);
   const [profileForm, setProfileForm] = useState<ConsultantProfile>(consultantProfile);
   const [preferencesForm, setPreferencesForm] = useState<ConsultantPreferences>(consultantPreferences);
   const [aiForm, setAiForm] = useState<AIConfig>(aiConfig);
@@ -307,9 +325,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', margin: 0 }}>
-              Configuración del Sistema
-            </h2>
+            <h1 className="page-title" style={{ fontSize: '1.45rem', letterSpacing: '-0.025em', margin: 0 }}>
+              Configuración
+            </h1>
             <span
               className="badge"
               style={{
@@ -350,6 +368,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
       {/* ── Navigation Tabs ─────────────────────────────────────────── */}
       <div
+        ref={tabsRowRef}
+        onScroll={handleTabsScroll}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -359,6 +379,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-md)',
           overflowX: 'auto',
+          // El degradado solo aparece cuando hay pestañas fuera de vista:
+          // en ventanas anchas no se atenúa nada.
+          maskImage: tabsOverflowing
+            ? 'linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%)'
+            : 'none',
+          WebkitMaskImage: tabsOverflowing
+            ? 'linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%)'
+            : 'none',
         }}
       >
         {tabs.map((tab) => {
@@ -371,18 +399,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.55rem',
-                padding: '0.6rem 1.1rem',
+                gap: '0.45rem',
+                padding: '0.5rem 0.8rem',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
                 color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                 fontWeight: isActive ? 800 : 600,
-                fontSize: '0.84rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
                 boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               {tab.icon}

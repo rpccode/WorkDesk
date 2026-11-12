@@ -12,6 +12,7 @@ import { CommitmentModal } from '../components/CommitmentModal';
 import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { formatRelativeDate, formatDate, isOverdue } from '../utils/date';
+import { SkeletonRows } from '../components/LoadingSkeletons';
 
 export const CommitmentsView: React.FC = () => {
   const {
@@ -21,6 +22,7 @@ export const CommitmentsView: React.FC = () => {
     fetchCommitments,
     markCommitmentDone,
     snoozeCommitment,
+    isLoadingCommitments,
   } = useStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +61,7 @@ export const CommitmentsView: React.FC = () => {
       <div className="page-header">
         <div className="page-title-group">
           <h1 className="page-title">
-            Control de Compromisos &amp; Entregas
+            Compromisos
           </h1>
           <p className="page-subtitle">
             Todo lo prometido a clientes y lo que clientes deben entregarte
@@ -68,7 +70,7 @@ export const CommitmentsView: React.FC = () => {
 
         <div className="page-actions">
           <button type="button" className="btn-primary" onClick={() => setIsModalOpen(true)}>
-            <Plus size={16} /> Nuevo Compromiso
+            <Plus size={16} /> Nuevo compromiso
           </button>
         </div>
       </div>
@@ -125,17 +127,22 @@ export const CommitmentsView: React.FC = () => {
 
       {/* List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {pagination.paginatedItems.length === 0 ? (
+        {isLoadingCommitments && commitments.length === 0 ? (
+          <SkeletonRows rows={4} columns={2} />
+        ) : pagination.paginatedItems.length === 0 ? (
           <div
-            className="glass-card"
+            className="empty-state"
             style={{
-              padding: '3.5rem 1rem',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <CheckSquare size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-            <p style={{ fontSize: '1rem', fontWeight: 600 }}>No hay compromisos con los filtros seleccionados</p>
+            <div className="empty-state-icon">
+              <CheckSquare size={40} />
+            </div>
+            <p className="empty-state-title">No hay compromisos con los filtros seleccionados</p>
+            <p className="empty-state-desc">Cambia los filtros o registra un compromiso nuevo.</p>
           </div>
         ) : (
           pagination.paginatedItems.map((com) => {

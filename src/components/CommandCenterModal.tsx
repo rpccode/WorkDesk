@@ -7,12 +7,9 @@ import {
   CheckSquare,
   Tag,
   FileText,
-  Sun,
-  Inbox,
-  Clock,
   ArrowRight,
 } from 'lucide-react';
-import type { ActiveTab } from '../types';
+import { DESTINATIONS } from '../navigation/destinations';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CommandCenterModalProps {
@@ -58,26 +55,26 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
     const items: SearchResultItem[] = [];
 
     // 1. Navigation / Quick Commands
-    const navCommands: { title: string; subtitle: string; tab: ActiveTab; icon: React.ReactNode }[] = [
-      { title: 'Mi Día', subtitle: 'Centro de Operaciones y Morning Brief', tab: 'my_day', icon: <Sun size={16} /> },
-      { title: 'Bandeja de Entrada (Inbox)', subtitle: 'Captura y clasificación rápida GTD', tab: 'inbox', icon: <Inbox size={16} /> },
-      { title: 'Esperando de Otros', subtitle: 'Bloqueos y dependencias de clientes/terceros', tab: 'waiting_on', icon: <Clock size={16} /> },
-      { title: 'Casos y Proyectos', subtitle: 'Directorio y seguimiento de casos', tab: 'cases', icon: <Briefcase size={16} /> },
-      { title: 'Compromisos & Tareas', subtitle: 'Matriz de compromisos y plazos', tab: 'commitments', icon: <CheckSquare size={16} /> },
-      { title: 'Tickets & Soporte', subtitle: 'Centro de incidencias y SLA', tab: 'tickets', icon: <Tag size={16} /> },
-      { title: 'Clientes & Contactos', subtitle: 'Directorio y complejidad de clientes', tab: 'clients', icon: <Building2 size={16} /> },
-      { title: 'Centro de Documentos', subtitle: 'Generador de Word (.docx) y plantillas', tab: 'reports', icon: <FileText size={16} /> },
-    ];
+    // Todos los destinos, con el mismo nombre que el sidebar: antes solo
+    // cubría 8 de 14 y usaba nombres propios ("Centro de Documentos",
+    // "Bandeja de Entrada (Inbox GTD)") que divergían del resto de la app.
+    const navCommands = DESTINATIONS.map((dest) => ({
+      title: dest.label,
+      subtitle: dest.summary,
+      section: dest.section,
+      tab: dest.id,
+      icon: dest.icon,
+    }));
 
     navCommands.forEach((cmd) => {
-      if (!q || cmd.title.toLowerCase().includes(q) || cmd.subtitle.toLowerCase().includes(q)) {
+      if (!q || cmd.title.toLowerCase().includes(q) || cmd.subtitle.toLowerCase().includes(q) || cmd.section.toLowerCase().includes(q)) {
         items.push({
           id: `nav_${cmd.tab}`,
           type: 'navigation',
           title: cmd.title,
           subtitle: cmd.subtitle,
           icon: cmd.icon,
-          badge: 'Módulo',
+          badge: cmd.section,
           action: () => {
             setActiveTab(cmd.tab);
             onClose();
@@ -86,7 +83,9 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
       }
     });
 
-    if (!q) return items.slice(0, 8);
+    // Sin consulta se muestran todos los destinos (14): el límite anterior de
+    // 8 ocultaba la mitad de la app desde el buscador.
+    if (!q) return items;
 
     // 2. Clients
     clients.forEach((c) => {
@@ -325,7 +324,18 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {item.badge && (
-                      <span className="badge" style={{ fontSize: '0.65rem', backgroundColor: 'var(--bg-surface)' }}>
+                      <span
+                        className="badge"
+                        style={{
+                          fontSize: '0.65rem',
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
                         {item.badge}
                       </span>
                     )}

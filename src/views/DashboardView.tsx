@@ -107,7 +107,7 @@ export const DashboardView: React.FC = () => {
       <div className="page-header">
         <div className="page-title-group">
           <h1 className="page-title">
-            Centro de Operaciones
+            Resumen
           </h1>
           <p className="page-subtitle">
             Visión ejecutiva de compromisos, casos críticos y entregables
@@ -119,10 +119,10 @@ export const DashboardView: React.FC = () => {
             <Zap size={14} color="var(--accent-primary)" /> Captura Rápida
           </button>
           <button type="button" className="btn-secondary btn-sm" onClick={() => setIsCommitmentModalOpen(true)}>
-            <Plus size={14} /> Compromiso
+            <Plus size={14} /> Nuevo compromiso
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => setIsCaseModalOpen(true)}>
-            <Plus size={14} /> Nuevo Caso
+            <Plus size={14} /> Nuevo caso
           </button>
         </div>
       </div>

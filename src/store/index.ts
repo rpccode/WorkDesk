@@ -344,6 +344,9 @@ interface WorkDeskState {
   // Live Notifications
   isNotificationCenterOpen: boolean;
   setNotificationCenterOpen: (open: boolean) => void;
+  // Modal de cuentas de correo: una sola instancia para toda la app.
+  isEmailAccountsOpen: boolean;
+  setEmailAccountsOpen: (open: boolean) => void;
   notifications: AppNotification[];
   activeToasts: AppNotification[];
   addNotification: (input: AddNotificationInput) => void;
@@ -372,7 +375,9 @@ interface WorkDeskState {
 
 export const useStore = create<WorkDeskState>((set, get) => ({
   // UI
-  activeTab: 'dashboard',
+  // "Mi Día" es la pantalla de arranque: es la que enumera qué hacer hoy.
+  // Antes arrancaba en "dashboard", que solo recapitula los mismos KPIs.
+  activeTab: 'my_day',
   setActiveTab: (tab) => set({ activeTab: tab }),
   isQuickCaptureOpen: false,
   setQuickCaptureOpen: (open) => set({ isQuickCaptureOpen: open }),
@@ -382,6 +387,8 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   setCaseForEmail: (c) => set({ caseForEmail: c, activeTab: 'emails' }),
   isNotificationCenterOpen: false,
   setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
+  isEmailAccountsOpen: false,
+  setEmailAccountsOpen: (open) => set({ isEmailAccountsOpen: open }),
   notifications: getStoredCache<AppNotification[]>(NOTIFICATIONS_CACHE_KEY, []),
   activeToasts: [],
   isStaleData: false,

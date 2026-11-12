@@ -454,7 +454,7 @@ export const TicketsView: React.FC = () => {
             </div>
             <div>
               <h1 className="page-title">
-                Centro de Tickets &amp; Soporte
+                Tickets &amp; Soporte
               </h1>
               <p className="page-subtitle">
                 Control, trazabilidad y nivel de servicio (SLA) por cliente
@@ -497,7 +497,7 @@ export const TicketsView: React.FC = () => {
             className="btn-primary btn-sm"
             onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}
           >
-            <Plus size={14} /> Nuevo Ticket
+            <Plus size={14} /> Nuevo ticket
           </button>
         </div>
       </div>
@@ -823,7 +823,7 @@ export const TicketsView: React.FC = () => {
                 ? <button type="button" className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={resetAllFilters}><RotateCcw size={14} /> Limpiar filtros</button>
                 : (
                   <>
-                    <button type="button" className="btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}><Plus size={14} /> Crear Ticket</button>
+                    <button type="button" className="btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => { setTicketToEdit(null); setIsCreateModalOpen(true); }}><Plus size={14} /> Crear ticket</button>
                     <button type="button" className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => setIsBulkImportOpen(true)}><FileSpreadsheet size={14} /> Importar Excel</button>
                   </>
                 )
