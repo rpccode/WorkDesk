@@ -345,7 +345,7 @@ export const EmailBuilderView: React.FC = () => {
 
           {mode === 'ai' ? (
             /* AI Drafter Panel */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-border, rgba(59,130,246,0.3))' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-border, var(--accent-border))' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary-text)', fontWeight: 700, fontSize: '0.82rem' }}>
                 <Bot size={16} /> Instrucción para el Redactor IA
               </div>
@@ -407,7 +407,7 @@ export const EmailBuilderView: React.FC = () => {
                   gap: '0.5rem',
                   fontSize: '0.82rem',
                   padding: '0.65rem',
-                  background: 'linear-gradient(135deg, var(--accent-primary) 0%, #7c3aed 100%)',
+                  background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%)',
                 }}
               >
                 {isGeneratingAI ? (
@@ -479,7 +479,7 @@ export const EmailBuilderView: React.FC = () => {
                               padding: '0.5rem 0.75rem',
                               fontWeight: isActive ? 700 : 500,
                               background: isActive
-                                ? 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(29,78,216,0.15) 100%)'
+                                ? 'linear-gradient(135deg, var(--accent-glow) 0%, rgba(29,78,216,0.15) 100%)'
                                 : 'var(--bg-surface-elevated)',
                               border: `1px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
                               borderRadius: 'var(--radius-md)',
@@ -561,9 +561,9 @@ export const EmailBuilderView: React.FC = () => {
                         padding: '0.5rem 0.85rem',
                         fontWeight: isActive ? 600 : 500,
                         background: isActive
-                          ? 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05))'
+                          ? 'linear-gradient(135deg, var(--accent-glow-soft), var(--accent-glow-faint))'
                           : 'transparent',
-                        border: `1px solid ${isActive ? 'rgba(37,99,235,0.3)' : 'var(--border-subtle)'}`,
+                        border: `1px solid ${isActive ? 'var(--accent-border)' : 'var(--border-subtle)'}`,
                         borderRadius: 'var(--radius-md)',
                         color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                         transition: 'var(--transition-fast)',

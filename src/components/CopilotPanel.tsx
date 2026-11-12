@@ -172,7 +172,7 @@ export const CopilotPanel: React.FC = () => {
         backdropFilter: 'blur(20px)',
         borderLeft: '1px solid var(--border-subtle)',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.35)',
-        zIndex: 9999,
+        zIndex: 'var(--z-drawer)',
         display: 'flex',
         flexDirection: 'column',
         animation: 'slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)',

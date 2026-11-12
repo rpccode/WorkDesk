@@ -229,7 +229,7 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
       tabIndex={-1}
       className="modal-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ zIndex: 2000 }}
+      style={{ zIndex: 'var(--z-modal-nested)' }}
     >
       <div
         className="modal-content animate-fade-in"
@@ -238,7 +238,7 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(29,78,216,0.15) 100%)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent-glow) 0%, rgba(29,78,216,0.15) 100%)' }}>
               <Mail size={20} color="var(--accent-primary)" />
             </div>
             <div>

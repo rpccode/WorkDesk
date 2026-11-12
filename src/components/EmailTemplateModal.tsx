@@ -233,7 +233,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      style={{ zIndex: 2100 }}
+      style={{ zIndex: 'var(--z-modal-nested)' }}
     >
       <div
         className="modal-content animate-fade-in"
@@ -263,7 +263,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
               style={{
                 padding: '0.45rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
+                background: 'linear-gradient(135deg, var(--accent-glow-strong) 0%, var(--accent-glow-strong) 100%)',
                 color: 'var(--accent-primary-text)',
               }}
             >
@@ -402,8 +402,8 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                 style={{
                   padding: '1rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(37, 99, 235, 0.08) 100%)',
-                  border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
+                  background: 'linear-gradient(135deg, var(--accent-glow-soft) 0%, var(--accent-glow-soft) 100%)',
+                  border: '1px solid var(--accent-border, var(--accent-border))',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.6rem',

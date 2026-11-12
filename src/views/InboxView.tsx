@@ -270,7 +270,7 @@ export const InboxView: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '280px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {item.client_name && (
-                  <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
+                  <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
                     <Building2 size={11} /> {item.client_name}
                   </span>
                 )}
@@ -353,7 +353,7 @@ export const InboxView: React.FC = () => {
 
       {/* ── Processing Modal ────────────────────────────────────────── */}
       {processingItem && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 'var(--z-modal)', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>

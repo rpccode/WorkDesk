@@ -256,7 +256,7 @@ export function App() {
           right: 0,
           width: '1px',
           height: '100%',
-          background: 'linear-gradient(180deg, transparent, rgba(37,99,235,0.08) 30%, rgba(37,99,235,0.04) 70%, transparent)',
+          background: 'linear-gradient(180deg, transparent, var(--accent-glow-soft) 30%, rgba(37,99,235,0.04) 70%, transparent)',
           pointerEvents: 'none',
           zIndex: 1,
         }} />
@@ -278,7 +278,7 @@ export function App() {
                 borderRadius: '9px',
                 background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                 color: 'white',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255,255,255,0.15)',
+                boxShadow: '0 2px 8px var(--accent-glow-strong), inset 0 1px 0 rgba(255,255,255,0.15)',
                 flexShrink: 0,
               }}>
                 <Layers size={17} />
@@ -380,7 +380,7 @@ export function App() {
               padding: '0.45rem 0.65rem',
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-subtle)',
-              backgroundColor: 'rgba(59,130,246,0.06)',
+              backgroundColor: 'var(--accent-glow-faint)',
               color: 'var(--text-secondary)',
               fontSize: '0.75rem',
               marginBottom: '0.25rem',
@@ -408,8 +408,8 @@ export function App() {
               justifyContent: 'space-between',
               padding: '0.45rem 0.65rem',
               borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37, 99, 235, 0.12) 100%)',
+              border: '1px solid var(--accent-border, var(--accent-border))',
+              background: 'linear-gradient(135deg, var(--accent-glow) 0%, var(--accent-glow) 100%)',
               color: 'var(--accent-primary-text)',
               fontSize: '0.75rem',
               marginBottom: '0.4rem',
@@ -555,7 +555,7 @@ export function App() {
             overflowY: 'auto',
             padding: '2rem 2.25rem 0',
             backgroundColor: 'var(--bg-main)',
-            background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow-faint) 0%, transparent 60%), var(--bg-main)',
           }}
         >
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

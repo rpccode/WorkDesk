@@ -96,7 +96,7 @@ Component Stack: ${this.state.errorInfo?.componentStack || 'N/A'}`;
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                backgroundColor: 'var(--status-critical-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

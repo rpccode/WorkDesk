@@ -196,7 +196,7 @@ const UpdateBanner: React.FC<{
       borderRadius: 'var(--radius-md)',
       border: `1px solid ${color}40`,
       background: accent
-        ? `linear-gradient(135deg, rgba(16,185,129,0.1), var(--bg-surface))`
+        ? `linear-gradient(135deg, var(--status-low-bg), var(--bg-surface))`
         : 'var(--bg-surface)',
       fontSize: '0.82rem',
       color: 'var(--text-primary)',

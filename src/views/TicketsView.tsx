@@ -382,10 +382,10 @@ export const TicketsView: React.FC = () => {
   // ── Render helpers ──────────────────────────────────────────────────────────
   const renderPriorityBadge = (priority: TicketPriority) => {
     const map: Record<TicketPriority, { label: string; bg: string; color: string }> = {
-      critical: { label: '🔥 Crítica', bg: 'rgba(239,68,68,0.15)', color: 'var(--status-critical-text)' },
-      high:     { label: '⚠ Alta',   bg: 'rgba(245,158,11,0.15)', color: 'var(--status-medium-text)' },
-      medium:   { label: 'Media',     bg: 'rgba(99,102,241,0.12)', color: 'var(--accent-primary-text)' },
-      low:      { label: 'Baja',      bg: 'rgba(16,185,129,0.12)', color: 'var(--status-low-text)' },
+      critical: { label: '🔥 Crítica', bg: 'var(--status-critical-bg)', color: 'var(--status-critical-text)' },
+      high:     { label: '⚠ Alta',   bg: 'var(--status-high-bg)', color: 'var(--status-medium-text)' },
+      medium:   { label: 'Media',     bg: 'var(--accent-glow)', color: 'var(--accent-primary-text)' },
+      low:      { label: 'Baja',      bg: 'var(--status-low-bg)', color: 'var(--status-low-text)' },
     };
     const s = map[priority] || map.medium;
     return (
@@ -404,9 +404,9 @@ export const TicketsView: React.FC = () => {
         fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 700,
         background:
           ticket.status === 'closed' ? 'rgba(100,116,139,0.15)' :
-          ticket.status === 'resolved' ? 'rgba(16,185,129,0.12)' :
-          ticket.status === 'in_progress' ? 'rgba(99,102,241,0.12)' :
-          ticket.status === 'waiting_client' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
+          ticket.status === 'resolved' ? 'var(--status-low-bg)' :
+          ticket.status === 'in_progress' ? 'var(--accent-glow)' :
+          ticket.status === 'waiting_client' ? 'var(--status-high-bg)' : 'var(--status-critical-bg)',
         color:
           ticket.status === 'closed' ? 'var(--text-muted)' :
           ticket.status === 'resolved' ? 'var(--status-low-text)' :
@@ -507,9 +507,9 @@ export const TicketsView: React.FC = () => {
         {[
           { label: 'Total Registrados', value: totalCount, color: 'var(--text-primary)', icon: <Tag size={18} />, bg: 'var(--bg-surface-elevated)' },
           { label: 'Abiertos / En Gestión', value: activeCount, color: 'var(--accent-primary-text)', icon: <Clock size={18} />, bg: 'var(--accent-glow)' },
-          { label: 'Críticos / Alta Prior.', value: criticalCount, color: 'var(--status-critical-text)', icon: <Flame size={18} />, bg: 'rgba(239,68,68,0.15)' },
-          { label: 'Resueltos / Cerrados', value: resolvedCount, color: 'var(--status-low-text)', icon: <CheckCircle size={18} />, bg: 'rgba(16,185,129,0.15)' },
-          { label: 'SLA Vencido', value: overdueCount, color: overdueCount > 0 ? 'var(--status-critical-text)' : 'var(--text-muted)', icon: <AlertCircle size={18} />, bg: overdueCount > 0 ? 'rgba(239,68,68,0.15)' : 'var(--bg-surface-elevated)' },
+          { label: 'Críticos / Alta Prior.', value: criticalCount, color: 'var(--status-critical-text)', icon: <Flame size={18} />, bg: 'var(--status-critical-bg)' },
+          { label: 'Resueltos / Cerrados', value: resolvedCount, color: 'var(--status-low-text)', icon: <CheckCircle size={18} />, bg: 'var(--status-low-bg)' },
+          { label: 'SLA Vencido', value: overdueCount, color: overdueCount > 0 ? 'var(--status-critical-text)' : 'var(--text-muted)', icon: <AlertCircle size={18} />, bg: overdueCount > 0 ? 'var(--status-critical-bg)' : 'var(--bg-surface-elevated)' },
         ].map((kpi) => (
           <div key={kpi.label} className="glass-card" style={{ padding: '1rem 1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
             <div>
@@ -678,7 +678,7 @@ export const TicketsView: React.FC = () => {
 
       {/* ── Bulk Selection Banner ─────────────────────────────────────────── */}
       {someSelected && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06))', border: '1px solid rgba(99,102,241,0.3)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--accent-glow), var(--accent-glow-faint))', border: '1px solid var(--accent-border)', flexWrap: 'wrap' }}>
           <CheckSquare size={18} color="var(--accent-primary)" />
           <span style={{ fontWeight: 700, color: 'var(--accent-primary-text)', fontSize: '0.88rem' }}>
             {selectedIds.size} ticket{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}
@@ -706,7 +706,7 @@ export const TicketsView: React.FC = () => {
 
       {/* ── Bulk Edit Panel ──────────────────────────────────────────────── */}
       {isBulkEditing && (
-        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', border: '2px solid var(--accent-primary)', background: 'linear-gradient(135deg, rgba(99,102,241,0.08), var(--bg-surface))' }}>
+        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', border: '2px solid var(--accent-primary)', background: 'linear-gradient(135deg, var(--accent-glow-soft), var(--bg-surface))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Layers size={18} color="var(--accent-primary)" />
@@ -865,7 +865,7 @@ export const TicketsView: React.FC = () => {
                       style={{
                         borderBottom: '1px solid var(--border-subtle)',
                         transition: 'background-color 0.12s',
-                        backgroundColor: isSelected ? 'rgba(99,102,241,0.07)' : undefined,
+                        backgroundColor: isSelected ? 'var(--accent-glow-faint)' : undefined,
                       }}
                       className="table-row-hover"
                     >

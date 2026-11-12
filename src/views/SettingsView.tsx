@@ -527,7 +527,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               style={{
                 padding: '1.25rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0.02) 100%)',
+                background: 'linear-gradient(135deg, var(--accent-glow-soft) 0%, rgba(37,99,235,0.02) 100%)',
                 border: '1px solid var(--border-subtle)',
                 marginTop: '0.5rem',
               }}

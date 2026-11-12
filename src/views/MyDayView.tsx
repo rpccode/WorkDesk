@@ -225,8 +225,8 @@ export const MyDayView: React.FC = () => {
             style={{
               fontSize: '0.84rem',
               padding: '0.65rem 1rem',
-              border: '1px solid var(--accent-border, rgba(59,130,246,0.4))',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(37, 99, 235, 0.15) 100%)',
+              border: '1px solid var(--accent-border, var(--accent-border-strong))',
+              background: 'linear-gradient(135deg, var(--accent-glow) 0%, var(--accent-glow) 100%)',
               color: 'var(--accent-primary-text)',
               fontWeight: 700,
             }}
@@ -261,7 +261,7 @@ export const MyDayView: React.FC = () => {
           className="glass-card animate-fade-in"
           style={{
             padding: '1.5rem',
-            border: '1px solid var(--accent-border, rgba(59,130,246,0.35))',
+            border: '1px solid var(--accent-border, var(--accent-border-strong))',
             backgroundColor: 'var(--bg-surface-elevated)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
@@ -328,7 +328,7 @@ export const MyDayView: React.FC = () => {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {criticalRiskClients.slice(0, 2).map(({ client, report }) => (
-                  <div key={client.id} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+                  <div key={client.id} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', backgroundColor: 'var(--status-critical-bg)', borderRadius: '6px' }}>
                     <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                       {client.name}
                     </span>
@@ -354,7 +354,7 @@ export const MyDayView: React.FC = () => {
               </div>
               <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {overdueCommitments.slice(0, 3).map((comm) => (
-                  <div key={comm.id} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+                  <div key={comm.id} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', backgroundColor: 'var(--status-critical-bg)', borderRadius: '6px' }}>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
                       {comm.description}
                     </span>
@@ -477,7 +477,7 @@ export const MyDayView: React.FC = () => {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
+                        <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
                           <Building2 size={11} /> {caseItem.client_name || 'Cliente'}
                         </span>
                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>•</span>
@@ -636,7 +636,7 @@ export const MyDayView: React.FC = () => {
 
       {/* Modal para definir Próxima Acción */}
       {editingNextActionCaseId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 'var(--z-modal)', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Definir Próxima Acción</h3>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>

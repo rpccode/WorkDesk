@@ -208,8 +208,8 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               padding: '0.75rem 1rem',
               marginBottom: '1rem',
               borderRadius: 'var(--radius-sm)',
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              background: 'var(--status-critical-bg)',
+              border: '1px solid var(--status-critical-border)',
               color: 'var(--status-critical-text)',
               fontSize: '0.84rem',
               fontWeight: 600,
@@ -244,7 +244,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
                   padding: '1rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--accent-glow)',
-                  border: '1px solid rgba(37,99,235,0.2)',
+                  border: '1px solid var(--accent-glow-strong)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.6rem',
@@ -315,7 +315,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               style={{
                 width: '100%',
                 border: fieldErrors.title ? '1.5px solid var(--status-critical)' : undefined,
-                boxShadow: fieldErrors.title ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                boxShadow: fieldErrors.title ? '0 0 0 2px var(--status-critical-border)' : undefined,
               }}
             />
             {fieldErrors.title && (
@@ -381,8 +381,8 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           <div
             style={{
               padding: '0.85rem 1rem',
-              backgroundColor: 'rgba(37,99,235,0.06)',
-              border: '1px solid rgba(59,130,246,0.25)',
+              backgroundColor: 'var(--accent-glow-faint)',
+              border: '1px solid var(--accent-glow-strong)',
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               flexDirection: 'column',

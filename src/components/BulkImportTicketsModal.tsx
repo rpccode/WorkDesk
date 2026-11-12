@@ -151,7 +151,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 99999,
+        zIndex: 'var(--z-overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -191,7 +191,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
               style={{
                 padding: '0.45rem',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                backgroundColor: 'var(--status-low-bg)',
                 color: 'var(--status-low-text)',
               }}
             >
@@ -224,8 +224,8 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--status-critical-bg)',
+                border: '1px solid var(--status-critical-border)',
                 color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
@@ -319,9 +319,9 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                   <span
                     className="badge"
                     style={{
-                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      backgroundColor: 'var(--status-low-bg)',
                       color: 'var(--status-low-text)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      border: '1px solid var(--status-low-border)',
                       fontWeight: 700,
                     }}
                   >
@@ -332,9 +332,9 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     <span
                       className="badge"
                       style={{
-                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        backgroundColor: 'var(--status-critical-bg)',
                         color: 'var(--status-critical-text)',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        border: '1px solid var(--status-critical-border)',
                         fontWeight: 700,
                       }}
                     >
@@ -346,9 +346,9 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     <span
                       className="badge"
                       style={{
-                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        backgroundColor: 'var(--status-high-bg)',
                         color: 'var(--status-high-text)',
-                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        border: '1px solid var(--status-high-border)',
                         fontWeight: 700,
                       }}
                     >
@@ -360,9 +360,9 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     <span
                       className="badge"
                       style={{
-                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                        backgroundColor: 'var(--accent-glow)',
                         color: 'var(--accent-primary-text)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        border: '1px solid var(--accent-border)',
                         fontWeight: 700,
                       }}
                     >
@@ -399,7 +399,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                       padding: '0.2rem 0.5rem',
                       fontWeight: filterMode === 'valid' ? 800 : 500,
                       color: filterMode === 'valid' ? 'var(--status-low-text)' : 'var(--text-secondary)',
-                      backgroundColor: filterMode === 'valid' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                      backgroundColor: filterMode === 'valid' ? 'var(--status-low-bg)' : 'transparent',
                     }}
                     onClick={() => setFilterMode('valid')}
                   >
@@ -414,7 +414,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                         padding: '0.2rem 0.5rem',
                         fontWeight: filterMode === 'invalid' ? 800 : 500,
                         color: filterMode === 'invalid' ? 'var(--status-critical-text)' : 'var(--text-secondary)',
-                        backgroundColor: filterMode === 'invalid' ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
+                        backgroundColor: filterMode === 'invalid' ? 'var(--status-critical-bg)' : 'transparent',
                       }}
                       onClick={() => setFilterMode('invalid')}
                     >
@@ -487,9 +487,9 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                               borderRadius: '4px',
                               backgroundColor:
                                 r.priority === 'critical'
-                                  ? 'rgba(239, 68, 68, 0.15)'
+                                  ? 'var(--status-critical-bg)'
                                   : r.priority === 'high'
-                                  ? 'rgba(245, 158, 11, 0.15)'
+                                  ? 'var(--status-high-bg)'
                                   : 'var(--bg-main)',
                               color:
                                 r.priority === 'critical'

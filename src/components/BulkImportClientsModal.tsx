@@ -280,7 +280,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 99999,
+        zIndex: 'var(--z-overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -320,7 +320,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               style={{
                 padding: '0.5rem',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                backgroundColor: 'var(--status-low-bg)',
                 color: '#059669',
               }}
             >
@@ -430,7 +430,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   padding: '1rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--accent-glow)',
-                  border: '1px solid rgba(37,99,235,0.2)',
+                  border: '1px solid var(--accent-glow-strong)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -590,8 +590,8 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '0.65rem 0.95rem',
-                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        backgroundColor: 'var(--status-critical-bg)',
+                        border: '1px solid var(--status-critical-border)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.78rem',
                         flexWrap: 'wrap',
@@ -612,7 +612,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                         className="btn-secondary"
                         style={{
                           color: 'var(--status-critical-text)',
-                          borderColor: 'rgba(239, 68, 68, 0.4)',
+                          borderColor: 'var(--status-critical-border-strong)',
                           fontSize: '0.75rem',
                           padding: '0.35rem 0.75rem',
                         }}
@@ -685,7 +685,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                                       borderRadius: '4px',
                                       fontSize: '0.68rem',
                                       fontWeight: 700,
-                                      backgroundColor: compW === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compW === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                      backgroundColor: compW === 'Alta' ? 'var(--status-critical-bg)' : compW === 'Media' ? 'var(--status-high-bg)' : 'var(--status-low-bg)',
                                       color: compW === 'Alta' ? 'var(--status-critical-text)' : compW === 'Media' ? 'var(--status-medium-text)' : 'var(--status-low-text)',
                                     }}
                                   >
@@ -701,7 +701,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                                       borderRadius: '4px',
                                       fontSize: '0.68rem',
                                       fontWeight: 700,
-                                      backgroundColor: compE === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compE === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                      backgroundColor: compE === 'Alta' ? 'var(--status-critical-bg)' : compE === 'Media' ? 'var(--status-high-bg)' : 'var(--status-low-bg)',
                                       color: compE === 'Alta' ? 'var(--status-critical-text)' : compE === 'Media' ? 'var(--status-medium-text)' : 'var(--status-low-text)',
                                     }}
                                   >

@@ -193,9 +193,9 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                     fontWeight: 700,
                     padding: '0.1rem 0.4rem',
                     borderRadius: '4px',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    backgroundColor: 'var(--accent-glow-soft)',
                     color: 'var(--accent-primary-text)',
-                    border: '1px solid rgba(37, 99, 235, 0.2)',
+                    border: '1px solid var(--accent-glow-strong)',
                   }}
                 >
                   {selectedCase.client_name}
@@ -255,7 +255,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
             border: '1.5px solid var(--border-medium)',
             borderRadius: 'var(--radius-md)',
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
-            zIndex: 999999,
+            zIndex: 'var(--z-modal-nested)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -358,7 +358,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                         : isHighlighted
                         ? 'var(--bg-surface-elevated)'
                         : 'transparent',
-                      border: isSelected ? '1px solid rgba(37, 99, 235, 0.25)' : '1px solid transparent',
+                      border: isSelected ? '1px solid var(--accent-glow-strong)' : '1px solid transparent',
                       cursor: 'pointer',
                     }}
                   >

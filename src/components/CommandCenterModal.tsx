@@ -213,7 +213,7 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 'var(--z-overlay)',
         backgroundColor: 'rgba(0,0,0,0.65)',
         backdropFilter: 'blur(6px)',
         display: 'flex',

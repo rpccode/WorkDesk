@@ -64,9 +64,9 @@ export const ClientsView: React.FC = () => {
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontWeight: 800,
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            backgroundColor: 'var(--status-critical-bg)',
             color: 'var(--status-critical-text)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            border: '1px solid var(--status-critical-border)',
             whiteSpace: 'nowrap',
           }}
         >
@@ -83,9 +83,9 @@ export const ClientsView: React.FC = () => {
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontWeight: 800,
-            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            backgroundColor: 'var(--status-high-bg)',
             color: 'var(--status-medium-text)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
+            border: '1px solid var(--status-high-border)',
             whiteSpace: 'nowrap',
           }}
         >
@@ -100,9 +100,9 @@ export const ClientsView: React.FC = () => {
           borderRadius: '4px',
           fontSize: '0.75rem',
           fontWeight: 800,
-          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          backgroundColor: 'var(--status-low-bg)',
           color: 'var(--status-low-text)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
+          border: '1px solid var(--status-low-border)',
           whiteSpace: 'nowrap',
         }}
       >
@@ -165,9 +165,9 @@ export const ClientsView: React.FC = () => {
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontWeight: 800,
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            backgroundColor: 'var(--status-critical-bg)',
             color: 'var(--status-critical-text)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            border: '1px solid var(--status-critical-border)',
           }}
         >
           Alta
@@ -182,9 +182,9 @@ export const ClientsView: React.FC = () => {
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontWeight: 800,
-            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            backgroundColor: 'var(--status-high-bg)',
             color: 'var(--status-medium-text)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
+            border: '1px solid var(--status-high-border)',
           }}
         >
           Media
@@ -198,9 +198,9 @@ export const ClientsView: React.FC = () => {
           borderRadius: '4px',
           fontSize: '0.75rem',
           fontWeight: 800,
-          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          backgroundColor: 'var(--status-low-bg)',
           color: 'var(--status-low-text)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
+          border: '1px solid var(--status-low-border)',
         }}
       >
         Baja
@@ -283,7 +283,7 @@ export const ClientsView: React.FC = () => {
         </div>
 
         <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: 'var(--status-critical-text)' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--status-critical-bg)', color: 'var(--status-critical-text)' }}>
             <ShieldAlert size={22} />
           </div>
           <div>
@@ -684,7 +684,7 @@ export const ClientsView: React.FC = () => {
                     </span>
                   )}
                   {c.has_it_department && (
-                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--status-low-text)', border: '1px solid rgba(5, 150, 105, 0.2)', fontWeight: 700 }}>
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'var(--status-low-bg)', color: 'var(--status-low-text)', border: '1px solid var(--status-low-border)', fontWeight: 700 }}>
                       ✓ Depto. TI
                     </span>
                   )}

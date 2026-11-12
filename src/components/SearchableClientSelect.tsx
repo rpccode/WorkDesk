@@ -136,10 +136,10 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
     if (!val) return null;
     const bg =
       val === 'Alta'
-        ? 'rgba(239, 68, 68, 0.15)'
+        ? 'var(--status-critical-bg)'
         : val === 'Media'
-        ? 'rgba(245, 158, 11, 0.15)'
-        : 'rgba(16, 185, 129, 0.15)';
+        ? 'var(--status-high-bg)'
+        : 'var(--status-low-bg)';
     const color =
       val === 'Alta'
         ? 'var(--status-critical)'
@@ -283,7 +283,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             border: '1.5px solid var(--border-medium)',
             borderRadius: 'var(--radius-md)',
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
-            zIndex: 999999,
+            zIndex: 'var(--z-modal-nested)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -386,7 +386,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
                         : isHighlighted
                         ? 'var(--bg-surface-elevated)'
                         : 'transparent',
-                      border: isSelected ? '1px solid rgba(37, 99, 235, 0.25)' : '1px solid transparent',
+                      border: isSelected ? '1px solid var(--accent-glow-strong)' : '1px solid transparent',
                       cursor: 'pointer',
                       transition: 'background-color 0.1s',
                     }}

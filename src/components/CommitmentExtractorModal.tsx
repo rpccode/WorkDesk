@@ -98,7 +98,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
         inset: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 9999,
+        zIndex: 'var(--z-overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -225,7 +225,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
               justifyContent: 'center',
               gap: '0.5rem',
               padding: '0.7rem',
-              background: 'linear-gradient(135deg, var(--accent-primary) 0%, #7c3aed 100%)',
+              background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%)',
             }}
           >
             {isExtracting ? (

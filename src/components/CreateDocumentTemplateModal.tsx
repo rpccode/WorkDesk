@@ -174,7 +174,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 99999,
+        zIndex: 'var(--z-overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -244,8 +244,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--status-critical-bg)',
+                border: '1px solid var(--status-critical-border)',
                 color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
@@ -314,7 +314,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                   style={{
                     width: '100%',
                     border: fieldErrors.title ? '1.5px solid var(--status-critical)' : undefined,
-                    boxShadow: fieldErrors.title ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                    boxShadow: fieldErrors.title ? '0 0 0 2px var(--status-critical-border)' : undefined,
                   }}
                 />
                 {fieldErrors.title && (
@@ -407,7 +407,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                   fontSize: '0.84rem',
                   lineHeight: '1.5',
                   border: fieldErrors.content ? '1.5px solid var(--status-critical)' : undefined,
-                  boxShadow: fieldErrors.content ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                  boxShadow: fieldErrors.content ? '0 0 0 2px var(--status-critical-border)' : undefined,
                 }}
               />
               {fieldErrors.content && (

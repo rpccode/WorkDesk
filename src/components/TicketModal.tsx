@@ -289,8 +289,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--status-critical-bg)',
+                border: '1px solid var(--status-critical-border)',
                 color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
@@ -360,7 +360,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   style={{
                     width: '100%',
                     border: fieldErrors.title ? '1.5px solid var(--status-critical)' : undefined,
-                    boxShadow: fieldErrors.title ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                    boxShadow: fieldErrors.title ? '0 0 0 2px var(--status-critical-border)' : undefined,
                   }}
                 />
                 {fieldErrors.title && (

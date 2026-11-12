@@ -90,7 +90,7 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
         inset: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 9999,
+        zIndex: 'var(--z-overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

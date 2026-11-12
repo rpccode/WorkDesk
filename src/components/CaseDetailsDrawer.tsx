@@ -419,8 +419,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               style={{
                 fontSize: '0.76rem',
                 padding: '0.35rem 0.65rem',
-                border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37, 99, 235, 0.12) 100%)',
+                border: '1px solid var(--accent-border, var(--accent-border))',
+                background: 'linear-gradient(135deg, var(--accent-glow) 0%, var(--accent-glow) 100%)',
                 color: 'var(--accent-primary-text)',
                 fontWeight: 700,
               }}
@@ -483,7 +483,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               style={{
                 padding: '1rem 1.5rem',
                 backgroundColor: 'var(--bg-surface-elevated)',
-                borderBottom: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
+                borderBottom: '1px solid var(--accent-border, var(--accent-border))',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>

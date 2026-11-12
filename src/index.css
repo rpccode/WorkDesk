@@ -40,6 +40,15 @@
   --accent-primary-on-dark: #93c5fd;
   --status-critical-strong-on-dark: #fca5a5;
 
+  /* Tintes de acento por intensidad (para fondos y bordes) */
+  --accent-glow-faint:      rgba(37, 99, 235, 0.06);
+  --accent-glow-soft:       rgba(37, 99, 235, 0.09);
+  --accent-border-strong:   rgba(37, 99, 235, 0.4);
+  --status-critical-bg-faint: rgba(220, 38, 38, 0.06);
+  --status-critical-border-strong: rgba(220, 38, 38, 0.35);
+  --status-high-border-strong: rgba(234, 88, 12, 0.35);
+  --status-low-border-strong: rgba(4, 120, 87, 0.3);
+
   /* Status — superficies (bordes, fondos, iconos) */
   --status-critical:      #dc2626;
   --status-critical-bg:   rgba(220, 38, 38, 0.08);
@@ -89,6 +98,7 @@
   --shadow-sm:   0 2px 8px rgba(15, 23, 42, 0.08);
   --shadow-md:   0 8px 24px rgba(15, 23, 42, 0.1);
   --shadow-lg:   0 16px 48px rgba(15, 23, 42, 0.14);
+  --shadow-xl:   0 24px 72px rgba(15, 23, 42, 0.2);
   /* Elevación con matiz de acento — desplazada, nunca halo de 0px */
   --shadow-glow: 0 2px 12px rgba(37, 99, 235, 0.14);
   --shadow-glow-strong: 0 4px 18px rgba(37, 99, 235, 0.22);
@@ -104,12 +114,18 @@
   --glass-blur:     12px;
   --glass-border:   rgba(15, 23, 42, 0.08);
 
-  /* Z-index layers */
+  /* Z-index layers
+     La escala refleja el orden real de apilado: contenido < panel lateral
+     < diálogo < diálogo anidado (dropdown dentro de un modal) < overlay
+     superior (Command Center, widget) < toast. */
   --z-base: 1;
   --z-sticky: 10;
   --z-dropdown: 100;
   --z-drawer: 500;
   --z-modal: 1000;
+  --z-modal-nested: 1100;
+  --z-overlay: 1200;
+  --z-widget: 1300;
   --z-toast: 2000;
 }
 
@@ -160,11 +176,25 @@
   /* Acento sobre tinte compuesto (círculo de "hoy" dentro de una celda ya tintada) */
   --accent-primary-strong: #93c5fd; /* 7.86:1 sobre el tinte compuesto */
 
+  /* Tintes por intensidad — en modo oscuro los tintes suben de alfa para
+     seguir distinguiéndose sobre superficies más oscuras */
+  --accent-glow-faint:      rgba(59, 130, 246, 0.08);
+  --accent-glow-soft:       rgba(59, 130, 246, 0.11);
+  --accent-glow:            rgba(59, 130, 246, 0.14);
+  --accent-glow-strong:     rgba(59, 130, 246, 0.24);
+  --accent-border:          rgba(59, 130, 246, 0.32);
+  --accent-border-strong:   rgba(59, 130, 246, 0.45);
+  --status-critical-bg-faint: rgba(239, 68, 68, 0.09);
+  --status-critical-border-strong: rgba(239, 68, 68, 0.4);
+  --status-high-border-strong: rgba(249, 115, 22, 0.4);
+  --status-low-border-strong: rgba(52, 211, 153, 0.4);
+
   /* Shadows — Profundas para modo oscuro */
   --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.55);
   --shadow-lg:   0 16px 48px rgba(0, 0, 0, 0.7);
+  --shadow-xl:   0 24px 72px rgba(0, 0, 0, 0.78);
   --shadow-glow: 0 2px 12px rgba(59, 130, 246, 0.18);
   --shadow-glow-strong: 0 4px 18px rgba(59, 130, 246, 0.28);
 

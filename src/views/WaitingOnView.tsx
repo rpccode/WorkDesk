@@ -108,7 +108,7 @@ export const WaitingOnView: React.FC = () => {
             <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--status-critical-text)', textTransform: 'uppercase' }}>Críticos (+5 Días)</span>
             <p style={{ fontSize: '1.55rem', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--status-critical-text)' }}>{criticalWaitingCount}</p>
           </div>
-          <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.12)' }}>
+          <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'var(--status-critical-bg)' }}>
             <Flame size={18} color="var(--status-critical)" />
           </div>
         </div>
@@ -128,7 +128,7 @@ export const WaitingOnView: React.FC = () => {
             <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--status-medium-text)', textTransform: 'uppercase' }}>De Terceros / TI</span>
             <p style={{ fontSize: '1.55rem', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--status-medium-text)' }}>{thirdPartyWaitingCount}</p>
           </div>
-          <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'rgba(245,158,11,0.12)' }}>
+          <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'var(--status-high-bg)' }}>
             <AlertTriangle size={18} color="var(--status-medium)" />
           </div>
         </div>
@@ -181,7 +181,7 @@ export const WaitingOnView: React.FC = () => {
                   padding: '1.1rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--bg-surface-elevated)',
-                  border: isCritical ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--border-subtle)',
+                  border: isCritical ? '1px solid var(--status-critical-border-strong)' : '1px solid var(--border-subtle)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -191,7 +191,7 @@ export const WaitingOnView: React.FC = () => {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '280px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span className="badge" style={{ fontSize: '0.75rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
+                    <span className="badge" style={{ fontSize: '0.75rem', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
                       <Building2 size={11} /> {item.client_name || 'Cliente'}
                     </span>
                     {item.caseItem && (
@@ -207,7 +207,7 @@ export const WaitingOnView: React.FC = () => {
                       style={{
                         fontSize: '0.7rem',
                         fontWeight: 800,
-                        backgroundColor: isCritical ? 'rgba(239,68,68,0.15)' : isMedium ? 'rgba(245,158,11,0.15)' : 'var(--bg-surface)',
+                        backgroundColor: isCritical ? 'var(--status-critical-bg)' : isMedium ? 'var(--status-high-bg)' : 'var(--bg-surface)',
                         color: isCritical ? 'var(--status-critical-text)' : isMedium ? 'var(--status-medium-text)' : 'var(--text-muted)',
                       }}
                     >

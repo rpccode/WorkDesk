@@ -100,10 +100,10 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
           borderRadius: '8px',
           width: fullWidth ? '100%' : 'auto',
           backgroundColor: consultantPreferences.enable_background_watchdog
-            ? 'rgba(16, 185, 129, 0.1)'
+            ? 'var(--status-low-bg)'
             : 'rgba(148, 163, 184, 0.1)',
           border: consultantPreferences.enable_background_watchdog
-            ? '1px solid rgba(16, 185, 129, 0.3)'
+            ? '1px solid var(--status-low-border)'
             : '1px solid var(--border-subtle)',
           color: consultantPreferences.enable_background_watchdog
             ? 'var(--status-low)'
@@ -160,7 +160,7 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
             borderRadius: 'var(--radius-md)',
             boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
             padding: '0.9rem',
-            zIndex: 99999,
+            zIndex: 'var(--z-widget)',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.7rem',

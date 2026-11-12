@@ -168,7 +168,7 @@ export const ConsultingAnalyticsView: React.FC = () => {
                       padding: '0.9rem 1.1rem',
                       borderRadius: 'var(--radius-md)',
                       backgroundColor: 'var(--bg-surface-elevated)',
-                      border: isCritical ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border-subtle)',
+                      border: isCritical ? '1px solid var(--status-critical-border)' : '1px solid var(--border-subtle)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -193,7 +193,7 @@ export const ConsultingAnalyticsView: React.FC = () => {
                         className="badge"
                         style={{
                           fontSize: '0.7rem',
-                          backgroundColor: isCritical ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+                          backgroundColor: isCritical ? 'var(--status-critical-bg)' : 'var(--status-high-bg)',
                           color: isCritical ? 'var(--status-critical-text)' : 'var(--status-medium-text)',
                           fontWeight: 800,
                         }}
@@ -223,15 +223,15 @@ export const ConsultingAnalyticsView: React.FC = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: '6px' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--status-low-bg)', borderRadius: '6px' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--status-low-text)', display: 'block' }}>{healthyClients.length}</span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>Saludables</span>
             </div>
-            <div style={{ padding: '0.75rem', backgroundColor: 'rgba(245,158,11,0.08)', borderRadius: '6px' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--status-high-bg)', borderRadius: '6px' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--status-medium-text)', display: 'block' }}>{warningClients.length}</span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>En Observación</span>
             </div>
-            <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--status-critical-bg)', borderRadius: '6px' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--status-critical-text)', display: 'block' }}>{criticalClients.length}</span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>Riesgo Crítico</span>
             </div>
@@ -248,8 +248,8 @@ export const ConsultingAnalyticsView: React.FC = () => {
                   style={{
                     padding: '0.75rem 0.9rem',
                     borderRadius: 'var(--radius-sm)',
-                    backgroundColor: 'rgba(239,68,68,0.06)',
-                    border: '1px solid rgba(239,68,68,0.25)',
+                    backgroundColor: 'var(--status-critical-bg-faint)',
+                    border: '1px solid var(--status-critical-border)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.25rem',

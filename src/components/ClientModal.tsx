@@ -289,8 +289,8 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 padding: '0.75rem 1rem',
                 marginBottom: '1.25rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--status-critical-bg)',
+                border: '1px solid var(--status-critical-border)',
                 color: 'var(--status-critical-text)',
                 fontSize: '0.84rem',
                 fontWeight: 600,
@@ -323,7 +323,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     style={{
                       width: '100%',
                       border: fieldErrors.name ? '1.5px solid var(--status-critical)' : undefined,
-                      boxShadow: fieldErrors.name ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                      boxShadow: fieldErrors.name ? '0 0 0 2px var(--status-critical-border)' : undefined,
                     }}
                   />
                   {fieldErrors.name && (
@@ -364,7 +364,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       style={{
                         width: '100%',
                         border: fieldErrors.email ? '1.5px solid var(--status-critical)' : undefined,
-                        boxShadow: fieldErrors.email ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                        boxShadow: fieldErrors.email ? '0 0 0 2px var(--status-critical-border)' : undefined,
                       }}
                     />
                     {fieldErrors.email && (

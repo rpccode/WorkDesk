@@ -88,7 +88,7 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
               height: '8px',
               borderRadius: '50%',
               backgroundColor: '#10b981',
-              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+              boxShadow: '0 2px 6px var(--status-low-border)',
               animation: 'pulse 2s infinite',
             }}
           />
@@ -137,8 +137,8 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
         {/* Overdue */}
         <div
           style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.25)',
+            backgroundColor: 'var(--status-critical-bg)',
+            border: '1px solid var(--status-critical-border)',
             borderRadius: '6px',
             padding: '0.45rem 0.5rem',
             textAlign: 'center',
@@ -155,8 +155,8 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
         {/* Due Today */}
         <div
           style={{
-            backgroundColor: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
+            backgroundColor: 'var(--status-high-bg)',
+            border: '1px solid var(--status-high-border)',
             borderRadius: '6px',
             padding: '0.45rem 0.5rem',
             textAlign: 'center',

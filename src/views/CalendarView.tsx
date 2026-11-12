@@ -128,9 +128,9 @@ export const CalendarView: React.FC = () => {
   const getEventBadgeStyle = (event: CalendarEvent) => {
     if (event.type === 'followup') {
       return {
-        bg: 'rgba(37, 99, 235, 0.1)',
-        border: 'rgba(37, 99, 235, 0.3)',
-        color: '#9333ea',
+        bg: 'var(--accent-glow-soft)',
+        border: 'var(--accent-border)',
+        color: 'var(--accent-primary-text)',
       };
     }
     if (event.status === 'done') {
@@ -156,7 +156,7 @@ export const CalendarView: React.FC = () => {
     }
     return {
       bg: 'var(--accent-glow)',
-      border: 'rgba(37, 99, 235, 0.3)',
+      border: 'var(--accent-border)',
       color: 'var(--accent-primary-text)',
     };
   };
@@ -342,7 +342,7 @@ export const CalendarView: React.FC = () => {
                     minHeight: '115px',
                     padding: '0.55rem',
                     backgroundColor: day.isToday
-                      ? 'rgba(37,99,235,0.06)'
+                      ? 'var(--accent-glow-faint)'
                       : day.isCurrentMonth
                       ? 'var(--bg-surface)'
                       : 'var(--bg-main)',
@@ -636,7 +636,7 @@ export const CalendarView: React.FC = () => {
             inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.6)',
             backdropFilter: 'blur(4px)',
-            zIndex: 9980,
+            zIndex: 'var(--z-overlay)',
             display: 'flex',
             justifyContent: 'flex-end',
           }}
