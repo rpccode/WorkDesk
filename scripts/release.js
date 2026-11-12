@@ -38,11 +38,32 @@ if (fs.existsSync(envPath)) {
 }
 
 const shouldPublish = process.argv.includes('--publish') || process.env.AUTO_PUBLISH === 'true';
+const skipPush = process.argv.includes('--no-push');
+
+function git(args, opts = {}) {
+  return execSync(`git ${args}`, {
+    cwd: rootDir,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8',
+    ...opts,
+  }).trim();
+}
 
 // 1. Validar clave de firma
 if (!fs.existsSync(keyPath)) {
   console.error('\x1b[31m[ERROR]\x1b[0m No se encontró la clave privada en src-tauri/updater.key');
   console.error('Genera una clave con: npx @tauri-apps/cli signer generate --ci -f -w src-tauri/updater.key');
+  process.exit(1);
+}
+
+// 1b. Validar que el árbol de trabajo esté limpio.
+// La release debe salir de código ya versionado: si hay cambios sin commitear,
+// el binario publicado podría no coincidir con el tag publicado.
+const dirty = git('status --porcelain');
+if (dirty) {
+  console.error('\x1b[31m[ERROR]\x1b[0m El árbol de trabajo tiene cambios sin commitear:');
+  console.error(dirty.split('\n').map((l) => `  ${l}`).join('\n'));
+  console.error('\x1b[33m[HINT]\x1b[0m Haz commit de esos cambios antes de publicar, para que el tag apunte al código real.');
   process.exit(1);
 }
 
@@ -84,6 +105,20 @@ if (targetVersion !== currentVersion) {
   fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
 }
 
+// 4b. Commit y push del bump de versión ANTES de compilar.
+// Sin esto, el tag se crea sobre el HEAD remoto anterior y la release
+// publicada lleva una versión distinta de la que anuncia el manifiesto.
+let bumpCommitted = false;
+if (targetVersion !== currentVersion && !skipPush) {
+  const branch = git('rev-parse --abbrev-ref HEAD');
+  console.log(`\x1b[36m[GIT]\x1b[0m Commit del bump a v${targetVersion} en ${branch}...`);
+  git('add package.json src-tauri/tauri.conf.json');
+  git(`commit -m "chore: bump version to ${targetVersion}"`);
+  bumpCommitted = true;
+  console.log(`\x1b[36m[GIT]\x1b[0m Subiendo ${branch} a origin...`);
+  git(`push origin ${branch}`);
+}
+
 console.log(`\n======================================================`);
 console.log(`🚀 COMPILANDO WORKDESK v${targetVersion} [FIRMA AUTOMÁTICA]`);
 console.log(`======================================================\n`);
@@ -108,6 +143,22 @@ try {
   });
 } catch (err) {
   console.error('\n\x1b[31m[ERROR]\x1b[0m Falló la compilación de Tauri.');
+  // Si ya se bumpeó la versión, se revierte el commit: si no, el repositorio
+  // queda con una versión que nunca se publicó y el siguiente intento
+  // bumpearía otra vez, dejando el historial con versiones fantasma.
+  if (bumpCommitted) {
+    console.error('\x1b[33m[ROLLBACK]\x1b[0m Revirtiendo el commit del bump de versión...');
+    try {
+      git('reset --hard HEAD~1');
+      const branch = git('rev-parse --abbrev-ref HEAD');
+      git(`push --force origin ${branch}`);
+      console.error('\x1b[33m[ROLLBACK]\x1b[0m Versión revertida a v' + currentVersion + '.');
+    } catch (rbErr) {
+      console.error('\x1b[31m[ERROR]\x1b[0m No se pudo revertir el bump automáticamente:');
+      console.error(`  ${rbErr.message}`);
+      console.error(`  Revísalo a mano: git reset --hard HEAD~1 && git push --force origin ${git('rev-parse --abbrev-ref HEAD')}`);
+    }
+  }
   process.exit(1);
 }
 
@@ -138,27 +189,39 @@ const collectedFiles = [
   ...copyIfExists(path.join(targetBundleDir, 'msi'), (f) => f.includes(targetVersion) && (f.endsWith('.msi') || f.endsWith('.sig')), targetVersionDir),
 ];
 
-// Generar o copiar latest.json para el Updater de Tauri v2
+// Generar o copiar latest.json para el Updater de Tauri v2.
+// El manifiesto debe declarar TODAS las plataformas publicadas: si el updater
+// pide una clave que no está, la instalación falla al descargar.
 const nsisExe = collectedFiles.find(f => f.name.endsWith('-setup.exe'));
 const nsisSig = collectedFiles.find(f => f.name.endsWith('-setup.exe.sig'));
+const msiInstaller = collectedFiles.find(f => f.name.endsWith('.msi'));
+const msiSig = collectedFiles.find(f => f.name.endsWith('.msi.sig'));
 
 const latestJsonPath = path.join(targetVersionDir, 'latest.json');
 let latestManifest = null;
 
 if (nsisExe && nsisSig) {
-  const signatureContent = fs.readFileSync(nsisSig.path, 'utf8').trim();
-  const downloadUrl = `https://github.com/rpccode/WorkDesk/releases/download/v${targetVersion}/${nsisExe.name}`;
-  
+  const platforms = {};
+
+  platforms['windows-x86_64'] = {
+    signature: fs.readFileSync(nsisSig.path, 'utf8').trim(),
+    url: `https://github.com/rpccode/WorkDesk/releases/download/v${targetVersion}/${nsisExe.name}`,
+  };
+
+  if (msiInstaller && msiSig) {
+    platforms['windows-x86_64-msi'] = {
+      signature: fs.readFileSync(msiSig.path, 'utf8').trim(),
+      url: `https://github.com/rpccode/WorkDesk/releases/download/v${targetVersion}/${msiInstaller.name}`,
+    };
+  }
+
+  platforms['windows-x86_64-nsis'] = platforms['windows-x86_64'];
+
   latestManifest = {
     version: targetVersion,
     notes: `Actualización automática a WorkDesk v${targetVersion}`,
     pub_date: new Date().toISOString(),
-    platforms: {
-      'windows-x86_64': {
-        signature: signatureContent,
-        url: downloadUrl,
-      },
-    },
+    platforms,
   };
   fs.writeFileSync(latestJsonPath, JSON.stringify(latestManifest, null, 2) + '\n');
   collectedFiles.push({ name: 'latest.json', path: latestJsonPath });
@@ -185,7 +248,61 @@ async function publishToGitHub() {
 
   console.log(`\n\x1b[35m[GITHUB API]\x1b[0m Publicando versión ${tag} directamente en GitHub Releases...`);
 
-  // Crear Release en GitHub
+  // El tag debe apuntar al commit con la versión publicada. Si ya existe
+  // apuntando a otro commit, se mueve: publicar un binario v0.5.7 bajo un tag
+  // que dice v0.5.6 hace que el updater sirva un manifiesto desalineado.
+  const headSha = git('rev-parse HEAD');
+  const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/ref/tags/${tag}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'WorkDesk-Release-Tool',
+    },
+  });
+  let tagExists = false;
+  if (refRes.ok) {
+    const ref = await refRes.json();
+    const remoteSha = ref.object?.sha;
+    if (remoteSha && remoteSha !== headSha) {
+      console.log(`\x1b[36m[GIT]\x1b[0m El tag ${tag} apunta a ${remoteSha.slice(0, 8)} y el código actual es ${headSha.slice(0, 8)}. Moviendo el tag...`);
+      const delRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/tags/${tag}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'User-Agent': 'WorkDesk-Release-Tool',
+        },
+      });
+      if (!delRes.ok) {
+        console.error('\x1b[31m[ERROR]\x1b[0m No se pudo eliminar el tag existente:', await delRes.text());
+        return;
+      }
+      tagExists = false;
+    } else {
+      tagExists = true;
+    }
+  }
+
+  // Crear (o reutilizar) el tag apuntando al commit con la versión correcta
+  if (!tagExists) {
+    const tagRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'WorkDesk-Release-Tool',
+      },
+      body: JSON.stringify({ ref: `refs/tags/${tag}`, sha: headSha }),
+    });
+    if (!tagRes.ok) {
+      console.error('\x1b[31m[ERROR]\x1b[0m Error al crear el tag en GitHub:', await tagRes.text());
+      return;
+    }
+    console.log(`\x1b[36m[GIT]\x1b[0m Tag ${tag} creado sobre ${headSha.slice(0, 8)}.`);
+  }
+
+  // Crear la release
   const releaseRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
     method: 'POST',
     headers: {

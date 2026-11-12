@@ -50,6 +50,19 @@ jobs:
             Write-Warning "TAURI_SIGNING_PRIVATE_KEY secret is not set!"
           }
 
+      - name: Verify tag matches package version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $pkgVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tauriVersion = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne "v$pkgVersion" -or $tag -ne "v$tauriVersion") {
+            Write-Error "El tag $tag no coincide con las versiones del repositorio (package.json=$pkgVersion, tauri.conf.json=$tauriVersion)."
+            Write-Error "Publicar un binario cuyo manifiesto no corresponde al tag deja el updater sirviendo una version desalineada. Abortando."
+            exit 1
+          }
+          Write-Host "Tag $tag coherente con la version del repositorio."
+
       - name: Build Tauri App & Create Release
         uses: tauri-apps/tauri-action@v0
         env:
