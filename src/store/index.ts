@@ -334,6 +334,13 @@ interface WorkDeskState {
   // Master refresh
   refreshAll: () => Promise<void>;
 
+  /**
+   * Datos servidos desde la caché local porque la sincronización falló.
+   * La UI debe avisar: el usuario no puede distinguir datos viejos de frescos.
+   */
+  isStaleData: boolean;
+  lastSyncError: string | null;
+
   // Live Notifications
   isNotificationCenterOpen: boolean;
   setNotificationCenterOpen: (open: boolean) => void;
@@ -377,6 +384,8 @@ export const useStore = create<WorkDeskState>((set, get) => ({
   setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
   notifications: getStoredCache<AppNotification[]>(NOTIFICATIONS_CACHE_KEY, []),
   activeToasts: [],
+  isStaleData: false,
+  lastSyncError: null,
 
   // Clients
   clients: getStoredCache<Client[]>(CLIENTS_CACHE_KEY, []),
@@ -393,8 +402,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       });
       saveStoredCache(CLIENTS_CACHE_KEY, merged);
       set({ clients: merged });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching clients (using local cache):', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingClients: false });
     }
@@ -489,8 +500,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
         saveStoredCache(CASES_CACHE_KEY, enriched);
       }
       set({ cases: enriched });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching cases (using local cache):', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingCases: false });
     }
@@ -709,8 +722,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       const enriched = (data || []).map((t) => enrichTicket(t, clients, cases));
       saveStoredTickets(enriched);
       set({ tickets: enriched });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching tickets:', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingTickets: false });
     }
@@ -881,8 +896,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
         saveStoredCache(COMMITMENTS_CACHE_KEY, data);
       }
       set({ commitments: data });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching commitments (using local cache):', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingCommitments: false });
     }
@@ -928,6 +945,7 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       set({ followups: data });
     } catch (err) {
       console.error('Error fetching followups:', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     }
   },
   createFollowup: async (input) => {
@@ -947,8 +965,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
         saveStoredCache(NOTES_CACHE_KEY, data);
       }
       set({ notes: data });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching notes (using local cache):', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingNotes: false });
     }
@@ -987,8 +1007,11 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       if (data) {
         saveStoredCache(DASHBOARD_CACHE_KEY, data);
         set({ dashboardSummary: data });
+        set({ isStaleData: false, lastSyncError: null });
       }
     } catch (err) {
+      // El dashboard se calcula localmente a partir de las entidades ya
+      // cargadas: un fallo aquí no implica datos obsoletos por sí solo.
       console.error('Error fetching dashboard summary (computing local):', err);
       const computed = computeLocalDashboardSummary(get().clients, get().cases, get().commitments);
       saveStoredCache(DASHBOARD_CACHE_KEY, computed);
@@ -1007,8 +1030,10 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       const data = await api.getEmailAccounts();
       saveStoredCache(EMAIL_ACCOUNTS_CACHE_KEY, data);
       set({ emailAccounts: data });
+      set({ isStaleData: false, lastSyncError: null });
     } catch (err) {
       console.error('Error fetching email accounts (using local cache):', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     } finally {
       set({ isLoadingEmailAccounts: false });
     }
@@ -1043,6 +1068,7 @@ export const useStore = create<WorkDeskState>((set, get) => ({
       set({ caseEmails: data });
     } catch (err) {
       console.error('Error fetching case emails:', err);
+      set({ isStaleData: true, lastSyncError: 'No se pudo sincronizar con la base de datos.' });
     }
   },
   addCaseEmail: async (input) => {

@@ -9,6 +9,7 @@ import {
 import { parseDocumentTemplateFile } from '../utils/docx-parser';
 import { playNotificationSound } from '../utils/live-alerts';
 import { useStore } from '../store';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CreateDocumentTemplateModalProps {
   isOpen: boolean;
@@ -35,6 +36,8 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -162,6 +165,10 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
 
   const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -208,7 +215,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                 padding: '0.5rem',
                 borderRadius: '8px',
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
               }}
             >
               <FileText size={20} />
@@ -217,12 +224,12 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 Cargar o Crear Plantilla de Documento
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
                 Sube un documento de Word (.docx) existente o redacta una plantilla desde cero
               </p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button aria-label="Cerrar plantilla de documento" onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -239,7 +246,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                 borderRadius: 'var(--radius-sm)',
                 background: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: 'var(--status-critical)',
+                color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
               }}
@@ -270,12 +277,13 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
             <input
               ref={fileInputRef}
               type="file"
+              aria-label="Seleccionar documento Word o texto de la plantilla"
               accept=".docx,.doc,.txt,.md"
               style={{ display: 'none' }}
               onChange={handleFileUpload}
             />
 
-            <div style={{ padding: '0.65rem', borderRadius: '50%', backgroundColor: 'var(--bg-surface)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.65rem', borderRadius: '50%', backgroundColor: 'var(--bg-surface)', color: 'var(--accent-primary-text)' }}>
               <UploadCloud size={24} />
             </div>
 
@@ -292,10 +300,10 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
           <form id="template-create-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                  Título de la Plantilla <span style={{ color: 'var(--status-critical)' }}>*</span>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="create-document-template-modal-f1">
+                  Título de la Plantilla <span style={{ color: 'var(--status-critical-text)' }}>*</span>
                 </label>
-                <input
+                <input id="create-document-template-modal-f1"
                   type="text"
                   value={title}
                   onChange={(e) => {
@@ -310,17 +318,17 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                   }}
                 />
                 {fieldErrors.title && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.title}
                   </span>
                 )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="create-document-template-modal-f2">
                   Categoría
                 </label>
-                <select
+                <select id="create-document-template-modal-f2"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
                   style={{ width: '100%' }}
@@ -335,10 +343,10 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="create-document-template-modal-f3">
                 Descripción Breve
               </label>
-              <input
+              <input id="create-document-template-modal-f3"
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -350,7 +358,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
             {/* Variable Tokens Helper */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }} htmlFor="create-document-template-modal-f4">
                   Variables Dinámicas Disponibles (Haz clic para insertar):
                 </label>
               </div>
@@ -362,12 +370,12 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                     type="button"
                     className="btn-ghost"
                     style={{
-                      fontSize: '0.72rem',
+                      fontSize: '0.75rem',
                       padding: '0.25rem 0.5rem',
                       backgroundColor: 'var(--bg-surface)',
                       border: '1px solid var(--border-medium)',
                       borderRadius: '4px',
-                      color: 'var(--accent-primary)',
+                      color: 'var(--accent-primary-text)',
                       fontFamily: 'monospace',
                     }}
                     onClick={() => handleInsertToken(token.token)}
@@ -382,9 +390,9 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
             {/* Content Editor */}
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                Contenido Markdown del Documento <span style={{ color: 'var(--status-critical)' }}>*</span>
+                Contenido Markdown del Documento <span style={{ color: 'var(--status-critical-text)' }}>*</span>
               </label>
-              <textarea
+              <textarea id="create-document-template-modal-f4"
                 ref={textareaRef}
                 rows={12}
                 value={content}
@@ -403,7 +411,7 @@ export const CreateDocumentTemplateModal: React.FC<CreateDocumentTemplateModalPr
                 }}
               />
               {fieldErrors.content && (
-                <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <AlertCircle size={12} /> {fieldErrors.content}
                 </span>
               )}

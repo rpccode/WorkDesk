@@ -22,6 +22,7 @@ import {
   type EmailToCommitmentInput,
 } from '../utils/email-parser';
 import { SearchableCaseSelect } from './SearchableCaseSelect';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface EmailImportModalProps {
   isOpen: boolean;
@@ -216,10 +217,16 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
     setEvidenceCaseId(defaultCaseId || '');
   };
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const content = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       className="modal-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ zIndex: 2000 }}
@@ -231,7 +238,7 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div style={{ padding: '1.5rem 1.75rem 1rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '10px', background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(147,51,234,0.15))' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(29,78,216,0.15) 100%)' }}>
               <Mail size={20} color="var(--accent-primary)" />
             </div>
             <div>
@@ -245,7 +252,7 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
                 )}
                 {step === 'done' && '✅ Conversión Completada'}
               </h2>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.05rem 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.05rem 0 0' }}>
                 {step === 'input' && 'Pega el texto o sube un archivo .eml'}
                 {step === 'review' && parsed?.subject}
                 {step === 'convert' && 'Configura y confirma la conversión'}
@@ -253,7 +260,7 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="btn-ghost" onClick={onClose} style={{ padding: '0.35rem' }}>
+          <button aria-label="Cerrar importación de correo" className="btn-ghost" onClick={onClose} style={{ padding: '0.35rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -269,25 +276,25 @@ export const EmailImportModal: React.FC<EmailImportModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setInputMode('paste')}
-                  style={{ padding: '0.45rem', fontSize: '0.8rem', fontWeight: inputMode === 'paste' ? 700 : 500, backgroundColor: inputMode === 'paste' ? 'var(--accent-primary)' : 'transparent', color: inputMode === 'paste' ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                  style={{ padding: '0.45rem', fontSize: '0.8rem', fontWeight: inputMode === 'paste' ? 700 : 500, backgroundColor: inputMode === 'paste' ? 'var(--accent-primary-text)' : 'transparent', color: inputMode === 'paste' ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
                 >
                   📋 Pegar texto
                 </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  style={{ padding: '0.45rem', fontSize: '0.8rem', fontWeight: inputMode === 'upload' ? 700 : 500, backgroundColor: inputMode === 'upload' ? 'var(--accent-primary)' : 'transparent', color: inputMode === 'upload' ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
+                  style={{ padding: '0.45rem', fontSize: '0.8rem', fontWeight: inputMode === 'upload' ? 700 : 500, backgroundColor: inputMode === 'upload' ? 'var(--accent-primary-text)' : 'transparent', color: inputMode === 'upload' ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
                 >
                   <Upload size={13} /> Subir .eml
                 </button>
-                <input ref={fileInputRef} type="file" accept=".eml,.txt,message/rfc822,text/plain" style={{ display: 'none' }} onChange={handleFileLoad} />
+                <input ref={fileInputRef} type="file" aria-label="Seleccionar archivo de correo .eml" accept=".eml,.txt,message/rfc822,text/plain" style={{ display: 'none' }} onChange={handleFileLoad} />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="email-import-modal-f1">
                   Contenido del correo
                 </label>
-                <textarea
+                <textarea id="email-import-modal-f1"
                   rows={12}
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
@@ -340,7 +347,7 @@ Por favor validen el acceso al servidor de producción.`}
                   {matchedClient && (
                     <>
                       <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Cliente:</span>
-                      <span style={{ color: 'var(--status-low)', fontWeight: 700 }}>✓ {matchedClient.name}</span>
+                      <span style={{ color: 'var(--status-low-text)', fontWeight: 700 }}>✓ {matchedClient.name}</span>
                     </>
                   )}
                 </div>
@@ -348,7 +355,7 @@ Por favor validen el acceso al servidor de producción.`}
 
               {/* Body preview */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }} htmlFor="email-import-modal-f2">
                   Cuerpo del Correo
                 </label>
                 <div style={{ backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)', padding: '0.9rem 1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-wrap', maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border-subtle)' }}>
@@ -402,7 +409,7 @@ Por favor validen el acceso al servidor de producción.`}
                         (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-surface-elevated)';
                       }}
                     >
-                      <span style={{ color: 'var(--accent-primary)' }}>{icon}</span>
+                      <span style={{ color: 'var(--accent-primary-text)' }}>{icon}</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>{label}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>{desc}</span>
                     </button>
@@ -419,7 +426,7 @@ Por favor validen el acceso al servidor de producción.`}
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                   Título del Caso
                 </label>
-                <input
+                <input id="email-import-modal-f2"
                   type="text"
                   value={caseTitle}
                   onChange={(e) => setCaseTitle(e.target.value)}
@@ -429,10 +436,10 @@ Por favor validen el acceso al servidor de producción.`}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="email-import-modal-f3">
                     Cliente
                   </label>
-                  <select
+                  <select id="email-import-modal-f3"
                     value={caseClientId}
                     onChange={(e) => setCaseClientId(e.target.value)}
                     style={{ width: '100%' }}
@@ -444,27 +451,27 @@ Por favor validen el acceso al servidor de producción.`}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="email-import-modal-f4">
                     Prioridad
                   </label>
-                  <select
+                  <select id="email-import-modal-f4"
                     value={casePriority}
                     onChange={(e) => setCasePriority(e.target.value as any)}
                     style={{ width: '100%' }}
                   >
-                    <option value="critical">🔴 Crítica</option>
-                    <option value="high">🟠 Alta</option>
-                    <option value="medium">🟡 Media</option>
-                    <option value="low">🟢 Baja</option>
+                    <option value="critical">Crítica</option>
+                    <option value="high">Alta</option>
+                    <option value="medium">Media</option>
+                    <option value="low">Baja</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="email-import-modal-f5">
                   Descripción del Caso
                 </label>
-                <textarea
+                <textarea id="email-import-modal-f5"
                   rows={6}
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
@@ -501,11 +508,13 @@ Por favor validen el acceso al servidor de producción.`}
                         display: 'flex',
                         gap: '0.75rem',
                         alignItems: 'flex-start',
-                        borderLeft: `3px solid ${draft.owner === 'me' ? 'var(--accent-primary)' : 'var(--status-medium)'}`,
+                        border: `1px solid ${draft.owner === 'me' ? 'var(--accent-border)' : 'var(--status-medium-border)'}`,
+                        backgroundColor: draft.owner === 'me' ? 'var(--accent-glow)' : 'var(--status-medium-bg)',
                         opacity: draft.selected ? 1 : 0.5,
                       }}
                     >
                       <input
+  aria-label="Seleccionar compromiso"
                         type="checkbox"
                         checked={draft.selected}
                         onChange={(e) => {
@@ -517,6 +526,7 @@ Por favor validen el acceso al servidor de producción.`}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <input
+  aria-label="Descripción del compromiso"
                           type="text"
                           value={draft.description}
                           onChange={(e) => {
@@ -528,13 +538,14 @@ Por favor validen el acceso al servidor de producción.`}
                         />
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
                           <select
+  aria-label="Responsable del compromiso"
                             value={draft.owner}
                             onChange={(e) => {
                               const updated = [...commitmentDrafts];
                               updated[idx] = { ...updated[idx], owner: e.target.value as any };
                               setCommitmentDrafts(updated);
                             }}
-                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.35rem', width: 'auto' }}
+                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.35rem', width: 'auto' }}
                           >
                             <option value="me">👤 Yo</option>
                             <option value="client">🏢 Cliente</option>
@@ -571,7 +582,7 @@ Por favor validen el acceso al servidor de producción.`}
 
               {evidenceCaseId && parsed && (
                 <div className="glass-card" style={{ padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>Se vinculará:</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Se vinculará:</span>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{parsed.subject}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>De: {parsed.from} · {new Date(parsed.date).toLocaleDateString('es-ES')}</span>
                 </div>

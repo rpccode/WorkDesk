@@ -20,6 +20,7 @@ import {
 } from '../utils/email-templates';
 import { callAIGenerate } from '../services/ai-copilot';
 import { useStore } from '../store';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface EmailTemplateModalProps {
   isOpen: boolean;
@@ -218,10 +219,16 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
     setActiveView('editor');
   };
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const content = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       className="modal-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -256,8 +263,8 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
               style={{
                 padding: '0.45rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(147,51,234,0.2) 100%)',
-                color: 'var(--accent-primary)',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
+                color: 'var(--accent-primary-text)',
               }}
             >
               <FileText size={20} />
@@ -266,7 +273,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 {editingId ? 'Editar Plantilla de Correo' : 'Generador y Gestor de Plantillas'}
               </h2>
-              <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.1rem 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.1rem 0 0' }}>
                 Crea plantillas reutilizables con variables automáticas o genéralas con IA
               </p>
             </div>
@@ -280,7 +287,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                 fontSize: '0.75rem',
                 padding: '0.35rem 0.65rem',
                 fontWeight: activeView === 'editor' ? 700 : 500,
-                color: activeView === 'editor' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeView === 'editor' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveView('editor')}
             >
@@ -293,7 +300,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                 fontSize: '0.75rem',
                 padding: '0.35rem 0.65rem',
                 fontWeight: activeView === 'list' ? 700 : 500,
-                color: activeView === 'list' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeView === 'list' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => {
                 refreshList();
@@ -302,7 +309,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
             >
               Mis Plantillas ({customTemplates.length})
             </button>
-            <button className="btn-ghost" onClick={onClose} style={{ padding: '0.35rem' }}>
+            <button aria-label="Cerrar plantilla de correo" className="btn-ghost" onClick={onClose} style={{ padding: '0.35rem' }}>
               <X size={18} />
             </button>
           </div>
@@ -366,7 +373,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                         <button
                           type="button"
                           className="btn-secondary"
-                          style={{ fontSize: '0.74rem', padding: '0.35rem 0.6rem' }}
+                          style={{ fontSize: '0.75rem', padding: '0.35rem 0.6rem' }}
                           onClick={() => handleEdit(t)}
                           title="Editar plantilla"
                         >
@@ -375,7 +382,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                         <button
                           type="button"
                           className="btn-ghost"
-                          style={{ fontSize: '0.74rem', padding: '0.35rem 0.5rem', color: 'var(--status-critical)' }}
+                          style={{ fontSize: '0.75rem', padding: '0.35rem 0.5rem', color: 'var(--status-critical-text)' }}
                           onClick={() => handleDelete(t.id, t.name)}
                           title="Eliminar plantilla"
                         >
@@ -395,21 +402,23 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                 style={{
                   padding: '1rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(147,51,234,0.08) 100%)',
+                  background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(37, 99, 235, 0.08) 100%)',
                   border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.6rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--accent-primary)', fontWeight: 800, fontSize: '0.84rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--accent-primary-text)', fontWeight: 800, fontSize: '0.84rem' }}>
                   <Sparkles size={16} /> Generar Plantilla con Inteligencia Artificial
                 </div>
-                <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0 }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
                   Escribe qué tipo de correo deseas (ej: <em>"Plantilla de cobranza preventiva cordial para clientes corporativos"</em> o <em>"Aprobación de orden de cambio con lista de compromisos"</em>) y la IA generará la estructura y variables automáticamente.
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
+                    id="emailtemplate-ai-prompt"
+                    aria-label="Describe la plantilla que necesitas"
                     type="text"
                     placeholder="Describe la plantilla que necesitas..."
                     value={aiPrompt}
@@ -437,10 +446,12 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
               {/* Form fields */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }} htmlFor="email-template-modal-f1">
                     Nombre de la Plantilla *
                   </label>
                   <input
+                    id="email-template-modal-f1"
+                    aria-label="Describe la plantilla que necesitas"
                     type="text"
                     placeholder="Ej. Notificación de Entrega Técnica"
                     value={name}
@@ -449,19 +460,19 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }} htmlFor="email-template-modal-f2">
                     Categoría
                   </label>
-                  <select
+                  <select id="email-template-modal-f2"
                     value={category}
                     onChange={(e) => setCategory(e.target.value as any)}
                     style={{ width: '100%' }}
                   >
-                    <option value="personalizado">⭐ Personalizado</option>
+                    <option value="personalizado">Personalizado</option>
                     <option value="seguimiento">📋 Seguimiento</option>
                     <option value="minuta">📝 Minuta</option>
-                    <option value="escalacion">⚠️ Escalación</option>
-                    <option value="cierre">✅ Cierre</option>
+                    <option value="escalacion">Escalación</option>
+                    <option value="cierre">Cierre</option>
                   </select>
                 </div>
               </div>
@@ -469,7 +480,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
               {/* Variables Bar (Click to insert) */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }} htmlFor="email-template-modal-f3">
                     <HelpCircle size={13} /> Variables Disponibles (Haz clic para insertar en {focusedField === 'subject' ? 'Asunto' : 'Cuerpo'}):
                   </label>
                   <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
@@ -489,7 +500,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                         backgroundColor: 'var(--bg-surface-elevated)',
                         border: '1px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-sm)',
-                        color: 'var(--accent-primary)',
+                        color: 'var(--accent-primary-text)',
                         fontWeight: 600,
                       }}
                       title={`${p.description} (Ej: ${p.example})`}
@@ -505,7 +516,7 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
                   Patrón del Asunto *
                 </label>
-                <input
+                <input id="email-template-modal-f3"
                   type="text"
                   value={subjectPattern}
                   onFocus={() => setFocusedField('subject')}
@@ -517,10 +528,10 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
 
               {/* Body Pattern */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.3rem' }} htmlFor="email-template-modal-f4">
                   Cuerpo de la Plantilla *
                 </label>
-                <textarea
+                <textarea id="email-template-modal-f4"
                   rows={9}
                   value={bodyPattern}
                   onFocus={() => setFocusedField('body')}

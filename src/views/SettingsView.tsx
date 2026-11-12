@@ -35,6 +35,7 @@ import {
   formatSignature,
 } from '../utils/theme-manager';
 import { playNotificationSound, sendDesktopNotification } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
 import { BulkImportClientsModal } from '../components/BulkImportClientsModal';
 import { CheckUpdatesButton } from '../components/UpdateChecker';
 import { callAI } from '../services/ai-copilot';
@@ -174,7 +175,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
       addNotification({
         type: 'critical',
         title: 'Error de Exportación',
-        message: err.message || 'No se pudo generar la copia de seguridad.',
+        message: toUserMessage(err, 'No se pudo generar la copia de seguridad.'),
         show_toast: true,
       });
     }
@@ -249,13 +250,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
     } catch (err: any) {
       setAiTestResult({
         success: false,
-        message: err.message || 'Error al conectar con la API de IA.',
+        message: toUserMessage(err, 'No se pudo conectar con la API de IA.', 'Verifica la clave y el modelo en esta pantalla.'),
       });
       playNotificationSound('critical');
       addNotification({
         type: 'critical',
         title: 'Error de Conexión IA',
-        message: err.message || 'No se pudo validar la API Key.',
+        message: toUserMessage(err, 'No se pudo validar la clave de la API.'),
         show_toast: true,
       });
     } finally {
@@ -300,7 +301,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
   ];
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
+    <div className="page-container animate-fade-in">
       
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="page-header">
@@ -313,9 +314,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               className="badge"
               style={{
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
                 fontWeight: 700,
-                fontSize: '0.72rem',
+                fontSize: '0.75rem',
               }}
             >
               Consultor PRO
@@ -332,7 +333,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               className="animate-fade-in badge"
               style={{
                 backgroundColor: 'var(--status-low-bg)',
-                color: 'var(--status-low)',
+                color: 'var(--status-low-text)',
                 border: '1px solid var(--status-low-border)',
                 padding: '0.4rem 0.8rem',
                 fontSize: '0.78rem',
@@ -375,7 +376,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                 fontWeight: isActive ? 800 : 600,
                 fontSize: '0.84rem',
                 cursor: 'pointer',
@@ -389,11 +390,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               {tab.badge && (
                 <span
                   style={{
-                    fontSize: '0.68rem',
+                    fontSize: '0.7rem',
                     padding: '0.1rem 0.45rem',
                     borderRadius: '10px',
                     backgroundColor: isActive ? 'var(--accent-glow)' : 'var(--bg-main)',
-                    color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                    color: isActive ? 'var(--accent-primary-text)' : 'var(--text-muted)',
                     fontWeight: 700,
                   }}
                 >
@@ -418,10 +419,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                <label htmlFor="settings-perfil-nombre" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                   Nombre Completo & Título
                 </label>
                 <input
+                    id="settings-perfil-nombre"
                   type="text"
                   value={profileForm.name}
                   onChange={(e) => handleProfileChange('name', e.target.value)}
@@ -432,10 +434,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  <label htmlFor="settings-perfil-cargo" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     Cargo / Especialidad
                   </label>
                   <input
+                    id="settings-perfil-cargo"
                     type="text"
                     value={profileForm.role_title}
                     onChange={(e) => handleProfileChange('role_title', e.target.value)}
@@ -445,10 +448,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  <label htmlFor="settings-perfil-empresa" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     Empresa / Firma
                   </label>
                   <input
+                    id="settings-perfil-empresa"
                     type="text"
                     value={profileForm.company}
                     onChange={(e) => handleProfileChange('company', e.target.value)}
@@ -460,10 +464,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  <label htmlFor="settings-perfil-correo" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     Correo de Contacto
                   </label>
                   <input
+                    id="settings-perfil-correo"
                     type="email"
                     value={profileForm.email}
                     onChange={(e) => handleProfileChange('email', e.target.value)}
@@ -473,10 +478,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  <label htmlFor="settings-perfil-telefono" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     Teléfono / WhatsApp
                   </label>
                   <input
+                    id="settings-perfil-telefono"
                     type="text"
                     value={profileForm.phone}
                     onChange={(e) => handleProfileChange('phone', e.target.value)}
@@ -497,7 +503,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 marginTop: '0.5rem',
               }}
             >
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Vista Previa de Tarjeta Ejecutiva
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem' }}>
@@ -513,7 +519,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     justifyContent: 'center',
                     fontSize: '1.15rem',
                     fontWeight: 800,
-                    boxShadow: '0 0 12px var(--accent-glow)',
+                    boxShadow: '0 2px 8px var(--accent-glow)',
                   }}
                 >
                   {profileForm.name ? profileForm.name.charAt(0).toUpperCase() : 'C'}
@@ -522,7 +528,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                   <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                     {profileForm.name || 'Nombre del Consultor'}
                   </h4>
-                  <p style={{ fontSize: '0.76rem', color: 'var(--accent-primary)', fontWeight: 600, margin: '0.15rem 0 0 0' }}>
+                  <p style={{ fontSize: '0.76rem', color: 'var(--accent-primary-text)', fontWeight: 600, margin: '0.15rem 0 0 0' }}>
                     {profileForm.role_title || 'Cargo Profesional'} • {profileForm.company || 'Empresa'}
                   </p>
                   <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
@@ -546,7 +552,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
             {/* Variable chips */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>
                 Insertar:
               </span>
               {['{nombre}', '{cargo}', '{empresa}', '{email}', '{telefono}'].map((v) => (
@@ -554,7 +560,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                   key={v}
                   type="button"
                   className="btn-secondary"
-                  style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
+                  style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
                   onClick={() => insertSignatureVariable(v)}
                 >
                   + {v}
@@ -563,6 +569,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
             </div>
 
             <textarea
+              id="settings-firma-correo"
+              aria-label="Firma de correo"
               rows={5}
               value={profileForm.email_signature}
               onChange={(e) => handleProfileChange('email_signature', e.target.value)}
@@ -583,7 +591,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 border: '1px solid var(--border-subtle)',
               }}
             >
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Vista Previa Renderizada
               </span>
               <div
@@ -641,14 +649,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                         borderRadius: 'var(--radius-md)',
                         border: `1.5px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
                         backgroundColor: isSelected ? 'var(--accent-glow)' : 'var(--bg-surface-elevated)',
-                        color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+                        color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-primary)',
                         textAlign: 'left',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
                     >
                       <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{prov.name}</div>
-                      <div style={{ fontSize: '0.68rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      <div style={{ fontSize: '0.7rem', color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
                         {prov.badge}
                       </div>
                     </button>
@@ -669,7 +677,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textDecoration: 'none' }}
+                      style={{ fontSize: '0.75rem', color: 'var(--accent-primary-text)', textDecoration: 'none' }}
                     >
                       Obtener clave gratis en Google AI Studio ↗
                     </a>
@@ -677,6 +685,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 </div>
                 <div style={{ position: 'relative', marginTop: '0.25rem' }}>
                   <input
+                    id="settings-ai-apikey"
+                    aria-label="Clave de API del proveedor de IA"
                     type={showApiKey ? 'text' : 'password'}
                     value={aiForm.apiKey || ''}
                     onChange={(e) => handleAIChange('apiKey', e.target.value)}
@@ -703,10 +713,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               </div>
             ) : (
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                <label htmlFor="settings-ollama-url" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                   URL Base de Ollama
                 </label>
                 <input
+                  id="settings-ollama-url"
                   type="text"
                   value={aiForm.ollamaBaseUrl || 'http://localhost:11434'}
                   onChange={(e) => handleAIChange('ollamaBaseUrl', e.target.value)}
@@ -802,15 +813,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                             fontFamily: 'monospace',
                             fontSize: '0.82rem',
                             fontWeight: isActive ? 700 : 500,
-                            color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
+                            color: isActive ? 'var(--accent-primary-text)' : 'var(--text-primary)',
                             flex: 1,
                           }}>
                             {opt.label}
                           </span>
                           {opt.tag && (
                             <span style={{
-                              fontSize: '0.65rem',
-                              color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                              fontSize: '0.7rem',
+                              color: isActive ? 'var(--accent-primary-text)' : 'var(--text-muted)',
                               fontWeight: 500,
                               flexShrink: 0,
                             }}>
@@ -830,10 +841,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                         backgroundColor: isCustom ? 'var(--accent-glow)' : 'transparent',
                       }}
                     >
-                      <div style={{ fontSize: '0.74rem', fontWeight: 700, color: isCustom ? 'var(--accent-primary)' : 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCustom ? 'var(--accent-primary-text)' : 'var(--text-muted)', marginBottom: '0.3rem' }}>
                         ✏️ Ingresar ID de modelo manualmente
                       </div>
                       <input
+                        id="settings-ai-modelo"
+                        aria-label="ID de modelo de IA"
                         type="text"
                         value={isCustom ? (aiForm.model || '') : ''}
                         onFocus={() => {
@@ -860,7 +873,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                   </div>
 
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'block' }}>
-                    Modelo seleccionado: <code style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{aiForm.model || '(ninguno)'}</code>
+                    Modelo seleccionado: <code style={{ color: 'var(--accent-primary-text)', fontWeight: 700 }}>{aiForm.model || '(ninguno)'}</code>
                   </span>
                 </div>
               );
@@ -894,7 +907,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     fontSize: '0.78rem',
                     backgroundColor: aiTestResult.success ? 'var(--status-low-bg)' : 'var(--status-high-bg)',
                     border: `1px solid ${aiTestResult.success ? 'var(--status-low-border)' : 'var(--status-high-border)'}`,
-                    color: aiTestResult.success ? 'var(--status-low)' : 'var(--status-high)',
+                    color: aiTestResult.success ? 'var(--status-low-text)' : 'var(--status-high-text)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.4rem',
@@ -936,7 +949,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                   }}
                 >
                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{cap.title}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>{cap.desc}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>{cap.desc}</div>
                 </div>
               ))}
             </div>
@@ -948,8 +961,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--accent-glow)',
                 border: '1px solid var(--accent-border)',
-                fontSize: '0.74rem',
-                color: 'var(--accent-primary)',
+                fontSize: '0.75rem',
+                color: 'var(--accent-primary-text)',
               }}
             >
               🔒 <strong>Privacidad:</strong> Tus datos operacionales solo se envían al proveedor de IA configurado en el momento exacto que solicitas una acción. Las claves se almacenan localmente en tu equipo.
@@ -979,11 +992,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <ShieldCheck size={15} color="var(--status-low)" /> Vigilante SLA & Compromisos Críticos
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Evalúa periódicamente los acuerdos vencidos y dispara alertas inmediatas.
                 </p>
               </div>
               <input
+                  aria-label="Activar vigilancia de SLA y compromisos críticos"
                 type="checkbox"
                 checked={preferencesForm.enable_background_watchdog}
                 onChange={(e) => handlePreferenceChange('enable_background_watchdog', e.target.checked)}
@@ -997,11 +1011,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>
                   Frecuencia de Monitoreo
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Intervalo de escaneo silencioso y actualización de indicadores.
                 </p>
               </div>
               <select
+                id="settings-frecuencia-monitoreo"
+                aria-label="Frecuencia de monitoreo"
                 value={preferencesForm.background_check_interval_seconds || 60}
                 onChange={(e) => handlePreferenceChange('background_check_interval_seconds', Number(e.target.value))}
                 style={{ fontSize: '0.82rem' }}
@@ -1019,11 +1035,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Mail size={15} color="var(--accent-primary)" /> Sincronización Silenciosa de Correos
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Consulta nuevas respuestas de clientes en segundo plano sin congelar la app.
                 </p>
               </div>
               <input
+                  aria-label="Activar sincronización silenciosa de correos"
                 type="checkbox"
                 checked={preferencesForm.enable_background_email_sync}
                 onChange={(e) => handlePreferenceChange('enable_background_email_sync', e.target.checked)}
@@ -1037,11 +1054,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Database size={15} color="var(--accent-primary)" /> Respaldo Automático de Notas & Borradores
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Guarda notas y redacciones continuamente en la base de datos local.
                 </p>
               </div>
               <input
+                  aria-label="Activar respaldo automático de notas y borradores"
                 type="checkbox"
                 checked={preferencesForm.enable_auto_drafts}
                 onChange={(e) => handlePreferenceChange('enable_auto_drafts', e.target.checked)}
@@ -1055,12 +1073,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Layers size={15} color="var(--status-low)" /> Mantener en Bandeja del Sistema (System Tray)
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Al cerrar la ventana ("X"), WorkDesk sigue activo en segundo plano para no interrumpir el seguimiento ni las notificaciones.
                 </p>
               </div>
               <input
                 type="checkbox"
+                aria-label="Mantener WorkDesk en la bandeja del sistema al cerrar"
                 checked={preferencesForm.close_to_tray !== false}
                 onChange={(e) => handlePreferenceChange('close_to_tray', e.target.checked)}
                 style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
@@ -1070,7 +1089,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
             {/* Exit Completely Action */}
             <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
               <div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--status-critical)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--status-critical-text)' }}>
                   ¿Deseas cerrar WorkDesk por completo?
                 </span>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
@@ -1105,7 +1124,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Volume2 size={15} color="var(--accent-primary)" /> Sonido de Alertas y Acciones
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Chimes sintetizados al confirmar guardados o detectar vencimientos.
                 </p>
               </div>
@@ -1113,13 +1132,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <button
                   type="button"
                   className="btn-secondary"
-                  style={{ fontSize: '0.72rem', padding: '0.25rem 0.55rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
                   onClick={handleTestSound}
                   title="Probar sonido"
                 >
                   🔊 Probar
                 </button>
                 <input
+                  aria-label="Activar alertas de sonido"
                   type="checkbox"
                   checked={preferencesForm.enable_sound_alerts}
                   onChange={(e) => handlePreferenceChange('enable_sound_alerts', e.target.checked)}
@@ -1134,7 +1154,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Radio size={15} color="var(--accent-primary)" /> Notificaciones de Escritorio (Windows OS)
                 </span>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                   Avisos flotantes nativos cuando la ventana está minimizada o en segundo plano.
                 </p>
               </div>
@@ -1142,13 +1162,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 <button
                   type="button"
                   className="btn-secondary"
-                  style={{ fontSize: '0.72rem', padding: '0.25rem 0.55rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
                   onClick={handleTestDesktopNotification}
                   title="Probar notificación OS"
                 >
                   🔔 Probar
                 </button>
                 <input
+                  aria-label="Activar notificaciones de escritorio"
                   type="checkbox"
                   checked={preferencesForm.enable_desktop_notifications}
                   onChange={(e) => handlePreferenceChange('enable_desktop_notifications', e.target.checked)}
@@ -1162,10 +1183,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
               <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                 Alerta de Clientes Inactivos (Sin Seguimiento)
               </label>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0.5rem 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.2rem 0 0.5rem 0' }}>
                 Destacar clientes en el panel principal si no registran actividad en:
               </p>
               <select
+                id="settings-dias-inactividad"
+                aria-label="Días sin actividad para alertar por cliente inactivo"
                 value={preferencesForm.inactive_client_days}
                 onChange={(e) => handlePreferenceChange('inactive_client_days', Number(e.target.value))}
                 style={{ fontSize: '0.82rem', width: '100%' }}
@@ -1243,19 +1266,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                       onClick={() => handlePreferenceChange('theme_mode', option.id)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: isCurrent ? 'var(--accent-primary-text)' : 'var(--text-primary)' }}>
                           {option.icon}
                           <span style={{ fontSize: '0.92rem', fontWeight: 800 }}>{option.title}</span>
                         </div>
                         {isCurrent ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary)', fontSize: '0.72rem', fontWeight: 800 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary-text)', fontSize: '0.75rem', fontWeight: 800 }}>
                             <Check size={14} /> Activo
                           </div>
                         ) : (
-                          <span className="badge" style={{ fontSize: '0.65rem' }}>{option.badge}</span>
+                          <span className="badge" style={{ fontSize: '0.7rem' }}>{option.badge}</span>
                         )}
                       </div>
-                      <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
                         {option.desc}
                       </p>
                     </button>
@@ -1296,7 +1319,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                         justifyContent: 'space-between',
                         gap: '0.75rem',
                         cursor: 'pointer',
-                        boxShadow: isSelected ? `0 0 14px ${p.glowRgba}` : 'none',
+                        boxShadow: isSelected ? `0 2px 8px ${p.glowRgba}` : 'none',
                         transition: 'all 0.2s',
                       }}
                       onClick={() => handlePreferenceChange('accent_color', key)}
@@ -1308,7 +1331,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                             height: '20px',
                             borderRadius: '50%',
                             backgroundColor: p.hex,
-                            boxShadow: `0 0 8px ${p.glowRgba}`,
+                            boxShadow: `0 1px 4px ${p.glowRgba}`,
                             flexShrink: 0,
                           }}
                         />
@@ -1366,7 +1389,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                   gap: '0.75rem',
                 }}
               >
-                <div style={{ padding: '0.75rem', borderRadius: '50%', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+                <div style={{ padding: '0.75rem', borderRadius: '50%', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
                   <Mail size={24} />
                 </div>
                 <div>
@@ -1424,7 +1447,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                         <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>
                           {acc.email}
                         </span>
-                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           Proveedor:{' '}
                           <strong style={{ textTransform: 'uppercase' }}>
                             {acc.provider === 'microsoft_graph'
@@ -1474,19 +1497,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clientes Registrados</span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'block' }}>{clients.length}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clientes Registrados</span>
+                  <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent-primary-text)', display: 'block' }}>{clients.length}</span>
                 </div>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Casos y Proyectos</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Casos y Proyectos</span>
                   <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>{cases.length}</span>
                 </div>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Compromisos SLA</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Compromisos SLA</span>
                   <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>{commitments.length}</span>
                 </div>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bitácora y Notas</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bitácora y Notas</span>
                   <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>{notes.length}</span>
                 </div>
               </div>
@@ -1525,7 +1548,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                 </button>
 
                 {backupSuccess && (
-                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--status-low-bg)', border: '1px solid var(--status-low-border)', borderRadius: '4px', textAlign: 'center', color: 'var(--status-low)', fontSize: '0.76rem', fontWeight: 700 }}>
+                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--status-low-bg)', border: '1px solid var(--status-low-border)', borderRadius: '4px', textAlign: 'center', color: 'var(--status-low-text)', fontSize: '0.76rem', fontWeight: 700 }}>
                     ✓ Copia de seguridad exportada y guardada en Descargas
                   </div>
                 )}
@@ -1589,7 +1612,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     <button
                       type="button"
                       className="btn-ghost"
-                      style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-critical)' }}
+                      style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-critical-text)' }}
                       onClick={handleClearErrorLogs}
                     >
                       <Trash2 size={13} /> Limpiar
@@ -1610,7 +1633,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--border-subtle)',
                     textAlign: 'center',
-                    color: 'var(--status-low)',
+                    color: 'var(--status-low-text)',
                     fontSize: '0.82rem',
                     fontWeight: 600,
                   }}
@@ -1624,10 +1647,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                       key={idx}
                       style={{
                         padding: '0.75rem 1rem',
-                        backgroundColor: 'var(--bg-surface-elevated)',
                         borderRadius: 'var(--radius-sm)',
-                        borderLeft: '3px solid var(--status-critical)',
-                        border: '1px solid var(--border-subtle)',
+                        backgroundColor: 'var(--status-critical-bg)',
+                        border: '1px solid var(--status-critical-border)',
                         fontSize: '0.78rem',
                         fontFamily: 'monospace',
                       }}
@@ -1636,11 +1658,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenEmailAccountsM
                         <span>#{idx + 1}</span>
                         <span>{new Date(log.timestamp).toLocaleString()}</span>
                       </div>
-                      <div style={{ color: 'var(--status-critical)', fontWeight: 700 }}>
+                      <div style={{ color: 'var(--status-critical-text)', fontWeight: 700 }}>
                         {log.message}
                       </div>
                       {log.stack && (
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginTop: '0.3rem', whiteSpace: 'pre-wrap', maxHeight: '60px', overflow: 'hidden' }}>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.3rem', whiteSpace: 'pre-wrap', maxHeight: '60px', overflow: 'hidden' }}>
                           {log.stack}
                         </div>
                       )}

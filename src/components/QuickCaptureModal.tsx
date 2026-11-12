@@ -4,6 +4,8 @@ import { useStore } from '../store';
 import { Zap, X, Check, AlertCircle } from 'lucide-react';
 import { SearchableCaseSelect } from './SearchableCaseSelect';
 import { playNotificationSound } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export const QuickCaptureModal: React.FC = () => {
   const { isQuickCaptureOpen, setQuickCaptureOpen, cases, createNote, createCommitment, addNotification } = useStore();
@@ -14,18 +16,16 @@ export const QuickCaptureModal: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(
+    isQuickCaptureOpen,
+    () => setQuickCaptureOpen(false),
+  );
+
   React.useEffect(() => {
     if (isQuickCaptureOpen) {
       setError(null);
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setQuickCaptureOpen(false);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isQuickCaptureOpen, setQuickCaptureOpen]);
+  }, [isQuickCaptureOpen]);
 
   if (!isQuickCaptureOpen) return null;
 
@@ -74,7 +74,7 @@ export const QuickCaptureModal: React.FC = () => {
       setDueDate('');
       setQuickCaptureOpen(false);
     } catch (err: any) {
-      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar la captura rápida.';
+      const errMsg = toUserMessage(err, 'No se pudo guardar la captura rápida.', 'Intenta de nuevo en un momento.');
       setError(errMsg);
       playNotificationSound('critical');
       addNotification({
@@ -98,7 +98,9 @@ export const QuickCaptureModal: React.FC = () => {
       onClick={() => setQuickCaptureOpen(false)}
     >
       <div
+        ref={dialogRef}
         className="glass-card animate-fade-in"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: '560px',
@@ -112,7 +114,7 @@ export const QuickCaptureModal: React.FC = () => {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ padding: '0.4rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.4rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Zap size={18} />
             </div>
             <h3 id="quick-capture-title" style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Captura Rápida</h3>
@@ -141,7 +143,7 @@ export const QuickCaptureModal: React.FC = () => {
               borderRadius: 'var(--radius-sm)',
               background: 'rgba(239, 68, 68, 0.12)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: 'var(--status-critical)',
+              color: 'var(--status-critical-text)',
               fontSize: '0.82rem',
               fontWeight: 600,
             }}
@@ -153,7 +155,11 @@ export const QuickCaptureModal: React.FC = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
+            <label htmlFor="quick-capture-content" className="sr-only">
+              Compromiso, idea, nota de reunión o pendiente
+            </label>
             <textarea
+              id="quick-capture-content"
               rows={3}
               autoFocus
               placeholder="Escribe un compromiso, idea, nota de reunión o pendiente..."
@@ -175,17 +181,18 @@ export const QuickCaptureModal: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div>
-              <SearchableCaseSelect
-                label="Vincular a Caso (Opcional)"
-                cases={cases}
-                selectedCaseId={selectedCaseId}
-                onChange={(id) => setSelectedCaseId(id)}
-                placeholder="Buscar caso o cliente (dejar vacío para nota general)..."
-                allowClear
-              />
-            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div>
+                <SearchableCaseSelect
+                  label="Vincular a Caso (Opcional)"
+                  inputId="quick-capture-case"
+                  cases={cases}
+                  selectedCaseId={selectedCaseId}
+                  onChange={(id) => setSelectedCaseId(id)}
+                  placeholder="Buscar caso o cliente (dejar vacío para nota general)..."
+                  allowClear
+                />
+              </div>
 
             {selectedCaseId && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -201,6 +208,8 @@ export const QuickCaptureModal: React.FC = () => {
 
                 {isCommitment && (
                   <input
+                    id="quickcapture-due-date"
+                    aria-label="Fecha de vencimiento del compromiso"
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}

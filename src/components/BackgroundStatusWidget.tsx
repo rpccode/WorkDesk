@@ -96,7 +96,7 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
           justifyContent: fullWidth ? 'space-between' : 'flex-start',
           gap: '0.4rem',
           padding: '0.35rem 0.65rem',
-          fontSize: '0.72rem',
+          fontSize: '0.75rem',
           borderRadius: '8px',
           width: fullWidth ? '100%' : 'auto',
           backgroundColor: consultantPreferences.enable_background_watchdog
@@ -123,7 +123,7 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
                 ? 'var(--status-low)'
                 : 'var(--text-muted)',
               boxShadow: consultantPreferences.enable_background_watchdog
-                ? '0 0 6px var(--status-low)'
+                ? '0 1px 4px var(--status-low-bg)'
                 : 'none',
               flexShrink: 0,
             }}
@@ -169,19 +169,21 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.45rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <div style={{ padding: '0.25rem', borderRadius: '6px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+              <div style={{ padding: '0.25rem', borderRadius: '6px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
                 <Zap size={13} />
               </div>
               <div>
                 <h4 style={{ fontSize: '0.8rem', fontWeight: 800, margin: 0 }}>
                   Vigilante de Fondo
                 </h4>
-                <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.69rem', color: 'var(--text-muted)' }}>
                   Monitoreo continuo SLA
                 </span>
               </div>
             </div>
             <button
+              type="button"
+              aria-label="Cerrar widget de estado"
               onClick={() => setIsOpen(false)}
               style={{ background: 'transparent', padding: '0.15rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
             >
@@ -196,7 +198,7 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
               className="btn-primary animate-pulse-glow"
               style={{
                 width: '100%',
-                fontSize: '0.72rem',
+                fontSize: '0.75rem',
                 padding: '0.45rem 0.65rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -227,10 +229,10 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
             }}
           >
             <div>
-              <span style={{ fontSize: '0.74rem', fontWeight: 700, display: 'block', color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', color: 'var(--text-primary)' }}>
                 Vigilante Activo
               </span>
-              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.69rem', color: 'var(--text-muted)' }}>
                 Cada {consultantPreferences.background_check_interval_seconds || 60}s
               </span>
             </div>
@@ -238,7 +240,7 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
             <button
               type="button"
               className={consultantPreferences.enable_background_watchdog ? 'btn-primary' : 'btn-secondary'}
-              style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}
+              style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
               onClick={handleToggleWatchdog}
             >
               {consultantPreferences.enable_background_watchdog ? 'Activado' : 'Pausado'}
@@ -248,33 +250,33 @@ export const BackgroundStatusWidget: React.FC<BackgroundStatusWidgetProps> = ({
           {/* Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
             <div style={{ padding: '0.4rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-critical)', fontSize: '0.66rem', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-critical-text)', fontSize: '0.7rem', fontWeight: 700 }}>
                 <AlertTriangle size={11} /> Vencidos
               </div>
-              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? 'var(--status-critical)' : 'var(--text-primary)' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? 'var(--status-critical-text)' : 'var(--text-primary)' }}>
                 {stats.overdueCount}
               </p>
             </div>
 
             <div style={{ padding: '0.4rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-medium)', fontSize: '0.66rem', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--status-medium-text)', fontSize: '0.7rem', fontWeight: 700 }}>
                 <Clock size={11} /> Vencen Hoy
               </div>
-              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.dueTodayCount > 0 ? 'var(--status-medium)' : 'var(--text-primary)' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 800, margin: '0.1rem 0 0 0', color: stats.dueTodayCount > 0 ? 'var(--status-medium-text)' : 'var(--text-primary)' }}>
                 {stats.dueTodayCount}
               </p>
             </div>
           </div>
 
           {/* Status info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Último ciclo:</span>
               <strong style={{ color: 'var(--text-primary)' }}>{formatLastScan()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Notificaciones Escritorio:</span>
-              <strong style={{ color: consultantPreferences.enable_desktop_notifications ? 'var(--status-low)' : 'var(--text-muted)' }}>
+              <strong style={{ color: consultantPreferences.enable_desktop_notifications ? 'var(--status-low-text)' : 'var(--text-muted)' }}>
                 {consultantPreferences.enable_desktop_notifications ? 'Activas' : 'Inactivas'}
               </strong>
             </div>

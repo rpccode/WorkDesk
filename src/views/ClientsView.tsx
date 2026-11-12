@@ -23,10 +23,11 @@ import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { playNotificationSound } from '../utils/live-alerts';
 import { calculateClientHealth } from '../utils/client-health';
+import { SkeletonRows } from '../components/LoadingSkeletons';
 import type { Client, ClientComplexity, ClientHealthReport } from '../types';
 
 export const ClientsView: React.FC = () => {
-  const { clients, cases, commitments, tickets, fetchClients, fetchCases, deleteAllClients, addNotification } = useStore();
+  const { clients, cases, commitments, tickets, fetchClients, fetchCases, deleteAllClients, addNotification, isLoadingClients } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
@@ -61,10 +62,10 @@ export const ClientsView: React.FC = () => {
           style={{
             padding: '0.2rem 0.55rem',
             borderRadius: '4px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 800,
             backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            color: 'var(--status-critical)',
+            color: 'var(--status-critical-text)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
             whiteSpace: 'nowrap',
           }}
@@ -80,10 +81,10 @@ export const ClientsView: React.FC = () => {
           style={{
             padding: '0.2rem 0.55rem',
             borderRadius: '4px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 800,
             backgroundColor: 'rgba(245, 158, 11, 0.15)',
-            color: 'var(--status-medium)',
+            color: 'var(--status-medium-text)',
             border: '1px solid rgba(245, 158, 11, 0.3)',
             whiteSpace: 'nowrap',
           }}
@@ -97,10 +98,10 @@ export const ClientsView: React.FC = () => {
         style={{
           padding: '0.2rem 0.55rem',
           borderRadius: '4px',
-          fontSize: '0.72rem',
+          fontSize: '0.75rem',
           fontWeight: 800,
           backgroundColor: 'rgba(16, 185, 129, 0.15)',
-          color: 'var(--status-low)',
+          color: 'var(--status-low-text)',
           border: '1px solid rgba(16, 185, 129, 0.3)',
           whiteSpace: 'nowrap',
         }}
@@ -162,10 +163,10 @@ export const ClientsView: React.FC = () => {
           style={{
             padding: '0.2rem 0.55rem',
             borderRadius: '4px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 800,
             backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            color: 'var(--status-critical)',
+            color: 'var(--status-critical-text)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
           }}
         >
@@ -179,10 +180,10 @@ export const ClientsView: React.FC = () => {
           style={{
             padding: '0.2rem 0.55rem',
             borderRadius: '4px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 800,
             backgroundColor: 'rgba(245, 158, 11, 0.15)',
-            color: 'var(--status-medium)',
+            color: 'var(--status-medium-text)',
             border: '1px solid rgba(245, 158, 11, 0.3)',
           }}
         >
@@ -195,10 +196,10 @@ export const ClientsView: React.FC = () => {
         style={{
           padding: '0.2rem 0.55rem',
           borderRadius: '4px',
-          fontSize: '0.72rem',
+          fontSize: '0.75rem',
           fontWeight: 800,
           backgroundColor: 'rgba(16, 185, 129, 0.15)',
-          color: 'var(--status-low)',
+          color: 'var(--status-low-text)',
           border: '1px solid rgba(16, 185, 129, 0.3)',
         }}
       >
@@ -230,7 +231,7 @@ export const ClientsView: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Header */}
       <div className="page-header">
         <div className="page-title-group">
@@ -247,7 +248,7 @@ export const ClientsView: React.FC = () => {
             <button
               type="button"
               className="btn-ghost btn-sm"
-              style={{ color: 'var(--status-critical)' }}
+              style={{ color: 'var(--status-critical-text)' }}
               onClick={handleDeleteAll}
               title="Borrar todos los clientes para cargarlos de nuevo"
             >
@@ -270,11 +271,11 @@ export const ClientsView: React.FC = () => {
       {/* KPI Ribbon */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
         <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
             <Users size={22} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Total Clientes
             </span>
             <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalClients}</p>
@@ -282,15 +283,15 @@ export const ClientsView: React.FC = () => {
         </div>
 
         <div className="glass-card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: 'var(--status-critical)' }}>
+          <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: 'var(--status-critical-text)' }}>
             <ShieldAlert size={22} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Clientes Complejos
             </span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-              <p style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--status-critical)' }}>{complexClients}</p>
+              <p style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--status-critical-text)' }}>{complexClients}</p>
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                 ({complexPercent}%)
               </span>
@@ -303,7 +304,7 @@ export const ClientsView: React.FC = () => {
             <Building2 size={22} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Sucursales Atendidas
             </span>
             <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalBranches}</p>
@@ -315,7 +316,7 @@ export const ClientsView: React.FC = () => {
             <Cpu size={22} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Empleados Impactados
             </span>
             <p style={{ fontSize: '1.45rem', fontWeight: 800 }}>{totalEmployees.toLocaleString()}</p>
@@ -333,7 +334,9 @@ export const ClientsView: React.FC = () => {
               style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
             />
             <input
+              id="clients-search"
               type="text"
+              aria-label="Buscar cliente, empresa o rubro"
               placeholder="Buscar cliente, empresa o rubro..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -343,6 +346,8 @@ export const ClientsView: React.FC = () => {
 
           {uniqueCategories.length > 0 && (
             <select
+              id="clients-filter-categoria"
+              aria-label="Filtrar por categoría"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
@@ -357,25 +362,29 @@ export const ClientsView: React.FC = () => {
           )}
 
           <select
+            id="clients-filter-complejidad"
+            aria-label="Filtrar por complejidad"
             value={selectedComplexity}
             onChange={(e) => setSelectedComplexity(e.target.value)}
             style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
           >
             <option value="all">Toda Complejidad</option>
-            <option value="Alta">🔴 Alta</option>
-            <option value="Media">🟡 Media</option>
-            <option value="Baja">🟢 Baja</option>
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
           </select>
 
           <select
+            id="clients-filter-riesgo"
+            aria-label="Filtrar por estado de salud"
             value={selectedRisk}
             onChange={(e) => setSelectedRisk(e.target.value)}
             style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
           >
             <option value="all">Todo Estado Salud</option>
-            <option value="critical">🚨 Riesgo Crítico</option>
-            <option value="warning">⚠️ En Observación</option>
-            <option value="healthy">🟢 Saludable</option>
+            <option value="critical">Riesgo Crítico</option>
+            <option value="warning">En Observación</option>
+            <option value="healthy">Saludable</option>
           </select>
         </div>
 
@@ -389,7 +398,7 @@ export const ClientsView: React.FC = () => {
               fontSize: '0.78rem',
               fontWeight: viewMode === 'matrix' ? 700 : 500,
               backgroundColor: viewMode === 'matrix' ? 'var(--bg-surface)' : 'transparent',
-              color: viewMode === 'matrix' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: viewMode === 'matrix' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-xs)',
             }}
             onClick={() => setViewMode('matrix')}
@@ -404,7 +413,7 @@ export const ClientsView: React.FC = () => {
               fontSize: '0.78rem',
               fontWeight: viewMode === 'cards' ? 700 : 500,
               backgroundColor: viewMode === 'cards' ? 'var(--bg-surface)' : 'transparent',
-              color: viewMode === 'cards' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: viewMode === 'cards' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-xs)',
             }}
             onClick={() => setViewMode('cards')}
@@ -415,7 +424,11 @@ export const ClientsView: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      {filteredClients.length === 0 ? (
+      {isLoadingClients && clients.length === 0 ? (
+        <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <SkeletonRows rows={5} columns={5} />
+        </div>
+      ) : filteredClients.length === 0 ? (
         <div
           className="glass-card"
           style={{
@@ -506,7 +519,7 @@ export const ClientsView: React.FC = () => {
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>{c.name}</span>
                           {c.company && (
-                            <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary-text)', fontWeight: 600 }}>
                               {c.company}
                             </span>
                           )}
@@ -549,7 +562,7 @@ export const ClientsView: React.FC = () => {
 
                       <td style={{ padding: '0.8rem 0.75rem', textAlign: 'center' }}>
                         {c.has_it_department === true ? (
-                          <span style={{ color: 'var(--status-low)', fontWeight: 800, fontSize: '0.75rem' }}>Sí</span>
+                          <span style={{ color: 'var(--status-low-text)', fontWeight: 800, fontSize: '0.75rem' }}>Sí</span>
                         ) : c.has_it_department === false ? (
                           <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.75rem' }}>No</span>
                         ) : (
@@ -561,14 +574,14 @@ export const ClientsView: React.FC = () => {
                         <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
                           <button
                             className="btn-secondary"
-                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.75rem' }}
                             onClick={() => setClientToEdit(c)}
                           >
                             Editar
                           </button>
                           <button
                             className="btn-primary"
-                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.75rem' }}
                             onClick={() => setIsCaseModalOpen(true)}
                           >
                             + Caso
@@ -585,10 +598,10 @@ export const ClientsView: React.FC = () => {
                   <td style={{ padding: '0.85rem 1rem' }}>
                     Total: {filteredClients.length} Clientes
                   </td>
-                  <td colSpan={2} style={{ padding: '0.85rem 0.85rem', textAlign: 'center', color: '#f87171' }}>
+                  <td colSpan={2} style={{ padding: '0.85rem 0.85rem', textAlign: 'center', color: 'var(--status-critical-on-dark)' }}>
                     {complexClients} Clientes complejos
                   </td>
-                  <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center', color: 'var(--accent-primary)' }}>
+                  <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center', color: 'var(--accent-primary-on-dark)' }}>
                     {complexPercent}%
                   </td>
                   <td style={{ padding: '0.85rem 0.85rem' }} />
@@ -638,25 +651,23 @@ export const ClientsView: React.FC = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      {c.name}
-                    </h3>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{c.name}</p>
                     {c.company && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.2rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary-text)', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.2rem' }}>
                         <Building size={13} /> {c.company}
                       </div>
                     )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem' }}>
                     {getComplexityBadge(c.complexity_evaluated || c.complexity_weighted)}
-                    <span className={`badge ${c.status === 'active' ? 'badge-low' : 'badge-neutral'}`} style={{ fontSize: '0.65rem' }}>
+                    <span className={`badge ${c.status === 'active' ? 'badge-low' : 'badge-neutral'}`} style={{ fontSize: '0.7rem' }}>
                       {c.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
                 </div>
 
                 {/* Categoría & Diagnóstico */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', fontSize: '0.72rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', fontSize: '0.75rem' }}>
                   {c.category && (
                     <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', fontWeight: 600 }}>
                       🏷️ {c.category}
@@ -673,7 +684,7 @@ export const ClientsView: React.FC = () => {
                     </span>
                   )}
                   {c.has_it_department && (
-                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--status-low)', border: '1px solid rgba(5, 150, 105, 0.2)', fontWeight: 700 }}>
+                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: 'rgba(5, 150, 105, 0.1)', color: 'var(--status-low-text)', border: '1px solid rgba(5, 150, 105, 0.2)', fontWeight: 700 }}>
                       ✓ Depto. TI
                     </span>
                   )}

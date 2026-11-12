@@ -93,6 +93,8 @@ export const Pagination: React.FC<PaginationProps> = ({
             Mostrar
           </span>
           <select
+            id="pagination-page-size"
+            aria-label="Elementos por página"
             value={pageSize}
             onChange={(e) => {
               onPageSizeChange(Number(e.target.value));

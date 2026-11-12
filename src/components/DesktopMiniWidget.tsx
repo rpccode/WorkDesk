@@ -88,7 +88,7 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
               height: '8px',
               borderRadius: '50%',
               backgroundColor: '#10b981',
-              boxShadow: '0 0 8px #10b981',
+              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
               animation: 'pulse 2s infinite',
             }}
           />
@@ -98,7 +98,7 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
           </span>
           <span
             style={{
-              fontSize: '0.62rem',
+              fontSize: '0.69rem',
               backgroundColor: 'rgba(56, 189, 248, 0.15)',
               color: '#38bdf8',
               padding: '0.1rem 0.35rem',
@@ -144,10 +144,10 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
             textAlign: 'center',
           }}
         >
-          <span style={{ fontSize: '0.62rem', color: '#f87171', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+          <span style={{ fontSize: '0.69rem', color: 'var(--status-critical-on-dark)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
             <AlertTriangle size={10} /> Vencidos
           </span>
-          <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? '#ef4444' : '#f8fafc' }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0.1rem 0 0 0', color: stats.overdueCount > 0 ? 'var(--status-critical-on-dark)' : '#f8fafc' }}>
             {stats.overdueCount}
           </p>
         </div>
@@ -162,7 +162,7 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
             textAlign: 'center',
           }}
         >
-          <span style={{ fontSize: '0.62rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+          <span style={{ fontSize: '0.69rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
             <Clock size={10} /> Hoy
           </span>
           <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0.1rem 0 0 0', color: stats.dueTodayCount > 0 ? '#f59e0b' : '#f8fafc' }}>
@@ -180,7 +180,7 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
             textAlign: 'center',
           }}
         >
-          <span style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+          <span style={{ fontSize: '0.69rem', color: '#38bdf8', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
             <CheckCircle2 size={10} /> Casos
           </span>
           <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0.1rem 0 0 0', color: '#38bdf8' }}>
@@ -192,8 +192,8 @@ export const DesktopMiniWidget: React.FC<DesktopMiniWidgetProps> = ({ onRestore 
       {/* Quick Action & Scan Controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '0.45rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.62rem', color: '#94a3b8' }}>Último chequeo:</span>
-          <strong style={{ fontSize: '0.68rem', color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: '0.69rem', color: '#94a3b8' }}>Último chequeo:</span>
+          <strong style={{ fontSize: '0.7rem', color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>
             {formatLastScan()}
           </strong>
         </div>

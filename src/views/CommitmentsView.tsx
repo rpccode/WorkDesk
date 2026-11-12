@@ -54,7 +54,7 @@ export const CommitmentsView: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Header */}
       <div className="page-header">
         <div className="page-title-group">
@@ -81,7 +81,9 @@ export const CommitmentsView: React.FC = () => {
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
           />
           <input
+            id="commitments-search"
             type="text"
+            aria-label="Buscar por compromiso, caso o cliente"
             placeholder="Buscar por compromiso, caso o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -149,13 +151,14 @@ export const CommitmentsView: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '1rem',
-                  borderLeft: overdue
-                    ? '4px solid var(--status-critical)'
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: overdue
+                    ? 'var(--status-critical-bg)'
                     : isDone
-                    ? '4px solid var(--status-low)'
+                    ? 'var(--status-low-bg)'
                     : com.owner !== 'me'
-                    ? '4px solid var(--status-medium)'
-                    : '4px solid var(--accent-primary)',
+                    ? 'var(--status-medium-bg)'
+                    : 'var(--accent-glow)',
                   opacity: isDone ? 0.6 : 1,
                 }}
               >
@@ -163,7 +166,7 @@ export const CommitmentsView: React.FC = () => {
                   onClick={() => !isDone && markCommitmentDone(com.id)}
                   style={{
                     background: isDone ? 'var(--status-low-bg)' : 'transparent',
-                    color: isDone ? 'var(--status-low)' : 'var(--text-muted)',
+                    color: isDone ? 'var(--status-low-text)' : 'var(--text-muted)',
                     border: `1px solid ${isDone ? 'var(--status-low)' : 'var(--border-subtle)'}`,
                     padding: '0.5rem',
                     borderRadius: '50%',
@@ -176,7 +179,7 @@ export const CommitmentsView: React.FC = () => {
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-primary-text)' }}>
                       {com.client_name || 'Cliente'}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -200,7 +203,7 @@ export const CommitmentsView: React.FC = () => {
 
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', marginTop: '0.35rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                     {com.due_date ? (
-                      <span style={{ color: overdue ? 'var(--status-critical)' : 'inherit', fontWeight: overdue ? 700 : 400 }}>
+                      <span style={{ color: overdue ? 'var(--status-critical-text)' : 'inherit', fontWeight: overdue ? 700 : 400 }}>
                         📅 {formatRelativeDate(com.due_date)} ({formatDate(com.due_date)})
                       </span>
                     ) : (
@@ -208,7 +211,7 @@ export const CommitmentsView: React.FC = () => {
                     )}
 
                     {isDone && com.done_at && (
-                      <span style={{ color: 'var(--status-low)' }}>
+                      <span style={{ color: 'var(--status-low-text)' }}>
                         ✓ Completado el {formatDate(com.done_at)}
                       </span>
                     )}
@@ -220,6 +223,8 @@ export const CommitmentsView: React.FC = () => {
                     {snoozeId === com.id ? (
                       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                         <input
+                          id="commitment-snooze-date"
+                          aria-label="Nueva fecha de vencimiento"
                           type="date"
                           value={snoozeDate}
                           onChange={(e) => setSnoozeDate(e.target.value)}

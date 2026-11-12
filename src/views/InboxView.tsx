@@ -109,13 +109,13 @@ export const InboxView: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
+    <div className="page-container animate-fade-in">
       
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="page-header">
         <div className="page-title-group">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Inbox size={20} />
             </div>
             <div>
@@ -142,7 +142,7 @@ export const InboxView: React.FC = () => {
             className="btn-secondary btn-sm"
             style={{
               border: '1px solid var(--accent-primary)',
-              color: 'var(--accent-primary)',
+              color: 'var(--accent-primary-text)',
             }}
             onClick={() => setIsExtractorOpen(true)}
           >
@@ -158,7 +158,9 @@ export const InboxView: React.FC = () => {
       <form onSubmit={handleQuickAdd} className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ display: 'flex', gap: '0.6rem' }}>
           <input
+            id="inbox-quick-capture"
             type="text"
+            aria-label="Captura rápida: qué tienes en mente"
             placeholder="¿Qué tienes en mente? Escribe y pulsa Enter (ej. Llamar a Juan mañana para confirmar balance)..."
             value={inputContent}
             onChange={(e) => setInputContent(e.target.value)}
@@ -172,8 +174,9 @@ export const InboxView: React.FC = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Cliente (opcional):</span>
+            <label htmlFor="inbox-quick-cliente" style={{ color: 'var(--text-muted)' }}>Cliente (opcional):</label>
             <select
+              id="inbox-quick-cliente"
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
               style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
@@ -186,8 +189,9 @@ export const InboxView: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Tipo sugerido:</span>
+            <label htmlFor="inbox-quick-tipo" style={{ color: 'var(--text-muted)' }}>Tipo sugerido:</label>
             <select
+              id="inbox-quick-tipo"
               value={suggestedType}
               onChange={(e) => setSuggestedType(e.target.value as any)}
               style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
@@ -208,7 +212,7 @@ export const InboxView: React.FC = () => {
           className="btn-ghost"
           style={{
             fontWeight: activeTab === 'unprocessed' ? 800 : 500,
-            color: activeTab === 'unprocessed' ? 'var(--accent-primary)' : 'var(--text-muted)',
+            color: activeTab === 'unprocessed' ? 'var(--accent-primary-text)' : 'var(--text-muted)',
             borderBottom: activeTab === 'unprocessed' ? '2px solid var(--accent-primary)' : 'none',
             borderRadius: 0,
             padding: '0.4rem 0.8rem',
@@ -223,7 +227,7 @@ export const InboxView: React.FC = () => {
           className="btn-ghost"
           style={{
             fontWeight: activeTab === 'processed' ? 800 : 500,
-            color: activeTab === 'processed' ? 'var(--accent-primary)' : 'var(--text-muted)',
+            color: activeTab === 'processed' ? 'var(--accent-primary-text)' : 'var(--text-muted)',
             borderBottom: activeTab === 'processed' ? '2px solid var(--accent-primary)' : 'none',
             borderRadius: 0,
             padding: '0.4rem 0.8rem',
@@ -239,7 +243,7 @@ export const InboxView: React.FC = () => {
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {activeTab === 'unprocessed' && unprocessedItems.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-            <CheckCircle2 size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: 'var(--status-low)' }} />
+            <CheckCircle2 size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: 'var(--status-low-text)' }} />
             <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>¡Bandeja de entrada limpia (Inbox Zero)!</p>
             <p style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>No tienes elementos pendientes por clasificar.</p>
           </div>
@@ -264,11 +268,11 @@ export const InboxView: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '280px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {item.client_name && (
-                  <span className="badge" style={{ fontSize: '0.68rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                  <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
                     <Building2 size={11} /> {item.client_name}
                   </span>
                 )}
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(item.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -283,7 +287,7 @@ export const InboxView: React.FC = () => {
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => handleOpenTriage(item, 'case')}
                 title="Convertir a Caso"
               >
@@ -292,7 +296,7 @@ export const InboxView: React.FC = () => {
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => handleOpenTriage(item, 'commitment')}
                 title="Convertir a Compromiso"
               >
@@ -301,7 +305,7 @@ export const InboxView: React.FC = () => {
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                 onClick={() => handleOpenTriage(item, 'note')}
                 title="Guardar como Nota"
               >
@@ -310,7 +314,7 @@ export const InboxView: React.FC = () => {
               <button
                 type="button"
                 className="btn-ghost"
-                style={{ fontSize: '0.74rem', padding: '0.3rem 0.5rem', color: 'var(--status-critical)' }}
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem', color: 'var(--status-critical-text)' }}
                 onClick={() => processInboxItem(item.id, 'discarded')}
                 title="Descartar"
               >
@@ -338,7 +342,7 @@ export const InboxView: React.FC = () => {
               <CheckCircle2 size={16} color="var(--status-low)" />
               <span style={{ fontSize: '0.84rem' }}>{item.content}</span>
             </div>
-            <span className="badge" style={{ fontSize: '0.68rem', textTransform: 'capitalize' }}>
+            <span className="badge" style={{ fontSize: '0.7rem', textTransform: 'capitalize' }}>
               {item.processed_as || 'procesado'}
             </span>
           </div>
@@ -353,7 +357,7 @@ export const InboxView: React.FC = () => {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 Convertir a {triageTarget === 'case' ? 'Caso' : triageTarget === 'commitment' ? 'Compromiso' : triageTarget === 'note' ? 'Nota' : 'Seguimiento'}
               </h3>
-              <button type="button" className="btn-ghost" onClick={() => setProcessingItem(null)}>
+              <button type="button" className="btn-ghost" aria-label="Cerrar clasificación de elemento" onClick={() => setProcessingItem(null)}>
                 <X size={16} />
               </button>
             </div>
@@ -365,16 +369,18 @@ export const InboxView: React.FC = () => {
             {triageTarget === 'case' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Título del Caso:</label>
+                  <label htmlFor="inbox-triage-titulo" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Título del Caso:</label>
                   <input
+                    id="inbox-triage-titulo"
                     type="text"
                     value={triageTitle}
                     onChange={(e) => setTriageTitle(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Cliente:</label>
+                  <label htmlFor="inbox-triage-cliente" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Cliente:</label>
                   <select
+                    id="inbox-triage-cliente"
                     value={triageClientId}
                     onChange={(e) => setTriageClientId(e.target.value)}
                   >
@@ -384,8 +390,9 @@ export const InboxView: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Prioridad:</label>
+                  <label htmlFor="inbox-triage-prioridad" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Prioridad:</label>
                   <select
+                    id="inbox-triage-prioridad"
                     value={triagePriority}
                     onChange={(e) => setTriagePriority(e.target.value)}
                   >
@@ -401,8 +408,9 @@ export const InboxView: React.FC = () => {
             {triageTarget === 'commitment' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Caso Relacionado:</label>
+                  <label htmlFor="inbox-triage-caso-rel" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Caso Relacionado:</label>
                   <select
+                    id="inbox-triage-caso-rel"
                     value={triageCaseId}
                     onChange={(e) => setTriageCaseId(e.target.value)}
                   >
@@ -413,8 +421,9 @@ export const InboxView: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Responsable:</label>
+                    <label htmlFor="inbox-triage-responsable" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Responsable:</label>
                     <select
+                      id="inbox-triage-responsable"
                       value={triageOwner}
                       onChange={(e) => setTriageOwner(e.target.value as any)}
                     >
@@ -424,8 +433,9 @@ export const InboxView: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Fecha límite:</label>
+                    <label htmlFor="inbox-triage-fecha" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Fecha límite:</label>
                     <input
+                      id="inbox-triage-fecha"
                       type="date"
                       value={triageDueDate}
                       onChange={(e) => setTriageDueDate(e.target.value)}
@@ -437,8 +447,9 @@ export const InboxView: React.FC = () => {
 
             {(triageTarget === 'note' || triageTarget === 'followup') && (
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Caso Asociado:</label>
+                <label htmlFor="inbox-triage-caso-aso" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Caso Asociado:</label>
                 <select
+                  id="inbox-triage-caso-aso"
                   value={triageCaseId}
                   onChange={(e) => setTriageCaseId(e.target.value)}
                 >

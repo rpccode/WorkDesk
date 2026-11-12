@@ -21,6 +21,8 @@ import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
 import { CommitmentModal } from '../components/CommitmentModal';
 import { calculateClientHealth } from '../utils/client-health';
+import { formatDate } from '../utils/date';
+import { toUserMessage } from '../utils/error-messages';
 import { generateMorningBriefAI } from '../services/ai-copilot';
 import type { Case, NextAction } from '../types';
 
@@ -161,7 +163,7 @@ export const MyDayView: React.FC = () => {
       addNotification({
         type: 'critical',
         title: 'Error AI Morning Brief',
-        message: err.message || 'No se pudo generar el brief con la IA.',
+        message: toUserMessage(err, 'No se pudo generar el brief con la IA.', 'Verifica la clave del modelo en Configuración.'),
         show_toast: true,
       });
     } finally {
@@ -172,7 +174,7 @@ export const MyDayView: React.FC = () => {
   const selectedCase = cases.find((c) => c.id === selectedCaseId) || null;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
+    <div className="page-container animate-fade-in">
       
       {/* ── MORNING BRIEF HERO BANNER ────────────────────────────────────────── */}
       <div
@@ -192,11 +194,11 @@ export const MyDayView: React.FC = () => {
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.5rem', borderRadius: '10px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Sun size={24} />
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Personal Operations Center • Mi Día
               </span>
               <h2 style={{ fontSize: '1.65rem', fontWeight: 900, letterSpacing: '-0.025em', margin: '0.1rem 0 0' }}>
@@ -207,8 +209,8 @@ export const MyDayView: React.FC = () => {
 
           <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginTop: '0.65rem', lineHeight: 1.5, maxWidth: '680px', margin: '0.65rem 0 0' }}>
             Tienes <strong>{activeCases.length} casos activos</strong>. 
-            {criticalCases.length > 0 && <span> <span style={{ color: 'var(--status-critical)', fontWeight: 800 }}>{criticalCases.length} requieren atención prioritaria</span>.</span>}
-            {overdueCommitments.length > 0 && <span> <span style={{ color: 'var(--status-critical)', fontWeight: 800 }}>{overdueCommitments.length} compromisos vencidos</span>.</span>}
+            {criticalCases.length > 0 && <span> <span style={{ color: 'var(--status-critical-text)', fontWeight: 800 }}>{criticalCases.length} requieren atención prioritaria</span>.</span>}
+            {overdueCommitments.length > 0 && <span> <span style={{ color: 'var(--status-critical-text)', fontWeight: 800 }}>{overdueCommitments.length} compromisos vencidos</span>.</span>}
             {waitingCommitments.length > 0 && <span> Hay <strong>{waitingCommitments.length} pendientes</strong> esperando respuesta de clientes/terceros.</span>}
           </p>
         </div>
@@ -221,8 +223,8 @@ export const MyDayView: React.FC = () => {
               fontSize: '0.84rem',
               padding: '0.65rem 1rem',
               border: '1px solid var(--accent-border, rgba(59,130,246,0.4))',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(147,51,234,0.15) 100%)',
-              color: 'var(--accent-primary)',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(37, 99, 235, 0.15) 100%)',
+              color: 'var(--accent-primary-text)',
               fontWeight: 700,
             }}
             onClick={handleGenerateBrief}
@@ -273,7 +275,7 @@ export const MyDayView: React.FC = () => {
               <button
                 type="button"
                 className="btn-ghost"
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                 onClick={handleGenerateBrief}
                 disabled={isGeneratingBrief}
               >
@@ -282,7 +284,7 @@ export const MyDayView: React.FC = () => {
               <button
                 type="button"
                 className="btn-ghost"
-                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                 onClick={() => setAiBrief(null)}
               >
                 Cerrar
@@ -309,16 +311,16 @@ export const MyDayView: React.FC = () => {
           
           {/* Cuentas en Riesgo Crítico */}
           {criticalRiskClients.length > 0 && (
-            <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-critical)' }}>
+            <div className="glass-card" style={{ padding: '1.2rem', border: '1px solid var(--status-critical-border)', backgroundColor: 'var(--status-critical-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-critical)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-critical-text)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <ShieldAlert size={15} /> {criticalRiskClients.length} Cuenta(s) en Riesgo Crítico
                 </span>
-                <button type="button" className="btn-ghost" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('analytics')}>
+                <button type="button" className="btn-ghost" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('analytics')}>
                   Analíticas <ArrowRight size={12} />
                 </button>
               </div>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
                 Acumulación de retrasos o bloqueos prolongados detectados:
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -327,7 +329,7 @@ export const MyDayView: React.FC = () => {
                     <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                       {client.name}
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--status-critical)', fontWeight: 800 }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--status-critical-text)', fontWeight: 800 }}>
                       Score {report.score}/100
                     </span>
                   </div>
@@ -338,12 +340,12 @@ export const MyDayView: React.FC = () => {
 
           {/* Vencidos */}
           {overdueCommitments.length > 0 && (
-            <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-critical)' }}>
+            <div className="glass-card" style={{ padding: '1.2rem', border: '1px solid var(--status-critical-border)', backgroundColor: 'var(--status-critical-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-critical)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-critical-text)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Flame size={15} /> {overdueCommitments.length} Compromisos Vencidos
                 </span>
-                <button type="button" className="btn-ghost" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('commitments')}>
+                <button type="button" className="btn-ghost" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('commitments')}>
                   Ver todos <ArrowRight size={12} />
                 </button>
               </div>
@@ -353,8 +355,8 @@ export const MyDayView: React.FC = () => {
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
                       {comm.description}
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--status-critical)', fontWeight: 800 }}>
-                      Venció {comm.due_date?.split('T')[0]}
+                    <span style={{ fontSize: '0.7rem', color: 'var(--status-critical-text)', fontWeight: 800 }}>
+                      Venció {formatDate(comm.due_date)}
                     </span>
                   </div>
                 ))}
@@ -364,16 +366,16 @@ export const MyDayView: React.FC = () => {
 
           {/* Casos sin Próxima Acción */}
           {casesWithoutNextAction.length > 0 && (
-            <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-medium)' }}>
+            <div className="glass-card" style={{ padding: '1.2rem', border: '1px solid var(--status-medium-border)', backgroundColor: 'var(--status-medium-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-medium)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-medium-text)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <AlertTriangle size={15} /> {casesWithoutNextAction.length} Casos Sin Próxima Acción
                 </span>
-                <button type="button" className="btn-ghost" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('cases')}>
+                <button type="button" className="btn-ghost" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('cases')}>
                   Gestionar <ArrowRight size={12} />
                 </button>
               </div>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
                 Todo caso activo debe tener definido el siguiente paso para avanzar.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -383,7 +385,7 @@ export const MyDayView: React.FC = () => {
                     <button
                       type="button"
                       className="btn-secondary"
-                      style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}
+                      style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
                       onClick={() => {
                         setEditingNextActionCaseId(c.id);
                         setNextActionDesc('');
@@ -400,13 +402,13 @@ export const MyDayView: React.FC = () => {
 
           {/* Listos para cerrar */}
           {closableCases.length > 0 && (
-            <div className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid var(--status-low)' }}>
+            <div className="glass-card" style={{ padding: '1.2rem', border: '1px solid var(--status-low-border)', backgroundColor: 'var(--status-low-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-low)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--status-low-text)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <CheckCircle2 size={15} /> {closableCases.length} Casos Listos para Cerrar
                 </span>
               </div>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.6rem' }}>
                 Todos los compromisos han sido completados.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -416,7 +418,7 @@ export const MyDayView: React.FC = () => {
                     <button
                       type="button"
                       className="btn-secondary"
-                      style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem', color: 'var(--status-low)' }}
+                      style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', color: 'var(--status-low-text)' }}
                       onClick={() => setSelectedCaseId(c.id)}
                     >
                       Cerrar Caso
@@ -439,14 +441,14 @@ export const MyDayView: React.FC = () => {
               <Target size={18} color="var(--accent-primary)" />
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Mis Próximas Acciones</h3>
             </div>
-            <span className="badge" style={{ fontSize: '0.72rem', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)', fontWeight: 800 }}>
+            <span className="badge" style={{ fontSize: '0.75rem', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
               {myNextActions.length} Pendientes
             </span>
           </div>
 
           {myNextActions.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
-              <CheckCircle2 size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: 'var(--status-low)' }} />
+              <CheckCircle2 size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: 'var(--status-low-text)' }} />
               <p style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0 }}>¡Estás al día con tus próximas acciones!</p>
               <p style={{ fontSize: '0.76rem', marginTop: '0.25rem' }}>Define nuevos pasos en tus casos para seguir avanzando.</p>
             </div>
@@ -472,7 +474,7 @@ export const MyDayView: React.FC = () => {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className="badge" style={{ fontSize: '0.68rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                        <span className="badge" style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59,130,246,0.12)', color: 'var(--accent-primary-text)', fontWeight: 800 }}>
                           <Building2 size={11} /> {caseItem.client_name || 'Cliente'}
                         </span>
                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>•</span>
@@ -487,30 +489,30 @@ export const MyDayView: React.FC = () => {
                       {action.due_date && (
                         <span
                           style={{
-                            fontSize: '0.72rem',
+                            fontSize: '0.75rem',
                             fontWeight: 800,
-                            color: isActionOverdue ? 'var(--status-critical)' : isActionToday ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                            color: isActionOverdue ? 'var(--status-critical-text)' : isActionToday ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.25rem',
                           }}
                         >
                           <Clock size={12} />
-                          {isActionOverdue ? `Atrasado (${action.due_date})` : isActionToday ? 'Para Hoy' : action.due_date}
+                          {isActionOverdue ? `Atrasado (${formatDate(action.due_date)})` : isActionToday ? 'Para Hoy' : formatDate(action.due_date)}
                         </span>
                       )}
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        <span style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>➔</span>
+                        <span style={{ color: 'var(--accent-primary-text)', fontWeight: 900 }}>➔</span>
                         <span>{action.description}</span>
                       </div>
 
                       <button
                         type="button"
                         className="btn-secondary"
-                        style={{ fontSize: '0.72rem', padding: '0.3rem 0.7rem', color: 'var(--status-low)', borderColor: 'var(--status-low)', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', color: 'var(--status-low-text)', borderColor: 'var(--status-low)', whiteSpace: 'nowrap' }}
                         onClick={() => handleCompleteNextAction(caseItem)}
                       >
                         <CheckCircle2 size={13} /> Hecho
@@ -533,7 +535,7 @@ export const MyDayView: React.FC = () => {
                 <Clock size={17} color="var(--status-medium)" />
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Esperando de Otros</h3>
               </div>
-              <button type="button" className="btn-ghost" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('waiting_on')}>
+              <button type="button" className="btn-ghost" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => setActiveTab('waiting_on')}>
                 Ver todo <ArrowRight size={12} />
               </button>
             </div>
@@ -562,10 +564,10 @@ export const MyDayView: React.FC = () => {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)' }}>
                           {comm.client_name || 'Cliente'}
                         </span>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: diffDays >= 4 ? 'var(--status-critical)' : 'var(--status-medium)' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: diffDays >= 4 ? 'var(--status-critical-text)' : 'var(--status-medium-text)' }}>
                           {diffDays === 0 ? 'Hoy' : `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`}
                         </span>
                       </div>
@@ -576,7 +578,7 @@ export const MyDayView: React.FC = () => {
                         <button
                           type="button"
                           className="btn-ghost"
-                          style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', color: 'var(--accent-primary)' }}
+                          style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: 'var(--accent-primary-text)' }}
                           onClick={() => {
                             const relatedCase = cases.find((c) => c.id === comm.case_id);
                             if (relatedCase) setCaseForEmail(relatedCase);
@@ -614,7 +616,7 @@ export const MyDayView: React.FC = () => {
                     <button
                       type="button"
                       className="btn-secondary"
-                      style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem', color: 'var(--status-low)' }}
+                      style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', color: 'var(--status-low-text)' }}
                       onClick={() => markCommitmentDone(comm.id)}
                     >
                       ✓ Cumplido
@@ -639,8 +641,9 @@ export const MyDayView: React.FC = () => {
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Descripción de la acción:</label>
+              <label htmlFor="myday-descripcion" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Descripción de la acción:</label>
               <input
+                id="myday-descripcion"
                 type="text"
                 placeholder="Ej. Llamar a Contabilidad para validar balance..."
                 value={nextActionDesc}
@@ -651,16 +654,18 @@ export const MyDayView: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Fecha límite:</label>
+                <label htmlFor="myday-fecha" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Fecha límite:</label>
                 <input
+                  id="myday-fecha"
                   type="date"
                   value={nextActionDate}
                   onChange={(e) => setNextActionDate(e.target.value)}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Responsable:</label>
+                <label htmlFor="myday-responsable" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Responsable:</label>
                 <select
+                  id="myday-responsable"
                   value={nextActionOwner}
                   onChange={(e) => setNextActionOwner(e.target.value as any)}
                 >

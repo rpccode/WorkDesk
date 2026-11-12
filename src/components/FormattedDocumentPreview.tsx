@@ -107,7 +107,7 @@ export const FormattedDocumentPreview: React.FC<FormattedDocumentPreviewProps> =
       } else if (trimmed === '---' || trimmed === '***') {
         elements.push(<hr key={`hr-${i}`} style={{ border: 'none', borderTop: '1px solid #cbd5e1', margin: '1.25rem 0' }} />);
       } else if (trimmed.startsWith('> ')) {
-        elements.push(<blockquote key={`quote-${i}`} style={{ margin: '0.85rem 0', padding: '0.65rem 1rem', backgroundColor: '#f8fafc', borderLeft: '4px solid #2563eb', borderRadius: '0 4px 4px 0', color: '#334155', fontSize: '0.86rem', fontStyle: 'italic' }}>{renderFormattedInlineText(trimmed.replace(/^>\s+/, ''))}</blockquote>);
+        elements.push(<blockquote key={`quote-${i}`} style={{ margin: '0.85rem 0', padding: '0.65rem 1rem', backgroundColor: '#f8fafc', border: '1px solid #93b4f5', borderRadius: '4px', color: '#334155', fontSize: '0.86rem', fontStyle: 'italic' }}>{renderFormattedInlineText(trimmed.replace(/^>\s+/, ''))}</blockquote>);
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
         elements.push(<div key={`bullet-${i}`} style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', margin: '0.25rem 0', paddingLeft: '0.75rem', fontSize: '0.86rem', color: '#1e293b' }}><span style={{ color: '#2563eb', fontWeight: 800 }}>•</span><div>{renderFormattedInlineText(trimmed.replace(/^[-*]\s+/, ''))}</div></div>);
       } else if (/^\d+\.\s+/.test(trimmed)) {
@@ -144,7 +144,7 @@ export const FormattedDocumentPreview: React.FC<FormattedDocumentPreviewProps> =
           <h4 style={{ fontSize: '0.92rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0f172a', margin: 0 }}>
             WorkDesk • Consultoría Operativa
           </h4>
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
             {docCategory ? `CATEGORÍA: ${docCategory.toUpperCase()}` : 'DOCUMENTO OFICIAL DE GESTIÓN'}
           </span>
         </div>
@@ -152,7 +152,7 @@ export const FormattedDocumentPreview: React.FC<FormattedDocumentPreviewProps> =
           <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>
             {new Date().toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
             REF: WD-{docTitle.substring(0, 3).toUpperCase()}-{new Date().getFullYear()}
           </span>
         </div>
@@ -178,7 +178,7 @@ export const FormattedDocumentPreview: React.FC<FormattedDocumentPreviewProps> =
       </div>
 
       {/* Official Footer */}
-      <div style={{ marginTop: '3rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8' }}>
+      <div style={{ marginTop: '3rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#94a3b8' }}>
         <span>WorkDesk • Documento Oficial y Confidencial</span>
         <span style={{ fontWeight: 700, color: '#64748b' }}>Página 1 de 1</span>
       </div>

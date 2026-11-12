@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { EmailAccount, EmailAccountProvider, SaveEmailAccountInput } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface EmailAccountsModalProps {
   isOpen: boolean;
@@ -91,6 +92,8 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -226,7 +229,14 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
   };
 
   const modalContent = (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      className="modal-overlay"
+      onClick={onClose}
+    >
       <div
         className="modal-panel"
         style={{ width: '100%', maxWidth: '680px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
@@ -235,7 +245,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
         {/* Modal Header */}
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.4rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Mail size={18} />
             </div>
             <div>
@@ -245,7 +255,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
               </p>
             </div>
           </div>
-          <button className="btn-ghost" style={{ padding: '0.35rem' }} onClick={onClose}>
+          <button aria-label="Cerrar cuentas de correo" className="btn-ghost" style={{ padding: '0.35rem' }} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
@@ -271,7 +281,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
 
               {emailAccounts.length === 0 ? (
                 <div className="empty-state" style={{ padding: '2.5rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--accent-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--accent-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary-text)' }}>
                     <ShieldCheck size={28} />
                   </div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Conecta tu Correo Oficialmente</h3>
@@ -314,10 +324,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                               {acc.provider === 'microsoft_graph' ? 'Microsoft 365 (Cloud API)' : acc.provider === 'gmail_api' ? 'Google API' : 'Servidor SMTP'}
                             </span>
                           </div>
-                          <p style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', marginTop: '0.2rem', fontWeight: 600 }}>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--accent-primary-text)', marginTop: '0.2rem', fontWeight: 600 }}>
                             {acc.email}
                           </p>
-                          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                             {isCloud ? '✓ Conexión en vivo vía REST API (Sin credenciales SMTP)' : `Servidor: ${acc.smtp_host || 'Desconocido'} • Puerto ${acc.smtp_port || 587}`}
                           </p>
                         </div>
@@ -334,7 +344,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                           )}
                           <button
                             className="btn-ghost"
-                            style={{ padding: '0.35rem 0.5rem', color: 'var(--status-critical)' }}
+                            style={{ padding: '0.35rem 0.5rem', color: 'var(--status-critical-text)' }}
                             onClick={() => handleDelete(acc.id)}
                             title="Eliminar cuenta"
                           >
@@ -448,7 +458,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.78rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 600 }}
+                  style={{ fontSize: '0.78rem', color: 'var(--accent-primary-text)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 600 }}
                   onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
                 >
                   {showAdvancedOAuth ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -460,18 +470,18 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                     <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                       Si tu organización bloquea aplicaciones de terceros multi-inquilino (error <code>AADSTS65002</code> o <code>AADSTS700016</code>), puedes registrar tu propia aplicación en 1 minuto:
                     </p>
-                    <ol style={{ fontSize: '0.74rem', color: 'var(--text-muted)', paddingLeft: '1.2rem', margin: 0, lineHeight: 1.6 }}>
+                    <ol style={{ fontSize: '0.75rem', color: 'var(--text-muted)', paddingLeft: '1.2rem', margin: 0, lineHeight: 1.6 }}>
                       <li>Entra a <strong>portal.azure.com</strong> &gt; <em>Registros de aplicaciones</em> &gt; <em>Nuevo registro</em>.</li>
-                      <li>En <strong>URI de redirección</strong>, elige <em>Móvil y escritorio</em> y escribe: <code style={{ color: 'var(--accent-primary)' }}>http://127.0.0.1:8989/callback</code></li>
+                      <li>En <strong>URI de redirección</strong>, elige <em>Móvil y escritorio</em> y escribe: <code style={{ color: 'var(--accent-primary-text)' }}>http://127.0.0.1:8989/callback</code></li>
                       <li>Copia el <strong>Id. de aplicación (cliente)</strong> y pégalo abajo:</li>
                     </ol>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginTop: '0.25rem' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }} htmlFor="email-accounts-modal-f1">
                           Client / Application ID (Azure / Google)
                         </label>
-                        <input
+                        <input id="email-accounts-modal-f1"
                           type="text"
                           placeholder="Ej: a1b2c3d4-e5f6-7890-..."
                           value={customClientId}
@@ -480,10 +490,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                         />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }} htmlFor="email-accounts-modal-f2">
                           Tenant ID (Opcional, por defecto "common")
                         </label>
-                        <input
+                        <input id="email-accounts-modal-f2"
                           type="text"
                           placeholder="common o ID de tu directorio"
                           value={customTenantId}
@@ -505,7 +515,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                   padding: '0.75rem 0.9rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: oauthFeedback.success ? 'var(--status-low-bg)' : 'var(--status-critical-bg)',
-                  color: oauthFeedback.success ? 'var(--status-low)' : 'var(--status-critical)',
+                  color: oauthFeedback.success ? 'var(--status-low-text)' : 'var(--status-critical-text)',
                   border: `1px solid ${oauthFeedback.success ? 'var(--status-low-border)' : 'var(--status-critical-border)'}`,
                   fontSize: '0.82rem',
                 }}>
@@ -532,7 +542,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
               {/* Presets Row */}
               {!editingId && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem' }} htmlFor="email-accounts-modal-f3">
                     PLANTILLA RÁPIDA DE SERVIDOR:
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.45rem' }}>
@@ -564,7 +574,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.3rem' }}>
                     Nombre Visible / Remitente *
                   </label>
-                  <input
+                  <input id="email-accounts-modal-f3"
                     type="text"
                     required
                     placeholder="Ej. Ing. Roberto Pérez"
@@ -574,10 +584,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.3rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.3rem' }} htmlFor="email-accounts-modal-f4">
                     Dirección de Correo *
                   </label>
-                  <input
+                  <input id="email-accounts-modal-f4"
                     type="email"
                     required
                     placeholder="tucorreo@empresa.com"
@@ -592,16 +602,16 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
 
               {/* SMTP Settings */}
               <div style={{ padding: '0.9rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--accent-primary-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Server size={14} /> SERVIDOR SALIENTE (SMTP)
                 </span>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }} htmlFor="email-accounts-modal-f5">
                       Servidor SMTP
                     </label>
-                    <input
+                    <input id="email-accounts-modal-f5"
                       type="text"
                       placeholder="smtp.office365.com / smtp.gmail.com"
                       value={smtpHost}
@@ -609,10 +619,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }} htmlFor="email-accounts-modal-f6">
                       Puerto
                     </label>
-                    <input
+                    <input id="email-accounts-modal-f6"
                       type="number"
                       value={smtpPort}
                       onChange={(e) => setSmtpPort(Number(e.target.value))}
@@ -622,10 +632,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }} htmlFor="email-accounts-modal-f7">
                       Usuario / Correo SMTP
                     </label>
-                    <input
+                    <input id="email-accounts-modal-f7"
                       type="text"
                       placeholder="usuario@dominio.com"
                       value={smtpUser}
@@ -633,10 +643,10 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }} htmlFor="email-accounts-modal-f8">
                       Contraseña / App Password
                     </label>
-                    <input
+                    <input id="email-accounts-modal-f8"
                       type="password"
                       placeholder="••••••••••••"
                       value={smtpPassword}
@@ -666,7 +676,7 @@ export const EmailAccountsModal: React.FC<EmailAccountsModalProps> = ({ isOpen, 
                   padding: '0.75rem 0.9rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: testResult.success ? 'var(--status-low-bg)' : 'var(--status-critical-bg)',
-                  color: testResult.success ? 'var(--status-low)' : 'var(--status-critical)',
+                  color: testResult.success ? 'var(--status-low-text)' : 'var(--status-critical-text)',
                   border: `1px solid ${testResult.success ? 'var(--status-low-border)' : 'var(--status-critical-border)'}`,
                   fontSize: '0.8rem',
                 }}>

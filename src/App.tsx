@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from './store';
 import {
   LayoutDashboard,
@@ -45,6 +45,7 @@ import { BackgroundStatusWidget } from './components/BackgroundStatusWidget';
 import { DesktopMiniWidget } from './components/DesktopMiniWidget';
 import { UpdateChecker } from './components/UpdateChecker';
 import { CopilotPanel } from './components/CopilotPanel';
+import { StaleDataBanner } from './components/StaleDataBanner';
 import { requestDesktopNotificationPermission } from './utils/live-alerts';
 import { backgroundEngine } from './services/background-service';
 import { api } from './api/tauri';
@@ -285,7 +286,7 @@ export function App() {
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#090d16' }}>
         <DesktopMiniWidget onRestore={() => toggleMiniWidgetMode(false)} />
         <QuickCaptureModal />
-        <LiveToastContainer />
+        <LiveToastContainer variant="overlay" />
       </div>
     );
   }
@@ -335,7 +336,7 @@ export function App() {
                 borderRadius: '9px',
                 background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                 color: 'white',
-                boxShadow: '0 0 16px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255,255,255,0.15)',
                 flexShrink: 0,
               }}>
                 <Layers size={17} />
@@ -352,19 +353,19 @@ export function App() {
                     WorkDesk
                   </span>
                   <span style={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.69rem',
                     fontWeight: 700,
                     padding: '0.1rem 0.3rem',
                     borderRadius: '4px',
                     backgroundColor: 'var(--accent-glow)',
-                    color: 'var(--accent-primary)',
+                    color: 'var(--accent-primary-text)',
                     letterSpacing: '0.04em',
                   }}>
                     PRO
                   </span>
                 </div>
                 <p style={{
-                  fontSize: '0.66rem',
+                  fontSize: '0.7rem',
                   color: 'var(--text-muted)',
                   lineHeight: 1,
                   marginTop: '0.15rem',
@@ -381,7 +382,7 @@ export function App() {
                 position: 'relative',
                 padding: '0.4rem',
                 borderRadius: '8px',
-                color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
+                color: unreadCount > 0 ? 'var(--accent-primary-text)' : 'var(--text-muted)',
               }}
               onClick={() => setNotificationCenterOpen(true)}
               title={unreadCount > 0 ? `${unreadCount} alerta(s) pendiente(s)` : 'Centro de Alertas'}
@@ -410,14 +411,21 @@ export function App() {
         </div>
 
         {/* ── Navigation ─────────────────────────────────────── */}
-        <nav style={{
-          flex: 1,
-          padding: '0.75rem 0.6rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.2rem',
-          overflowY: 'auto',
-        }}>
+        <nav
+          aria-label="Navegación principal"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: '0.75rem 0.6rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.2rem',
+            overflowY: 'auto',
+            // Desvanecido inferior: el recorte de la lista se lee como scroll, no como solape
+            maskImage: 'linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent 100%)',
+          }}
+        >
           {/* Global Omni-Search Trigger Button */}
           <button
             type="button"
@@ -442,7 +450,7 @@ export function App() {
               <Search size={13} color="var(--accent-primary)" />
               <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Buscar...</span>
             </div>
-            <span style={{ fontSize: '0.62rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
+            <span style={{ fontSize: '0.69rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
               Ctrl+K
             </span>
           </button>
@@ -459,8 +467,8 @@ export function App() {
               padding: '0.45rem 0.65rem',
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
-              color: 'var(--accent-primary)',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37, 99, 235, 0.12) 100%)',
+              color: 'var(--accent-primary-text)',
               fontSize: '0.75rem',
               marginBottom: '0.4rem',
               cursor: 'pointer',
@@ -471,7 +479,7 @@ export function App() {
               <Sparkles size={13} color="var(--accent-primary)" />
               <span style={{ fontWeight: 700 }}>AI Copilot</span>
             </div>
-            <span style={{ fontSize: '0.62rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
+            <span style={{ fontSize: '0.69rem', border: '1px solid var(--border-subtle)', padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--bg-surface)' }}>
               Ctrl+I
             </span>
           </button>
@@ -482,7 +490,7 @@ export function App() {
               <React.Fragment key={item.id}>
                 {item.section && (
                   <span style={{
-                    fontSize: '0.64rem',
+                    fontSize: '0.69rem',
                     fontWeight: 800,
                     color: 'var(--text-muted)',
                     textTransform: 'uppercase',
@@ -534,7 +542,7 @@ export function App() {
             <Zap size={15} />
             Captura Rápida
             <span style={{
-              fontSize: '0.6rem',
+              fontSize: '0.69rem',
               opacity: 0.75,
               marginLeft: '0.15rem',
               padding: '0.1rem 0.3rem',
@@ -552,7 +560,7 @@ export function App() {
               className="btn-ghost"
               style={{
                 flex: 1,
-                fontSize: '0.73rem',
+                fontSize: '0.75rem',
                 padding: '0.35rem 0.5rem',
                 color: 'var(--text-muted)',
               }}
@@ -568,7 +576,7 @@ export function App() {
             <button
               className="btn-ghost"
               style={{
-                fontSize: '0.73rem',
+                fontSize: '0.75rem',
                 padding: '0.35rem 0.5rem',
                 color: 'var(--text-muted)',
               }}
@@ -580,10 +588,9 @@ export function App() {
 
             {lastSync && (
               <span style={{
-                fontSize: '0.65rem',
-                color: 'var(--text-muted)',
+                fontSize: '0.7rem',
+                color: 'var(--text-secondary)',
                 fontVariantNumeric: 'tabular-nums',
-                opacity: 0.7,
               }}>
                 {lastSync}
               </span>
@@ -593,36 +600,42 @@ export function App() {
       </aside>
 
       {/* ── Main Content ─────────────────────────────────────────── */}
-      <main
-        style={{
-          flex: 1,
-          height: '100%',
-          overflowY: 'auto',
-          padding: '2rem 2.25rem',
-          backgroundColor: 'var(--bg-main)',
-          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
-        }}
-      >
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <UpdateChecker />
-          <ErrorBoundary fallbackTitle="Error al cargar la sección activa">
-            {activeTab === 'my_day'       && <MyDayView />}
-            {activeTab === 'inbox'        && <InboxView />}
-            {activeTab === 'waiting_on'   && <WaitingOnView />}
-            {activeTab === 'dashboard'    && <DashboardView />}
-            {activeTab === 'tickets'      && <TicketsView />}
-            {activeTab === 'cases'        && <CasesView />}
-            {activeTab === 'commitments'  && <CommitmentsView />}
-            {activeTab === 'calendar'     && <CalendarView />}
-            {activeTab === 'clients'      && <ClientsView />}
-            {activeTab === 'notes'        && <NotesView />}
-            {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
-            {activeTab === 'emails'       && <EmailBuilderView />}
-            {activeTab === 'reports'      && <ReportsView />}
-            {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
-          </ErrorBoundary>
-        </div>
-      </main>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <main
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '2rem 2.25rem 0',
+            backgroundColor: 'var(--bg-main)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.05) 0%, transparent 60%), var(--bg-main)',
+          }}
+        >
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <UpdateChecker />
+            <StaleDataBanner />
+            <ErrorBoundary fallbackTitle="Error al cargar la sección activa">
+              {activeTab === 'my_day'       && <MyDayView />}
+              {activeTab === 'inbox'        && <InboxView />}
+              {activeTab === 'waiting_on'   && <WaitingOnView />}
+              {activeTab === 'dashboard'    && <DashboardView />}
+              {activeTab === 'tickets'      && <TicketsView />}
+              {activeTab === 'cases'        && <CasesView />}
+              {activeTab === 'commitments'  && <CommitmentsView />}
+              {activeTab === 'calendar'     && <CalendarView />}
+              {activeTab === 'clients'      && <ClientsView />}
+              {activeTab === 'notes'        && <NotesView />}
+              {activeTab === 'analytics'    && <ConsultingAnalyticsView />}
+              {activeTab === 'emails'       && <EmailBuilderView />}
+              {activeTab === 'reports'      && <ReportsView />}
+              {activeTab === 'settings'     && <SettingsView onOpenEmailAccountsModal={() => setIsEmailModalOpen(true)} />}
+            </ErrorBoundary>
+          </div>
+        </main>
+
+        {/* Banda de notificaciones — espacio reservado, nunca superpuesto */}
+        <LiveToastContainer />
+      </div>
 
       {/* Global Modals & Live Overlays */}
       <QuickCaptureModal />
@@ -636,7 +649,6 @@ export function App() {
       />
       <NotificationCenterModal />
       <CopilotPanel />
-      <LiveToastContainer />
     </div>
   );
 }

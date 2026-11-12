@@ -266,7 +266,7 @@ export const ReportsView: React.FC = () => {
   });
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Top Header & Main Navigation Bar */}
       <div className="page-header">
         <div>
@@ -288,7 +288,7 @@ export const ReportsView: React.FC = () => {
               fontSize: '0.82rem',
               fontWeight: activeTab === 'library' ? 700 : 500,
               backgroundColor: activeTab === 'library' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'library' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeTab === 'library' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-sm)',
             }}
             onClick={() => setActiveTab('library')}
@@ -304,7 +304,7 @@ export const ReportsView: React.FC = () => {
               fontSize: '0.82rem',
               fontWeight: activeTab === 'generator' ? 700 : 500,
               backgroundColor: activeTab === 'generator' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'generator' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeTab === 'generator' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-sm)',
             }}
             onClick={() => setActiveTab('generator')}
@@ -320,7 +320,7 @@ export const ReportsView: React.FC = () => {
               fontSize: '0.82rem',
               fontWeight: activeTab === 'editor' ? 700 : 500,
               backgroundColor: activeTab === 'editor' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'editor' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeTab === 'editor' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-sm)',
             }}
             onClick={() => setActiveTab('editor')}
@@ -336,7 +336,7 @@ export const ReportsView: React.FC = () => {
               fontSize: '0.82rem',
               fontWeight: activeTab === 'weekly' ? 700 : 500,
               backgroundColor: activeTab === 'weekly' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'weekly' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeTab === 'weekly' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderRadius: 'var(--radius-sm)',
             }}
             onClick={() => setActiveTab('weekly')}
@@ -356,7 +356,7 @@ export const ReportsView: React.FC = () => {
             {/* Top Toolbar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+                <div style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
                   <BookOpen size={20} />
                 </div>
                 <div>
@@ -374,7 +374,9 @@ export const ReportsView: React.FC = () => {
                 <div style={{ position: 'relative' }}>
                   <Search size={14} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
+                    id="reports-search-plantilla"
                     type="text"
+                    aria-label="Buscar plantilla"
                     placeholder="Buscar plantilla..."
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
@@ -384,6 +386,8 @@ export const ReportsView: React.FC = () => {
 
                 {/* Category Filter */}
                 <select
+                  id="reports-filter-categoria"
+                  aria-label="Filtrar por categoría"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                   style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}
@@ -447,7 +451,7 @@ export const ReportsView: React.FC = () => {
                                 fontSize: '0.7rem',
                                 fontWeight: 700,
                                 backgroundColor: 'var(--accent-glow)',
-                                color: 'var(--accent-primary)',
+                                color: 'var(--accent-primary-text)',
                                 border: '1px solid var(--border-subtle)',
                               }}
                             >
@@ -465,9 +469,9 @@ export const ReportsView: React.FC = () => {
 
                           <td style={{ padding: '0.75rem 0.85rem', textAlign: 'center' }}>
                             {t.isDefault ? (
-                              <span className="badge badge-neutral" style={{ fontSize: '0.68rem' }}>Oficial</span>
+                              <span className="badge badge-neutral" style={{ fontSize: '0.7rem' }}>Oficial</span>
                             ) : (
-                              <span className="badge badge-low" style={{ fontSize: '0.68rem' }}>Personalizada</span>
+                              <span className="badge badge-low" style={{ fontSize: '0.7rem' }}>Personalizada</span>
                             )}
                           </td>
 
@@ -477,7 +481,7 @@ export const ReportsView: React.FC = () => {
                               <button
                                 type="button"
                                 className="btn-primary"
-                                style={{ padding: '0.3rem 0.65rem', fontSize: '0.74rem' }}
+                                style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
                                 onClick={() => handleGoToGenerator(t.id)}
                               >
                                 <Sparkles size={13} /> Redactar
@@ -487,7 +491,7 @@ export const ReportsView: React.FC = () => {
                               <button
                                 type="button"
                                 className="btn-secondary"
-                                style={{ padding: '0.3rem 0.65rem', fontSize: '0.74rem' }}
+                                style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
                                 onClick={() => handleGoToEditor(t.id)}
                                 title="Editar la estructura y texto de esta plantilla"
                               >
@@ -498,7 +502,7 @@ export const ReportsView: React.FC = () => {
                                 <button
                                   type="button"
                                   className="btn-ghost"
-                                  style={{ padding: '0.3rem 0.45rem', fontSize: '0.74rem', color: 'var(--status-critical)' }}
+                                  style={{ padding: '0.3rem 0.45rem', fontSize: '0.75rem', color: 'var(--status-critical-text)' }}
                                   onClick={() => handleDeleteTemplate(t.id)}
                                   title="Eliminar plantilla personalizada"
                                 >
@@ -539,10 +543,11 @@ export const ReportsView: React.FC = () => {
               <div style={{ height: '20px', width: '1px', backgroundColor: 'var(--border-subtle)' }} />
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                <label htmlFor="reports-plantilla-activa" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Plantilla Activa:
-                </span>
+                </label>
                 <select
+                  id="reports-plantilla-activa"
                   value={selectedTemplateId}
                   onChange={(e) => setSelectedTemplateId(e.target.value)}
                   style={{ fontSize: '0.82rem', fontWeight: 700, padding: '0.35rem 0.65rem' }}
@@ -631,11 +636,11 @@ export const ReportsView: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', backgroundColor: 'var(--bg-surface-elevated)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Consultor asignado: <strong style={{ color: 'var(--text-primary)' }}>{consultantProfile.name || 'Sin configurar'}</strong>
                 </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Compromisos a inyectar: <strong style={{ color: 'var(--accent-primary)' }}>{caseCommitments.length} acuerdos</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Compromisos a inyectar: <strong style={{ color: 'var(--accent-primary-text)' }}>{caseCommitments.length} acuerdos</strong>
                 </span>
               </div>
             </div>
@@ -647,7 +652,7 @@ export const ReportsView: React.FC = () => {
               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 Previsualización de Documento Formal (Renderizado Oficial)
               </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--status-low)', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--status-low-text)', fontWeight: 700 }}>
                 ● Todos los marcadores dinámicos resueltos en vivo
               </span>
             </div>
@@ -684,10 +689,11 @@ export const ReportsView: React.FC = () => {
               <div style={{ height: '20px', width: '1px', backgroundColor: 'var(--border-subtle)' }} />
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                <label htmlFor="reports-plantilla-editando" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Editando Plantilla:
-                </span>
+                </label>
                 <select
+                  id="reports-plantilla-editando"
                   value={editingTemplateId}
                   onChange={(e) => setEditingTemplateId(e.target.value)}
                   style={{ fontSize: '0.82rem', fontWeight: 700, padding: '0.35rem 0.65rem' }}
@@ -729,10 +735,11 @@ export const ReportsView: React.FC = () => {
             {/* Metadata Fields */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label htmlFor="reports-edit-titulo" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                   Título de la Plantilla
                 </label>
                 <input
+                  id="reports-edit-titulo"
                   type="text"
                   value={editingTitle}
                   onChange={(e) => setEditingTitle(e.target.value)}
@@ -742,10 +749,11 @@ export const ReportsView: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label htmlFor="reports-edit-categoria" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                   Categoría
                 </label>
                 <select
+                  id="reports-edit-categoria"
                   value={editingCategory}
                   onChange={(e) => setEditingCategory(e.target.value as any)}
                   style={{ width: '100%', fontSize: '0.84rem' }}
@@ -760,10 +768,11 @@ export const ReportsView: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label htmlFor="reports-edit-descripcion" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                   Descripción de Uso
                 </label>
                 <input
+                  id="reports-edit-descripcion"
                   type="text"
                   value={editingDescription}
                   onChange={(e) => setEditingDescription(e.target.value)}
@@ -827,7 +836,7 @@ export const ReportsView: React.FC = () => {
                       fontWeight: 600,
                       backgroundColor: 'var(--bg-surface)',
                       border: '1px solid var(--border-subtle)',
-                      color: 'var(--accent-primary)',
+                      color: 'var(--accent-primary-text)',
                       cursor: 'pointer',
                     }}
                   >
@@ -841,10 +850,11 @@ export const ReportsView: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
               {/* Textarea */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <label htmlFor="reports-edit-codigo" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Código Fuente de la Plantilla
                 </label>
                 <textarea
+                  id="reports-edit-codigo"
                   ref={editorTextareaRef}
                   rows={26}
                   value={editingContent}
@@ -861,7 +871,7 @@ export const ReportsView: React.FC = () => {
 
               {/* Formatted Preview Side */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Estructura Visual Preliminar
                 </label>
                 <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
@@ -886,10 +896,11 @@ export const ReportsView: React.FC = () => {
           <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Calendar size={18} color="var(--accent-primary)" />
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              <label htmlFor="reports-periodo" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                 Período del Reporte:
               </label>
               <input
+                id="reports-periodo"
                 type="text"
                 value={weeklyPeriod}
                 onChange={(e) => setWeeklyPeriod(e.target.value)}

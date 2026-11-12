@@ -5,6 +5,8 @@ import { MessageSquare, X, Check, AlertCircle } from 'lucide-react';
 import { getTodayIso } from '../utils/date';
 import type { FollowupType } from '../types';
 import { playNotificationSound } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface FollowupModalProps {
   isOpen: boolean;
@@ -36,6 +38,8 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
       setFieldErrors({});
     }
   }, [isOpen]);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -84,7 +88,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
       });
       onClose();
     } catch (err: any) {
-      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar el seguimiento.';
+      const errMsg = toUserMessage(err, 'No se pudo guardar el seguimiento.', 'Revisa los campos e intenta de nuevo.');
       setError(errMsg);
       playNotificationSound('critical');
       addNotification({
@@ -100,6 +104,10 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
 
   const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -128,7 +136,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <MessageSquare size={20} />
             </div>
             <div>
@@ -136,7 +144,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Caso: {caseTitle}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button aria-label="Cerrar seguimiento" onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -152,7 +160,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
               borderRadius: 'var(--radius-sm)',
               background: 'rgba(239, 68, 68, 0.12)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: 'var(--status-critical)',
+              color: 'var(--status-critical-text)',
               fontSize: '0.84rem',
               fontWeight: 600,
             }}
@@ -165,30 +173,30 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="followup-modal-f1">
                 Tipo de Interacción
               </label>
-              <select value={type} onChange={(e) => setType(e.target.value as FollowupType)} style={{ width: '100%' }}>
+              <select id="followup-modal-f1" value={type} onChange={(e) => setType(e.target.value as FollowupType)} style={{ width: '100%' }}>
                 <option value="meeting">🤝 Reunión / Sesión</option>
                 <option value="call">📞 Llamada Telefónica</option>
-                <option value="email">✉️ Correo Electrónico</option>
+                <option value="email">✉ Correo Electrónico</option>
                 <option value="note">📝 Nota / Actualización Interna</option>
               </select>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="followup-modal-f2">
                 Fecha
               </label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '100%' }} />
+              <input id="followup-modal-f2" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '100%' }} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              Resumen / Minuta de Acuerdos <span style={{ color: 'var(--status-critical)' }}>*</span>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="followup-modal-f3">
+              Resumen / Minuta de Acuerdos <span style={{ color: 'var(--status-critical-text)' }}>*</span>
             </label>
-            <textarea
+            <textarea id="followup-modal-f3"
               rows={4}
               value={summary}
               onChange={(e) => {
@@ -204,7 +212,7 @@ export const FollowupModal: React.FC<FollowupModalProps> = ({
               }}
             />
             {fieldErrors.summary && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <AlertCircle size={12} /> {fieldErrors.summary}
               </span>
             )}

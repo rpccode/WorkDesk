@@ -12,6 +12,9 @@ interface SearchableClientSelectProps {
   label?: string;
   disabled?: boolean;
   dropDirection?: 'auto' | 'down' | 'up';
+  inputId?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
 }
 
 export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
@@ -24,6 +27,9 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
   label,
   disabled = false,
   dropDirection = 'auto',
+  inputId,
+  ariaInvalid = false,
+  ariaDescribedBy,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,7 +152,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
         style={{
           padding: '0.1rem 0.4rem',
           borderRadius: '4px',
-          fontSize: '0.65rem',
+          fontSize: '0.7rem',
           fontWeight: 800,
           backgroundColor: bg,
           color,
@@ -162,6 +168,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       {label && (
         <label
+          htmlFor={inputId}
           style={{
             display: 'block',
             fontSize: '0.75rem',
@@ -172,12 +179,20 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             letterSpacing: '0.02em',
           }}
         >
-          {label} {required && <span style={{ color: 'var(--status-critical)' }}>*</span>}
+          {label} {required && <span style={{ color: 'var(--status-critical-text)' }}>*</span>}
         </label>
       )}
 
       {/* Main Select Button Trigger */}
       <div
+        id={inputId}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-required={required || undefined}
+        aria-invalid={ariaInvalid || undefined}
+        aria-describedby={ariaDescribedBy}
+        aria-label={label && !inputId ? label : undefined}
         tabIndex={disabled ? -1 : 0}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
@@ -190,8 +205,10 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
           backgroundColor: 'var(--bg-surface-elevated)',
           border: isOpen
             ? '1.5px solid var(--accent-primary)'
-            : '1px solid var(--border-medium)',
-          boxShadow: isOpen ? '0 0 0 3px var(--accent-glow)' : 'none',
+            : ariaInvalid
+              ? '1.5px solid var(--status-critical)'
+              : '1px solid var(--border-medium)',
+          boxShadow: isOpen ? '0 0 0 3px var(--accent-glow)' : ariaInvalid ? '0 0 0 2px var(--status-critical-bg)' : 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.15s ease',
@@ -200,14 +217,14 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
-          <Building2 size={16} style={{ color: selectedClient ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+          <Building2 size={16} style={{ color: selectedClient ? 'var(--accent-primary-text)' : 'var(--text-muted)', flexShrink: 0 }} />
           {selectedClient ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {selectedClient.name}
               </span>
               {selectedClient.company && (
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   ({selectedClient.company})
                 </span>
               )}
@@ -286,6 +303,8 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input
               ref={searchInputRef}
+              id={inputId ? `${inputId}-search` : undefined}
+              aria-label={label ? `${label}: buscar` : 'Buscar cliente o empresa'}
               type="text"
               value={searchTerm}
               onChange={(e) => {
@@ -308,6 +327,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
             {searchTerm && (
               <button
                 type="button"
+                aria-label="Limpiar búsqueda de cliente"
                 onClick={() => setSearchTerm('')}
                 style={{
                   background: 'transparent',
@@ -377,7 +397,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
                           style={{
                             fontSize: '0.84rem',
                             fontWeight: isSelected ? 800 : 600,
-                            color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+                            color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-primary)',
                           }}
                         >
                           {c.name}
@@ -392,7 +412,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
                     </div>
 
                     {isSelected && (
-                      <Check size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginLeft: '0.5rem' }} />
+                      <Check size={14} style={{ color: 'var(--accent-primary-text)', flexShrink: 0, marginLeft: '0.5rem' }} />
                     )}
                   </div>
                 );
@@ -406,7 +426,7 @@ export const SearchableClientSelect: React.FC<SearchableClientSelectProps> = ({
               padding: '0.35rem 0.75rem',
               backgroundColor: 'var(--bg-surface-elevated)',
               borderTop: '1px solid var(--border-subtle)',
-              fontSize: '0.68rem',
+              fontSize: '0.7rem',
               color: 'var(--text-muted)',
               display: 'flex',
               justifyContent: 'space-between',

@@ -53,7 +53,9 @@ export const UpdateChecker: React.FC<Props> = ({
       ) {
         setState('idle');
       } else {
-        setErrorMsg(msg);
+        // El detalle técnico va al log; al usuario se le da un mensaje accionable.
+        console.error('Error al verificar actualizaciones:', err);
+        setErrorMsg('No se pudo conectar con el servidor de actualizaciones. Revisa tu conexión a internet.');
         setState('error');
       }
     }
@@ -123,11 +125,11 @@ export const UpdateChecker: React.FC<Props> = ({
         <button
           type="button"
           onClick={checkAndInstall}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary)', fontWeight: 700, padding: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary-text)', fontWeight: 700, padding: 0 }}
         >
           Reintentar
         </button>
-        {errorMsg && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.2rem' }}>{errorMsg}</span>}
+        {errorMsg && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.2rem' }}>{errorMsg}</span>}
       </UpdateBanner>
     );
   }
@@ -149,7 +151,8 @@ export const CheckUpdatesButton: React.FC = () => {
       setInfo(result);
       setState(result.available ? 'done' : 'none');
     } catch (e: any) {
-      setErr(String(e));
+      console.error('Error al verificar actualizaciones:', e);
+      setErr('No se pudo conectar con el servidor de actualizaciones.');
       setState('error');
     }
   };
@@ -170,19 +173,19 @@ export const CheckUpdatesButton: React.FC = () => {
       </button>
 
       {state === 'none' && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--status-low)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--status-low-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <CheckCircle size={14} /> WorkDesk está actualizado.
         </span>
       )}
 
       {state === 'done' && info?.available && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--status-low)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--status-low-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <CheckCircle size={14} /> Actualización {info.version} instalada. Reinicia para aplicar.
         </span>
       )}
 
       {state === 'error' && (
-        <span style={{ fontSize: '0.78rem', color: 'var(--status-medium)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--status-medium-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <AlertTriangle size={14} /> {err || 'No se pudo verificar actualizaciones.'}
         </span>
       )}
@@ -218,7 +221,7 @@ const UpdateBanner: React.FC<{
     <span style={{ color, flexShrink: 0, marginTop: '0.1rem' }}>{icon}</span>
     <div style={{ flex: 1 }}>{children}</div>
     {onDismiss && (
-      <button
+      <button aria-label="Cerrar aviso de actualización"
         type="button"
         onClick={onDismiss}
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.1rem', flexShrink: 0 }}

@@ -26,6 +26,7 @@ import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { formatSignature } from '../utils/theme-manager';
 import { generateContextualEmailAI } from '../services/ai-copilot';
 import { Plus, Trash2, Edit3 } from 'lucide-react';
+import { toUserMessage } from '../utils/error-messages';
 
 const EMAIL_PROVIDER_KEY = 'workdesk_preferred_email_provider';
 
@@ -175,7 +176,7 @@ export const EmailBuilderView: React.FC = () => {
       addNotification({
         type: 'critical',
         title: 'Error Redactando Correo con IA',
-        message: err.message || 'No se pudo generar el correo.',
+        message: toUserMessage(err, 'No se pudo generar el correo con la IA.', 'Verifica la clave del modelo en Configuración.'),
         show_toast: true,
       });
     } finally {
@@ -261,7 +262,7 @@ export const EmailBuilderView: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Header */}
       <div className="page-header">
         <div>
@@ -346,12 +347,12 @@ export const EmailBuilderView: React.FC = () => {
           {mode === 'ai' ? (
             /* AI Drafter Panel */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', backgroundColor: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-border, rgba(59,130,246,0.3))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary)', fontWeight: 700, fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary-text)', fontWeight: 700, fontSize: '0.82rem' }}>
                 <Bot size={16} /> Instrucción para el Redactor IA
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Tono del Correo
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
@@ -367,10 +368,10 @@ export const EmailBuilderView: React.FC = () => {
                       onClick={() => setAiTone(t.id as any)}
                       style={{
                         padding: '0.4rem 0.5rem',
-                        fontSize: '0.72rem',
+                        fontSize: '0.75rem',
                         fontWeight: aiTone === t.id ? 700 : 500,
                         backgroundColor: aiTone === t.id ? 'var(--accent-glow)' : 'var(--bg-surface)',
-                        color: aiTone === t.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        color: aiTone === t.id ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                         border: `1px solid ${aiTone === t.id ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
                         borderRadius: 'var(--radius-sm)',
                         cursor: 'pointer',
@@ -384,10 +385,11 @@ export const EmailBuilderView: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                <label htmlFor="emailbuilder-ai-instruction" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   ¿Qué necesitas comunicar o exigir?
                 </label>
                 <textarea
+                  id="emailbuilder-ai-instruction"
                   rows={4}
                   value={aiInstruction}
                   onChange={(e) => setAiInstruction(e.target.value)}
@@ -431,9 +433,9 @@ export const EmailBuilderView: React.FC = () => {
                   type="button"
                   className="btn-ghost"
                   style={{
-                    fontSize: '0.72rem',
+                    fontSize: '0.75rem',
                     padding: '0.2rem 0.5rem',
-                    color: 'var(--accent-primary)',
+                    color: 'var(--accent-primary-text)',
                     fontWeight: 700,
                     gap: '0.3rem',
                     display: 'flex',
@@ -452,7 +454,7 @@ export const EmailBuilderView: React.FC = () => {
                 {/* Custom Templates */}
                 {customTemplates.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.25rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
                       ⭐ Plantillas Personalizadas ({customTemplates.length})
                     </span>
                     {customTemplates.map((t) => {
@@ -478,11 +480,11 @@ export const EmailBuilderView: React.FC = () => {
                               padding: '0.5rem 0.75rem',
                               fontWeight: isActive ? 700 : 500,
                               background: isActive
-                                ? 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(147,51,234,0.15))'
+                                ? 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(29,78,216,0.15) 100%)'
                                 : 'var(--bg-surface-elevated)',
                               border: `1px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
                               borderRadius: 'var(--radius-md)',
-                              color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
+                              color: isActive ? 'var(--accent-primary-text)' : 'var(--text-primary)',
                               gap: '0.5rem',
                               cursor: 'pointer',
                               display: 'flex',
@@ -502,7 +504,7 @@ export const EmailBuilderView: React.FC = () => {
                             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {t.name}
                             </span>
-                            <span className="badge badge-neutral" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
+                            <span className="badge badge-neutral" style={{ fontSize: '0.69rem', padding: '0.1rem 0.35rem' }}>
                               {t.category}
                             </span>
                           </button>
@@ -521,7 +523,7 @@ export const EmailBuilderView: React.FC = () => {
                           <button
                             type="button"
                             className="btn-ghost"
-                            style={{ padding: '0.4rem', color: 'var(--status-critical)' }}
+                            style={{ padding: '0.4rem', color: 'var(--status-critical-text)' }}
                             onClick={() => {
                               if (confirm(`¿Eliminar la plantilla "${t.name}"?`)) {
                                 deleteCustomTemplate(t.id);
@@ -542,7 +544,7 @@ export const EmailBuilderView: React.FC = () => {
                 )}
 
                 {/* Built-in Templates */}
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0.2rem 0 0.1rem' }}>
                   📋 Plantillas Estándar
                 </span>
                 {EMAIL_TEMPLATES.map((t) => {
@@ -564,7 +566,7 @@ export const EmailBuilderView: React.FC = () => {
                           : 'transparent',
                         border: `1px solid ${isActive ? 'rgba(37,99,235,0.3)' : 'var(--border-subtle)'}`,
                         borderRadius: 'var(--radius-md)',
-                        color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                         transition: 'var(--transition-fast)',
                         gap: '0.6rem',
                         whiteSpace: 'normal',
@@ -593,10 +595,11 @@ export const EmailBuilderView: React.FC = () => {
           {/* Account Selector if configured */}
           {emailAccounts.length > 0 && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', marginBottom: '0.35rem' }}>
+              <label htmlFor="emailbuilder-cuenta" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary-text)', marginBottom: '0.35rem' }}>
                 Cuenta Remitente para Envío Directo
               </label>
               <select
+                id="emailbuilder-cuenta"
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
                 style={{ width: '100%' }}
@@ -613,10 +616,11 @@ export const EmailBuilderView: React.FC = () => {
           {/* Recipient Email & Name row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label htmlFor="emailbuilder-destinatario-correo" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Correo del Destinatario
               </label>
               <input
+                id="emailbuilder-destinatario-correo"
                 type="email"
                 placeholder="ejemplo@empresa.com"
                 value={recipientEmail}
@@ -625,10 +629,11 @@ export const EmailBuilderView: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label htmlFor="emailbuilder-destinatario-nombre" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Nombre (Opcional)
               </label>
               <input
+                id="emailbuilder-destinatario-nombre"
                 type="text"
                 placeholder="Ej. Ing. Carlos"
                 value={recipientName}
@@ -639,10 +644,11 @@ export const EmailBuilderView: React.FC = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="emailbuilder-proximo-hito" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Próximo Hito / Siguiente Paso (Opcional)
             </label>
             <input
+              id="emailbuilder-proximo-hito"
               type="text"
               placeholder="Ej. Sesión de validación técnica el próximo martes"
               value={nextSteps}
@@ -652,10 +658,11 @@ export const EmailBuilderView: React.FC = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="emailbuilder-notas" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Notas u Observaciones Adicionales
             </label>
             <textarea
+              id="emailbuilder-notas"
               rows={2}
               placeholder="Cualquier aclaración o detalle extra..."
               value={extraNotes}
@@ -720,7 +727,7 @@ export const EmailBuilderView: React.FC = () => {
               padding: '0.65rem 0.9rem',
               borderRadius: 'var(--radius-md)',
               backgroundColor: feedbackMessage.success ? 'var(--status-low-bg)' : 'var(--status-critical-bg)',
-              color: feedbackMessage.success ? 'var(--status-low)' : 'var(--status-critical)',
+              color: feedbackMessage.success ? 'var(--status-low-text)' : 'var(--status-critical-text)',
               fontSize: '0.82rem',
               fontWeight: 600,
               border: `1px solid ${feedbackMessage.success ? 'var(--status-low-border)' : 'var(--status-critical-border)'}`,
@@ -747,7 +754,7 @@ export const EmailBuilderView: React.FC = () => {
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                   onClick={() => handleLaunchExternal('default')}
                 >
                   App Outlook/Mail
@@ -755,7 +762,7 @@ export const EmailBuilderView: React.FC = () => {
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                   onClick={() => handleLaunchExternal('gmail')}
                 >
                   Gmail Web
@@ -763,7 +770,7 @@ export const EmailBuilderView: React.FC = () => {
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                   onClick={() => handleLaunchExternal('outlook')}
                 >
                   Outlook 365
@@ -787,7 +794,7 @@ export const EmailBuilderView: React.FC = () => {
                   type="button"
                   onClick={() => handleProviderChange('default')}
                   style={{
-                    fontSize: '0.73rem',
+                    fontSize: '0.75rem',
                     padding: '0.25rem 0.55rem',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: emailProvider === 'default' ? 'var(--accent-primary)' : 'transparent',
@@ -801,7 +808,7 @@ export const EmailBuilderView: React.FC = () => {
                   type="button"
                   onClick={() => handleProviderChange('gmail')}
                   style={{
-                    fontSize: '0.73rem',
+                    fontSize: '0.75rem',
                     padding: '0.25rem 0.55rem',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: emailProvider === 'gmail' ? 'var(--accent-primary)' : 'transparent',
@@ -815,7 +822,7 @@ export const EmailBuilderView: React.FC = () => {
                   type="button"
                   onClick={() => handleProviderChange('outlook')}
                   style={{
-                    fontSize: '0.73rem',
+                    fontSize: '0.75rem',
                     padding: '0.25rem 0.55rem',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: emailProvider === 'outlook' ? 'var(--accent-primary)' : 'transparent',
@@ -849,10 +856,11 @@ export const EmailBuilderView: React.FC = () => {
 
           {/* Subject line */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+            <label htmlFor="emailbuilder-asunto" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
               ASUNTO:
             </label>
             <input
+              id="emailbuilder-asunto"
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
@@ -862,10 +870,11 @@ export const EmailBuilderView: React.FC = () => {
 
           {/* Email Body */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+            <label htmlFor="emailbuilder-cuerpo" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
               CUERPO DEL MENSAJE:
             </label>
             <textarea
+              id="emailbuilder-cuerpo"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               style={{

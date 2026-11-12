@@ -17,6 +17,7 @@ import {
   type TicketImportValidationResult,
 } from '../utils/excel-ticket-importer';
 import { playNotificationSound } from '../utils/live-alerts';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface BulkImportTicketsModalProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
   const [filterMode, setFilterMode] = useState<'all' | 'valid' | 'invalid'>('all');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -139,6 +142,10 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
 
   const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -185,7 +192,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 padding: '0.45rem',
                 borderRadius: '8px',
                 backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                color: 'var(--status-low)',
+                color: 'var(--status-low-text)',
               }}
             >
               <FileSpreadsheet size={20} />
@@ -194,12 +201,12 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 Carga Masiva de Tickets (Excel / CSV)
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                 Importa decenas de tickets e incidencias simultáneamente con vinculación automática de clientes
               </p>
             </div>
           </div>
-          <button
+          <button aria-label="Cerrar importación de tickets"
             onClick={onClose}
             style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
           >
@@ -219,7 +226,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 borderRadius: 'var(--radius-sm)',
                 background: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: 'var(--status-critical)',
+                color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
               }}
@@ -251,12 +258,13 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
+                aria-label="Seleccionar archivo Excel o CSV de tickets"
                 accept=".xlsx,.xls,.csv"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
 
-              <div style={{ padding: '0.65rem', borderRadius: '50%', backgroundColor: 'var(--bg-surface)', color: 'var(--accent-primary)' }}>
+              <div style={{ padding: '0.65rem', borderRadius: '50%', backgroundColor: 'var(--bg-surface)', color: 'var(--accent-primary-text)' }}>
                 <UploadCloud size={24} />
               </div>
 
@@ -264,7 +272,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>
                   {isParsing ? 'Analizando archivo...' : file ? `Archivo: ${file.name}` : 'Seleccionar o Arrastrar Archivo Excel / CSV'}
                 </span>
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   Formatos soportados: .xlsx, .xls o .csv
                 </span>
               </div>
@@ -287,7 +295,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Download size={14} color="var(--accent-primary)" /> Plantilla Oficial
                 </span>
-                <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.35rem', margin: 0 }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem', margin: 0 }}>
                   Descarga el formato de ejemplo con columnas estándar para preparar tus tickets.
                 </p>
               </div>
@@ -312,7 +320,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     className="badge"
                     style={{
                       backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                      color: 'var(--status-low)',
+                      color: 'var(--status-low-text)',
                       border: '1px solid rgba(16, 185, 129, 0.3)',
                       fontWeight: 700,
                     }}
@@ -325,7 +333,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                       className="badge"
                       style={{
                         backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                        color: 'var(--status-critical)',
+                        color: 'var(--status-critical-text)',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
                         fontWeight: 700,
                       }}
@@ -339,7 +347,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                       className="badge"
                       style={{
                         backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                        color: 'var(--status-high)',
+                        color: 'var(--status-high-text)',
                         border: '1px solid rgba(245, 158, 11, 0.3)',
                         fontWeight: 700,
                       }}
@@ -353,7 +361,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                       className="badge"
                       style={{
                         backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                        color: 'var(--accent-primary)',
+                        color: 'var(--accent-primary-text)',
                         border: '1px solid rgba(99, 102, 241, 0.3)',
                         fontWeight: 700,
                       }}
@@ -373,10 +381,10 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     type="button"
                     className="btn-ghost"
                     style={{
-                      fontSize: '0.72rem',
+                      fontSize: '0.75rem',
                       padding: '0.2rem 0.5rem',
                       fontWeight: filterMode === 'all' ? 800 : 500,
-                      color: filterMode === 'all' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      color: filterMode === 'all' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                       backgroundColor: filterMode === 'all' ? 'var(--accent-glow)' : 'transparent',
                     }}
                     onClick={() => setFilterMode('all')}
@@ -387,10 +395,10 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                     type="button"
                     className="btn-ghost"
                     style={{
-                      fontSize: '0.72rem',
+                      fontSize: '0.75rem',
                       padding: '0.2rem 0.5rem',
                       fontWeight: filterMode === 'valid' ? 800 : 500,
-                      color: filterMode === 'valid' ? 'var(--status-low)' : 'var(--text-secondary)',
+                      color: filterMode === 'valid' ? 'var(--status-low-text)' : 'var(--text-secondary)',
                       backgroundColor: filterMode === 'valid' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
                     }}
                     onClick={() => setFilterMode('valid')}
@@ -402,10 +410,10 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                       type="button"
                       className="btn-ghost"
                       style={{
-                        fontSize: '0.72rem',
+                        fontSize: '0.75rem',
                         padding: '0.2rem 0.5rem',
                         fontWeight: filterMode === 'invalid' ? 800 : 500,
-                        color: filterMode === 'invalid' ? 'var(--status-critical)' : 'var(--text-secondary)',
+                        color: filterMode === 'invalid' ? 'var(--status-critical-text)' : 'var(--text-secondary)',
                         backgroundColor: filterMode === 'invalid' ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
                       }}
                       onClick={() => setFilterMode('invalid')}
@@ -453,7 +461,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                           {r.ticket_number || <span style={{ color: 'var(--text-muted)' }}>Auto</span>}
                         </td>
                         <td style={{ padding: '0.55rem 0.75rem' }}>
-                          <span style={{ fontWeight: 700, color: r.matched_client_id ? 'var(--text-primary)' : 'var(--status-medium)' }}>
+                          <span style={{ fontWeight: 700, color: r.matched_client_id ? 'var(--text-primary)' : 'var(--status-medium-text)' }}>
                             {r.client_raw_name}
                           </span>
                           {!r.matched_client_id && (
@@ -465,7 +473,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                         <td style={{ padding: '0.55rem 0.75rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.title}</span>
                           {r.errors.length > 0 && (
-                            <div style={{ color: 'var(--status-critical)', fontSize: '0.68rem', marginTop: '0.15rem' }}>
+                            <div style={{ color: 'var(--status-critical-text)', fontSize: '0.68rem', marginTop: '0.15rem' }}>
                               {r.errors.join(', ')}
                             </div>
                           )}
@@ -495,16 +503,16 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                           </span>
                         </td>
                         <td style={{ padding: '0.55rem 0.75rem' }}>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{r.status}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.status}</span>
                         </td>
                         <td style={{ padding: '0.55rem 0.75rem', color: 'var(--text-muted)' }}>{r.requester_name}</td>
                         <td style={{ padding: '0.55rem 0.75rem' }}>
                           {r.isValid && !r.isDuplicate ? (
-                            <span style={{ color: 'var(--status-low)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.72rem', fontWeight: 700 }}>
+                            <span style={{ color: 'var(--status-low-text)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', fontWeight: 700 }}>
                               <CheckCircle size={13} /> Listo
                             </span>
                           ) : (
-                            <span style={{ color: 'var(--status-critical)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.72rem', fontWeight: 700 }}>
+                            <span style={{ color: 'var(--status-critical-text)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', fontWeight: 700 }}>
                               <AlertCircle size={13} /> Error
                             </span>
                           )}
@@ -524,7 +532,7 @@ export const BulkImportTicketsModal: React.FC<BulkImportTicketsModalProps> = ({
                 <span>{importProgress}%</span>
               </div>
               <div style={{ height: '6px', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${importProgress}%`, backgroundColor: 'var(--accent-primary)', transition: 'width 0.3s' }} />
+                <div style={{ height: '100%', width: '100%', backgroundColor: 'var(--accent-primary)', transform: `scaleX(${importProgress / 100})`, transformOrigin: 'left center', transition: 'transform 0.3s' }} />
               </div>
             </div>
           )}

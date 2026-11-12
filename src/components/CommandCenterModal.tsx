@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { ActiveTab } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CommandCenterModalProps {
   isOpen: boolean;
@@ -202,10 +203,14 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
     }
   };
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   return (
     <div
+    ref={dialogRef}
+    tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -251,7 +256,12 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
           <Search size={18} color="var(--accent-primary)" />
           <input
             ref={inputRef}
+            id="command-center-search"
             type="text"
+            role="combobox"
+            aria-expanded={true}
+            aria-controls="command-center-results"
+            aria-label="Buscar clientes, casos, compromisos, tickets o comandos"
             placeholder="Buscar clientes, casos, compromisos, tickets o comandos..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -271,7 +281,7 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
         </div>
 
         {/* Results List */}
-        <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '0.5rem' }}>
+        <div id="command-center-results" role="listbox" aria-label="Resultados de búsqueda" style={{ maxHeight: '380px', overflowY: 'auto', padding: '0.5rem' }}>
           {results.length === 0 ? (
             <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
               No se encontraron resultados para "{query}".
@@ -282,6 +292,8 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
               return (
                 <div
                   key={item.id}
+                  role="option"
+                  aria-selected={isSelected}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -296,15 +308,15 @@ export const CommandCenterModal: React.FC<CommandCenterModalProps> = ({ isOpen, 
                   onClick={item.action}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                    <div style={{ color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                    <div style={{ color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-muted)' }}>
                       {item.icon}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.86rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '0.86rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-primary)' }}>
                         {item.title}
                       </span>
                       {item.subtitle && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           {item.subtitle}
                         </span>
                       )}

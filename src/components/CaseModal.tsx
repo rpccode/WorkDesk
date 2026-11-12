@@ -7,6 +7,8 @@ import { ClientModal } from './ClientModal';
 import { BulkImportClientsModal } from './BulkImportClientsModal';
 import { SearchableClientSelect } from './SearchableClientSelect';
 import { playNotificationSound } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CaseModalProps {
   isOpen: boolean;
@@ -31,6 +33,8 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   React.useEffect(() => {
     if (isOpen) {
       if (caseToEdit) {
@@ -54,16 +58,8 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       }
       setError(null);
       setFieldErrors({});
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, caseToEdit, clients, onClose]);
+  }, [isOpen, caseToEdit, clients]);
 
   if (!isOpen) return null;
 
@@ -145,7 +141,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       playNotificationSound('success');
       onClose();
     } catch (err: any) {
-      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar el caso.';
+      const errMsg = toUserMessage(err, 'No se pudo guardar el caso.', 'Revisa los campos e intenta de nuevo.');
       setError(errMsg);
       playNotificationSound('critical');
       addNotification({
@@ -169,7 +165,9 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className="glass-card animate-fade-in"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: '580px',
@@ -183,7 +181,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Briefcase size={20} />
             </div>
             <h3 id="case-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
@@ -212,7 +210,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               borderRadius: 'var(--radius-sm)',
               background: 'rgba(239, 68, 68, 0.12)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: 'var(--status-critical)',
+              color: 'var(--status-critical-text)',
               fontSize: '0.84rem',
               fontWeight: 600,
             }}
@@ -225,14 +223,14 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Cliente Asignado <span style={{ color: 'var(--status-critical)' }}>*</span>
+              <label htmlFor="case-client" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Cliente Asignado <span style={{ color: 'var(--status-critical-text)' }}>*</span>
               </label>
               {clients.length > 0 && (
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem', color: 'var(--accent-primary)' }}
+                  style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', color: 'var(--accent-primary-text)' }}
                   onClick={() => setIsClientModalOpen(true)}
                 >
                   + Crear otro cliente
@@ -285,9 +283,12 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
                   }}
                   placeholder="Buscar o reasignar cliente por nombre o empresa..."
                   required
+                  inputId="case-client"
+                  ariaInvalid={!!fieldErrors.client}
+                  ariaDescribedBy={fieldErrors.client ? 'case-client-error' : undefined}
                 />
                 {fieldErrors.client && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span id="case-client-error" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.client}
                   </span>
                 )}
@@ -296,10 +297,11 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              Título o Asunto del Caso <span style={{ color: 'var(--status-critical)' }}>*</span>
+            <label htmlFor="case-title" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              Título o Asunto del Caso <span style={{ color: 'var(--status-critical-text)' }}>*</span>
             </label>
             <input
+              id="case-title"
               type="text"
               value={title}
               onChange={(e) => {
@@ -307,6 +309,9 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
                 if (fieldErrors.title) setFieldErrors((prev) => ({ ...prev, title: '' }));
               }}
               placeholder="Ej. Revisión de Arquitectura Cloud / Negociación Contrato"
+              required
+              aria-invalid={!!fieldErrors.title}
+              aria-describedby={fieldErrors.title ? 'case-title-error' : undefined}
               style={{
                 width: '100%',
                 border: fieldErrors.title ? '1.5px solid var(--status-critical)' : undefined,
@@ -314,7 +319,7 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               }}
             />
             {fieldErrors.title && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span id="case-title-error" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <AlertCircle size={12} /> {fieldErrors.title}
               </span>
             )}
@@ -322,10 +327,11 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label htmlFor="case-priority" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Nivel de Prioridad
               </label>
               <select
+                id="case-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as CasePriority)}
                 style={{ width: '100%' }}
@@ -333,16 +339,17 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
                 <option value="low">Baja</option>
                 <option value="medium">Media</option>
                 <option value="high">Alta</option>
-                <option value="critical">🚨 Crítica / Urgente</option>
+                <option value="critical">Crítica / Urgente</option>
               </select>
             </div>
 
             {caseToEdit && (
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                <label htmlFor="case-status" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                   Estado
                 </label>
                 <select
+                  id="case-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
                   style={{ width: '100%' }}
@@ -357,10 +364,11 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="case-description" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Descripción o Antecedentes (Opcional)
             </label>
             <textarea
+              id="case-description"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -381,11 +389,13 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
               gap: '0.5rem',
             }}
           >
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              🎯 Próxima Acción (Next Action)
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Próxima Acción (Next Action)
             </span>
             <input
+              id="case-next-action"
               type="text"
+              aria-label="Próxima acción: qué tiene que suceder ahora para que esto avance"
               value={nextActionDesc}
               onChange={(e) => setNextActionDesc(e.target.value)}
               placeholder="¿Qué tiene que suceder ahora para que esto avance? (opcional)"
@@ -394,8 +404,9 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
             {nextActionDesc.trim() && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Fecha límite:</label>
+                  <label htmlFor="case-next-action-due" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Fecha límite:</label>
                   <input
+                    id="case-next-action-due"
                     type="date"
                     value={nextActionDueDate}
                     onChange={(e) => setNextActionDueDate(e.target.value)}
@@ -403,8 +414,9 @@ export const CaseModal: React.FC<CaseModalProps> = ({ isOpen, onClose, caseToEdi
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Responsable:</label>
+                  <label htmlFor="case-next-action-owner" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Responsable:</label>
                   <select
+                    id="case-next-action-owner"
                     value={nextActionOwner}
                     onChange={(e) => setNextActionOwner(e.target.value as any)}
                     style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem' }}

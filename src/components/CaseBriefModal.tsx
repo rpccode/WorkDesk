@@ -10,6 +10,7 @@ import {
   Check,
 } from 'lucide-react';
 import { generateCaseBrief, exportCaseBriefToDocx, formatCaseBriefEmailText } from '../utils/case-brief-generator';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { Case, EmailTone } from '../types';
 
 interface CaseBriefModalProps {
@@ -31,6 +32,8 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
   const [tone, setTone] = useState<EmailTone>('formal');
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   const brief = useMemo(() => {
     if (!caseItem) return null;
@@ -88,6 +91,10 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
 
   const modalContent = (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -129,11 +136,11 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <FileText size={20} />
             </div>
             <div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary-text)', textTransform: 'uppercase' }}>
                 Consulting Intelligence • Minuta Ejecutiva
               </span>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0.1rem 0 0' }}>
@@ -142,7 +149,7 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
             </div>
           </div>
 
-          <button onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+          <button aria-label="Cerrar resumen del caso" onClick={onClose} style={{ background: 'transparent', padding: '0.3rem', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -160,11 +167,11 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
                 type="button"
                 className={`btn-ghost ${tone === 'formal' ? 'active' : ''}`}
                 style={{
-                  fontSize: '0.74rem',
+                  fontSize: '0.75rem',
                   padding: '0.3rem 0.65rem',
                   borderRadius: '6px',
                   backgroundColor: tone === 'formal' ? 'var(--accent-glow)' : 'var(--bg-surface-elevated)',
-                  color: tone === 'formal' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  color: tone === 'formal' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                   fontWeight: tone === 'formal' ? 800 : 500,
                 }}
                 onClick={() => setTone('formal')}
@@ -175,11 +182,11 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
                 type="button"
                 className={`btn-ghost ${tone === 'assertive' ? 'active' : ''}`}
                 style={{
-                  fontSize: '0.74rem',
+                  fontSize: '0.75rem',
                   padding: '0.3rem 0.65rem',
                   borderRadius: '6px',
                   backgroundColor: tone === 'assertive' ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface-elevated)',
-                  color: tone === 'assertive' ? 'var(--status-critical)' : 'var(--text-secondary)',
+                  color: tone === 'assertive' ? 'var(--status-critical-text)' : 'var(--text-secondary)',
                   fontWeight: tone === 'assertive' ? 800 : 500,
                 }}
                 onClick={() => setTone('assertive')}
@@ -190,11 +197,11 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
                 type="button"
                 className={`btn-ghost ${tone === 'technical' ? 'active' : ''}`}
                 style={{
-                  fontSize: '0.74rem',
+                  fontSize: '0.75rem',
                   padding: '0.3rem 0.65rem',
                   borderRadius: '6px',
                   backgroundColor: tone === 'technical' ? 'rgba(16,185,129,0.12)' : 'var(--bg-surface-elevated)',
-                  color: tone === 'technical' ? 'var(--status-low)' : 'var(--text-secondary)',
+                  color: tone === 'technical' ? 'var(--status-low-text)' : 'var(--text-secondary)',
                   fontWeight: tone === 'technical' ? 800 : 500,
                 }}
                 onClick={() => setTone('technical')}
@@ -208,7 +215,7 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem' }}>
             <div style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '6px', fontSize: '0.75rem' }}>
               <span style={{ color: 'var(--text-muted)', display: 'block' }}>Cliente:</span>
-              <strong style={{ color: 'var(--accent-primary)' }}>{brief.client_name}</strong>
+              <strong style={{ color: 'var(--accent-primary-text)' }}>{brief.client_name}</strong>
             </div>
             <div style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '6px', fontSize: '0.75rem' }}>
               <span style={{ color: 'var(--text-muted)', display: 'block' }}>Compromisos:</span>
@@ -216,7 +223,7 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
             </div>
             <div style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '6px', fontSize: '0.75rem' }}>
               <span style={{ color: 'var(--text-muted)', display: 'block' }}>Bloqueos Activos:</span>
-              <strong style={{ color: brief.blockers.length > 0 ? 'var(--status-critical)' : 'var(--status-low)' }}>
+              <strong style={{ color: brief.blockers.length > 0 ? 'var(--status-critical-text)' : 'var(--status-low-text)' }}>
                 {brief.blockers.length > 0 ? `${brief.blockers.length} en espera` : 'Sin bloqueos'}
               </strong>
             </div>
@@ -228,6 +235,8 @@ export const CaseBriefModal: React.FC<CaseBriefModalProps> = ({ isOpen, onClose,
               Vista Previa del Mensaje / Minuta:
             </label>
             <textarea
+              id="casebrief-preview"
+              aria-label="Vista previa del mensaje o minuta"
               readOnly
               value={emailText}
               rows={11}

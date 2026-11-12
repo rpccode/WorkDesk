@@ -14,6 +14,7 @@ import { formatRelativeDate, isOverdue } from '../utils/date';
 import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
 import { CommitmentModal } from '../components/CommitmentModal';
+import { SkeletonKpiGrid } from '../components/LoadingSkeletons';
 import type { Case } from '../types';
 
 /* ── Animated KPI number ─────────────────────────────────────────────── */
@@ -86,6 +87,7 @@ export const DashboardView: React.FC = () => {
     markCommitmentDone,
     setActiveTab,
     setQuickCaptureOpen,
+    isLoadingDashboard,
   } = useStore();
 
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
@@ -99,7 +101,7 @@ export const DashboardView: React.FC = () => {
   const summary = dashboardSummary;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div className="page-container animate-fade-in">
 
       {/* ── Page Header ──────────────────────────────────────── */}
       <div className="page-header">
@@ -127,6 +129,10 @@ export const DashboardView: React.FC = () => {
 
       {/* ── KPI Grid ─────────────────────────────────────────── */}
       <div className="kpi-grid stagger-children">
+        {isLoadingDashboard && !summary ? (
+          <SkeletonKpiGrid count={4} />
+        ) : (
+          <>
         <KpiCard
           label="Compromisos Vencidos"
           value={summary?.overdue_commitments_count || 0}
@@ -164,6 +170,8 @@ export const DashboardView: React.FC = () => {
           accentColor="var(--status-low)"
           glowColor="var(--status-low-bg)"
         />
+          </>
+        )}
       </div>
 
       {/* ── 2-Column Panels ──────────────────────────────────── */}
@@ -180,7 +188,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <button
               className="btn-ghost"
-              style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', color: 'var(--accent-primary)' }}
+              style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', color: 'var(--accent-primary-text)' }}
               onClick={() => setActiveTab('commitments')}
             >
               Ver todos <ArrowRight size={13} />
@@ -201,12 +209,9 @@ export const DashboardView: React.FC = () => {
                     key={com.id}
                     style={{
                       padding: '0.8rem 1rem',
-                      backgroundColor: 'var(--bg-surface-elevated)',
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--border-subtle)',
-                      borderLeft: overdue
-                        ? '3px solid var(--status-critical)'
-                        : '3px solid var(--accent-primary)',
+                      backgroundColor: overdue ? 'var(--status-critical-bg)' : 'var(--bg-surface-elevated)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.7rem',
@@ -232,13 +237,13 @@ export const DashboardView: React.FC = () => {
                       <p className="text-ellipsis" style={{ fontSize: '0.875rem', fontWeight: 600 }}>
                         {com.description}
                       </p>
-                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', fontSize: '0.71rem', color: 'var(--text-secondary)', marginTop: '0.18rem' }}>
-                        <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.18rem' }}>
+                        <span style={{ color: 'var(--accent-primary-text)', fontWeight: 600 }}>
                           {com.client_name || 'Cliente'}
                         </span>
                         <span style={{ opacity: 0.4 }}>•</span>
                         <span style={{
-                          color: overdue ? 'var(--status-critical)' : 'inherit',
+                          color: overdue ? 'var(--status-critical-text)' : 'inherit',
                           fontWeight: overdue ? 700 : 400,
                         }}>
                           {formatRelativeDate(com.due_date)}
@@ -263,7 +268,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <button
               className="btn-ghost"
-              style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', color: 'var(--accent-primary)' }}
+              style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', color: 'var(--accent-primary-text)' }}
               onClick={() => setActiveTab('cases')}
             >
               Ver todos <ArrowRight size={13} />
@@ -298,14 +303,14 @@ export const DashboardView: React.FC = () => {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                    <span style={{ fontSize: '0.73rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary-text)', fontWeight: 600 }}>
                       {c.client_name || 'Cliente sin nombre'}
                     </span>
                     <span className={`badge badge-${c.priority}`}>
                       {c.priority === 'critical' ? 'Crítica' : c.priority === 'high' ? 'Alta' : c.priority === 'medium' ? 'Media' : 'Baja'}
                     </span>
                   </div>
-                  <h4 style={{ fontSize: '0.91rem', fontWeight: 700 }}>{c.title}</h4>
+                  <h3 style={{ fontSize: '0.91rem', fontWeight: 700 }}>{c.title}</h3>
                   {c.description && (
                     <p className="text-ellipsis" style={{ fontSize: '0.77rem', color: 'var(--text-secondary)', marginTop: '0.28rem' }}>
                       {c.description}

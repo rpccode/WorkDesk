@@ -128,8 +128,8 @@ export const CalendarView: React.FC = () => {
   const getEventBadgeStyle = (event: CalendarEvent) => {
     if (event.type === 'followup') {
       return {
-        bg: 'rgba(147, 51, 234, 0.1)',
-        border: 'rgba(147, 51, 234, 0.3)',
+        bg: 'rgba(37, 99, 235, 0.1)',
+        border: 'rgba(37, 99, 235, 0.3)',
         color: '#9333ea',
       };
     }
@@ -137,32 +137,32 @@ export const CalendarView: React.FC = () => {
       return {
         bg: 'var(--status-low-bg)',
         border: 'var(--status-low-border)',
-        color: 'var(--status-low)',
+        color: 'var(--status-low-text)',
       };
     }
     if (isOverdue(event.date)) {
       return {
         bg: 'var(--status-critical-bg)',
         border: 'var(--status-critical-border)',
-        color: 'var(--status-critical)',
+        color: 'var(--status-critical-text)',
       };
     }
     if (isDueToday(event.date)) {
       return {
         bg: 'var(--status-medium-bg)',
         border: 'var(--status-medium-border)',
-        color: 'var(--status-medium)',
+        color: 'var(--status-medium-text)',
       };
     }
     return {
       bg: 'var(--accent-glow)',
       border: 'rgba(37, 99, 235, 0.3)',
-      color: 'var(--accent-primary)',
+      color: 'var(--accent-primary-text)',
     };
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="page-container animate-fade-in">
       
       {/* ── Top Header & Controls ───────────────────────────────────── */}
       <div className="page-header">
@@ -248,6 +248,8 @@ export const CalendarView: React.FC = () => {
 
         {/* Client filter */}
         <select
+          id="calendar-filter-cliente"
+          aria-label="Filtrar por cliente"
           value={selectedClientId}
           onChange={(e) => setSelectedClientId(e.target.value)}
           style={{ width: 'auto', minWidth: '180px', fontSize: '0.78rem', padding: '0.35rem 0.6rem' }}
@@ -262,6 +264,8 @@ export const CalendarView: React.FC = () => {
 
         {/* Owner filter */}
         <select
+          id="calendar-filter-responsable"
+          aria-label="Filtrar por responsable"
           value={selectedOwner}
           onChange={(e) => setSelectedOwner(e.target.value)}
           style={{ width: 'auto', minWidth: '150px', fontSize: '0.78rem', padding: '0.35rem 0.6rem' }}
@@ -358,7 +362,7 @@ export const CalendarView: React.FC = () => {
                         fontSize: '0.78rem',
                         fontWeight: day.isToday ? 800 : 600,
                         color: day.isToday
-                          ? 'var(--accent-primary)'
+                          ? 'var(--accent-primary-strong)'
                           : day.isCurrentMonth
                           ? 'var(--text-primary)'
                           : 'var(--text-muted)',
@@ -377,7 +381,7 @@ export const CalendarView: React.FC = () => {
                     {events.length > 0 && (
                       <span
                         className={`nav-badge ${hasOverdue ? 'nav-badge-critical' : 'nav-badge-default'}`}
-                        style={{ fontSize: '0.62rem', padding: '0.05rem 0.35rem' }}
+                        style={{ fontSize: '0.69rem', padding: '0.05rem 0.35rem' }}
                       >
                         {pendingEvents.length > 0 ? pendingEvents.length : '✓'}
                       </span>
@@ -397,7 +401,7 @@ export const CalendarView: React.FC = () => {
                             backgroundColor: badge.bg,
                             border: `1px solid ${badge.border}`,
                             color: badge.color,
-                            fontSize: '0.68rem',
+                            fontSize: '0.7rem',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -419,7 +423,7 @@ export const CalendarView: React.FC = () => {
                     })}
 
                     {events.length > 3 && (
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                         +{events.length - 3} más...
                       </span>
                     )}
@@ -461,14 +465,14 @@ export const CalendarView: React.FC = () => {
                       {formatDate(day.date)}
                     </h4>
                     {day.isToday && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary-text)', fontWeight: 700 }}>
                         (Hoy)
                       </span>
                     )}
                   </div>
                   <button
                     className="btn-ghost"
-                    style={{ padding: '0.25rem 0.4rem', fontSize: '0.72rem' }}
+                    style={{ padding: '0.25rem 0.4rem', fontSize: '0.75rem' }}
                     onClick={() => handleOpenAddCommitment(day.date)}
                     title="Añadir compromiso en este día"
                   >
@@ -506,7 +510,7 @@ export const CalendarView: React.FC = () => {
                             {ev.type === 'commitment' && !isDone && (
                               <button
                                 className="btn-ghost"
-                                style={{ padding: '0.1rem', color: 'var(--status-low)' }}
+                                style={{ padding: '0.1rem', color: 'var(--status-low-text)' }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   markCommitmentDone(ev.id.replace('com-', ''));
@@ -558,7 +562,7 @@ export const CalendarView: React.FC = () => {
                       padding: '1rem 1.25rem',
                       borderRadius: 'var(--radius-md)',
                       backgroundColor: 'var(--bg-surface-elevated)',
-                      borderLeft: `4px solid ${badge.color}`,
+                      border: `1px solid ${badge.color}`,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -570,7 +574,7 @@ export const CalendarView: React.FC = () => {
                         <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                           {formatDate(ev.date)}
                         </span>
-                        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                           {formatRelativeDate(ev.date)}
                         </p>
                       </div>
@@ -655,9 +659,7 @@ export const CalendarView: React.FC = () => {
             {/* Drawer Header */}
             <div style={{ padding: '1.3rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                  {formatDate(selectedDay.date)}
-                </h3>
+                <p style={{ fontSize: '1.15rem', fontWeight: 800 }}>{formatDate(selectedDay.date)}</p>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   {eventsMap.get(selectedDay.date)?.length || 0} evento(s) programado(s)
                 </p>
@@ -696,7 +698,7 @@ export const CalendarView: React.FC = () => {
                         padding: '1rem 1.15rem',
                         borderRadius: 'var(--radius-md)',
                         backgroundColor: 'var(--bg-surface-elevated)',
-                        borderLeft: `4px solid ${badge.color}`,
+                        border: `1px solid ${badge.color}`,
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '0.4rem',
@@ -721,7 +723,7 @@ export const CalendarView: React.FC = () => {
                         {ev.case_id && (
                           <button
                             className="btn-secondary"
-                            style={{ fontSize: '0.72rem', padding: '0.25rem 0.55rem' }}
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
                             onClick={() => {
                               setSelectedDay(null);
                               setSelectedCaseId(ev.case_id);
@@ -733,7 +735,7 @@ export const CalendarView: React.FC = () => {
                         {ev.type === 'commitment' && !isDone && (
                           <button
                             className="btn-primary"
-                            style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem' }}
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
                             onClick={() => markCommitmentDone(ev.id.replace('com-', ''))}
                           >
                             <CheckCircle2 size={12} /> Completar

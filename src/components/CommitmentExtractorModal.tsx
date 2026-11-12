@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { extractCommitmentsFromText } from '../services/ai-copilot';
 import type { ExtractedCommitmentDraft, CommitmentOwner } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { toUserMessage } from '../utils/error-messages';
 
 interface CommitmentExtractorModalProps {
   isOpen: boolean;
@@ -30,6 +32,8 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
   const [extractedDrafts, setExtractedDrafts] = useState<(ExtractedCommitmentDraft & { selected: boolean })[]>([]);
   const [hasExtracted, setHasExtracted] = useState(false);
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const handleExtract = async () => {
@@ -44,7 +48,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
       addNotification({
         type: 'critical',
         title: 'Error en Extracción IA',
-        message: err.message || 'No se pudieron extraer compromisos.',
+        message: toUserMessage(err, 'No se pudieron extraer los compromisos con la IA.'),
         show_toast: true,
       });
     } finally {
@@ -85,6 +89,10 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -129,7 +137,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
                 padding: '0.4rem',
                 borderRadius: '8px',
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
               }}
             >
               <Sparkles size={18} />
@@ -138,13 +146,13 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
                 Extracción Inteligente de Compromisos
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '0.1rem 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.1rem 0 0' }}>
                 Pega notas de reunión o correos. La IA detectará acuerdos, responsables y plazos.
               </p>
             </div>
           </div>
 
-          <button
+          <button aria-label="Cerrar extractor de compromisos"
             type="button"
             onClick={onClose}
             style={{
@@ -164,10 +172,10 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
           
           {/* Case selector */}
           <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }} htmlFor="commitment-extractor-modal-f1">
               Asociar al Caso / Proyecto
             </label>
-            <select
+            <select id="commitment-extractor-modal-f1"
               value={selectedCaseId}
               onChange={(e) => setSelectedCaseId(e.target.value)}
               style={{ width: '100%', marginTop: '0.25rem' }}
@@ -192,6 +200,8 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
               </span>
             </div>
             <textarea
+              id="extractor-raw-text"
+              aria-label="Texto de entrada para extraer compromisos"
               rows={5}
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
@@ -236,7 +246,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   Compromisos Detectados ({extractedDrafts.length})
                 </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Desmarca los que no apliquen o edita el responsable
                 </span>
               </div>
@@ -262,6 +272,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
                     >
                       <input
                         type="checkbox"
+                        aria-label="Seleccionar compromiso"
                         checked={draft.selected}
                         onChange={(e) => {
                           const copy = [...extractedDrafts];
@@ -273,6 +284,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
 
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <input
+  aria-label="Descripción del compromiso"
                           type="text"
                           value={draft.description}
                           onChange={(e) => {
@@ -294,13 +306,14 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
 
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                           <select
+  aria-label="Responsable del compromiso"
                             value={draft.owner}
                             onChange={(e) => {
                               const copy = [...extractedDrafts];
                               copy[idx].owner = e.target.value as any;
                               setExtractedDrafts(copy);
                             }}
-                            style={{ fontSize: '0.74rem', padding: '0.2rem 0.4rem' }}
+                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
                           >
                             <option value="me">Responsable: Mío (Consultor)</option>
                             <option value="client">Responsable: Cliente</option>
@@ -308,6 +321,7 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
                           </select>
 
                           <input
+  aria-label="Fecha de vencimiento del compromiso"
                             type="date"
                             value={draft.dueDate || ''}
                             onChange={(e) => {
@@ -315,11 +329,11 @@ export const CommitmentExtractorModal: React.FC<CommitmentExtractorModalProps> =
                               copy[idx].dueDate = e.target.value;
                               setExtractedDrafts(copy);
                             }}
-                            style={{ fontSize: '0.74rem', padding: '0.2rem 0.4rem' }}
+                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
                           />
 
                           {draft.priority === 'urgent' && (
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--status-critical)', backgroundColor: 'var(--status-critical-bg)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--status-critical-text)', backgroundColor: 'var(--status-critical-bg)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                               Urgente
                             </span>
                           )}

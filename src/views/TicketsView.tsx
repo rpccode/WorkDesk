@@ -27,6 +27,7 @@ import { BulkImportTicketsModal } from '../components/BulkImportTicketsModal';
 import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { playNotificationSound } from '../utils/live-alerts';
+import { SkeletonRows } from '../components/LoadingSkeletons';
 import type {
   Ticket,
   TicketPriority,
@@ -47,7 +48,7 @@ interface BulkEditValues {
 }
 
 export const TicketsView: React.FC = () => {
-  const { tickets, clients, updateTicket, deleteTicket, deleteAllTickets, addNotification } = useStore();
+  const { tickets, clients, updateTicket, deleteTicket, deleteAllTickets, addNotification, isLoadingTickets } = useStore();
 
   // ── Filter State ────────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm]         = useState('');
@@ -381,14 +382,14 @@ export const TicketsView: React.FC = () => {
   // ── Render helpers ──────────────────────────────────────────────────────────
   const renderPriorityBadge = (priority: TicketPriority) => {
     const map: Record<TicketPriority, { label: string; bg: string; color: string }> = {
-      critical: { label: '🔥 Crítica', bg: 'rgba(239,68,68,0.15)', color: 'var(--status-critical)' },
-      high:     { label: '⚠ Alta',   bg: 'rgba(245,158,11,0.15)', color: 'var(--status-medium)' },
-      medium:   { label: 'Media',     bg: 'rgba(99,102,241,0.12)', color: 'var(--accent-primary)' },
-      low:      { label: 'Baja',      bg: 'rgba(16,185,129,0.12)', color: 'var(--status-low)' },
+      critical: { label: '🔥 Crítica', bg: 'rgba(239,68,68,0.15)', color: 'var(--status-critical-text)' },
+      high:     { label: '⚠ Alta',   bg: 'rgba(245,158,11,0.15)', color: 'var(--status-medium-text)' },
+      medium:   { label: 'Media',     bg: 'rgba(99,102,241,0.12)', color: 'var(--accent-primary-text)' },
+      low:      { label: 'Baja',      bg: 'rgba(16,185,129,0.12)', color: 'var(--status-low-text)' },
     };
     const s = map[priority] || map.medium;
     return (
-      <span style={{ padding: '0.18rem 0.5rem', borderRadius: '4px', fontSize: '0.71rem', fontWeight: 800, backgroundColor: s.bg, color: s.color }}>
+      <span style={{ padding: '0.18rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, backgroundColor: s.bg, color: s.color }}>
         {s.label}
       </span>
     );
@@ -397,6 +398,7 @@ export const TicketsView: React.FC = () => {
   const renderStatusDropdown = (ticket: Ticket) => (
     <select
       value={ticket.status}
+      aria-label={`Estado del ticket ${ticket.ticket_number}`}
       onChange={(e) => handleStatusChange(ticket, e.target.value as TicketStatus)}
       style={{
         fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 700,
@@ -407,9 +409,9 @@ export const TicketsView: React.FC = () => {
           ticket.status === 'waiting_client' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
         color:
           ticket.status === 'closed' ? 'var(--text-muted)' :
-          ticket.status === 'resolved' ? 'var(--status-low)' :
-          ticket.status === 'in_progress' ? 'var(--accent-primary)' :
-          ticket.status === 'waiting_client' ? 'var(--status-medium)' : 'var(--status-critical)',
+          ticket.status === 'resolved' ? 'var(--status-low-text)' :
+          ticket.status === 'in_progress' ? 'var(--accent-primary-text)' :
+          ticket.status === 'waiting_client' ? 'var(--status-medium-text)' : 'var(--status-critical-text)',
         border: '1px solid var(--border-subtle)',
         cursor: 'pointer',
       }}
@@ -423,14 +425,14 @@ export const TicketsView: React.FC = () => {
   );
 
   const renderSlaIndicator = (slaDate?: string | null, status?: TicketStatus) => {
-    if (!slaDate) return <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>—</span>;
+    if (!slaDate) return <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>—</span>;
     if (status === 'resolved' || status === 'closed') {
-      return <span style={{ color: 'var(--status-low)', fontSize: '0.72rem' }}>✓ {slaDate}</span>;
+      return <span style={{ color: 'var(--status-low-text)', fontSize: '0.75rem' }}>✓ {slaDate}</span>;
     }
     const isOverdue = slaDate < today;
     const isToday   = slaDate === today;
     return (
-      <span style={{ fontSize: '0.72rem', fontWeight: isOverdue || isToday ? 800 : 500, color: isOverdue ? 'var(--status-critical)' : isToday ? 'var(--status-medium)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+      <span style={{ fontSize: '0.75rem', fontWeight: isOverdue || isToday ? 800 : 500, color: isOverdue ? 'var(--status-critical-text)' : isToday ? 'var(--status-medium-text)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
         <Clock size={12} />
         {isOverdue ? `Vencido (${slaDate})` : isToday ? `Hoy (${slaDate})` : slaDate}
       </span>
@@ -441,13 +443,13 @@ export const TicketsView: React.FC = () => {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', paddingBottom: '3rem' }}>
+    <div className="page-container animate-fade-in">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="page-header">
         <div className="page-title-group">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Tag size={20} />
             </div>
             <div>
@@ -464,7 +466,7 @@ export const TicketsView: React.FC = () => {
         <div className="page-actions">
           {someSelected && (
             <>
-              <button type="button" className="btn-secondary btn-sm" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
+              <button type="button" className="btn-secondary btn-sm" style={{ color: 'var(--accent-primary-text)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
                 <Layers size={14} /> Editar {selectedIds.size} seleccionados
               </button>
               <button type="button" className="btn-danger btn-sm" onClick={handleBulkDelete} disabled={isBulkSaving}>
@@ -482,7 +484,7 @@ export const TicketsView: React.FC = () => {
             <button
               type="button"
               className="btn-ghost btn-sm"
-              style={{ color: 'var(--status-critical)' }}
+              style={{ color: 'var(--status-critical-text)' }}
               onClick={handleDeleteAllTickets}
               disabled={isBulkSaving}
               title="Borrar todos los tickets de la base de datos"
@@ -504,15 +506,15 @@ export const TicketsView: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
         {[
           { label: 'Total Registrados', value: totalCount, color: 'var(--text-primary)', icon: <Tag size={18} />, bg: 'var(--bg-surface-elevated)' },
-          { label: 'Abiertos / En Gestión', value: activeCount, color: 'var(--accent-primary)', icon: <Clock size={18} />, bg: 'var(--accent-glow)' },
-          { label: 'Críticos / Alta Prior.', value: criticalCount, color: 'var(--status-critical)', icon: <Flame size={18} />, bg: 'rgba(239,68,68,0.15)' },
-          { label: 'Resueltos / Cerrados', value: resolvedCount, color: 'var(--status-low)', icon: <CheckCircle size={18} />, bg: 'rgba(16,185,129,0.15)' },
-          { label: 'SLA Vencido', value: overdueCount, color: overdueCount > 0 ? '#f87171' : 'var(--text-muted)', icon: <AlertCircle size={18} />, bg: overdueCount > 0 ? 'rgba(239,68,68,0.15)' : 'var(--bg-surface-elevated)' },
+          { label: 'Abiertos / En Gestión', value: activeCount, color: 'var(--accent-primary-text)', icon: <Clock size={18} />, bg: 'var(--accent-glow)' },
+          { label: 'Críticos / Alta Prior.', value: criticalCount, color: 'var(--status-critical-text)', icon: <Flame size={18} />, bg: 'rgba(239,68,68,0.15)' },
+          { label: 'Resueltos / Cerrados', value: resolvedCount, color: 'var(--status-low-text)', icon: <CheckCircle size={18} />, bg: 'rgba(16,185,129,0.15)' },
+          { label: 'SLA Vencido', value: overdueCount, color: overdueCount > 0 ? 'var(--status-critical-text)' : 'var(--text-muted)', icon: <AlertCircle size={18} />, bg: overdueCount > 0 ? 'rgba(239,68,68,0.15)' : 'var(--bg-surface-elevated)' },
         ].map((kpi) => (
           <div key={kpi.label} className="glass-card" style={{ padding: '1rem 1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
             <div>
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: kpi.color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{kpi.label}</span>
-              <h3 style={{ fontSize: '1.55rem', fontWeight: 800, margin: '0.1rem 0 0', color: kpi.color }}>{kpi.value}</h3>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: kpi.color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{kpi.label}</span>
+              <p style={{ fontSize: '1.55rem', fontWeight: 800, margin: '0.1rem 0 0', color: kpi.color }}>{kpi.value}</p>
             </div>
             <div style={{ padding: '0.55rem', borderRadius: '9px', backgroundColor: kpi.bg, color: kpi.color, flexShrink: 0 }}>{kpi.icon}</div>
           </div>
@@ -529,36 +531,38 @@ export const TicketsView: React.FC = () => {
           <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
+              id="tickets-search"
               type="text"
+              aria-label="Buscar por código, asunto, cliente, solicitante o descripción"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por código, asunto, cliente, solicitante, descripción..."
               style={{ width: '100%', paddingLeft: '2.2rem', paddingRight: '2rem', fontSize: '0.82rem' }}
             />
             {searchTerm && (
-              <button type="button" onClick={() => setSearchTerm('')} style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.1rem' }}>
+              <button type="button" aria-label="Limpiar búsqueda de tickets" onClick={() => setSearchTerm('')} style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.1rem' }}>
                 <X size={13} />
               </button>
             )}
           </div>
 
           {/* Client */}
-          <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '170px' }}>
+          <select id="tickets-filter-cliente" aria-label="Filtrar por cliente" value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '170px' }}>
             <option value="all">Todos los Clientes</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>)}
           </select>
 
           {/* Priority */}
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '130px' }}>
+          <select id="tickets-filter-prioridad" aria-label="Filtrar por prioridad" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '130px' }}>
             <option value="all">Toda Prioridad</option>
-            <option value="critical">🔴 Crítica</option>
-            <option value="high">🟠 Alta</option>
-            <option value="medium">🟡 Media</option>
-            <option value="low">🟢 Baja</option>
+            <option value="critical">Crítica</option>
+            <option value="high">Alta</option>
+            <option value="medium">Media</option>
+            <option value="low">Baja</option>
           </select>
 
           {/* Category */}
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '140px' }}>
+          <select id="tickets-filter-categoria" aria-label="Filtrar por categoría" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '140px' }}>
             <option value="all">Toda Categoría</option>
             <option value="Soporte TI">Soporte TI</option>
             <option value="Incidencia">Incidencia</option>
@@ -574,12 +578,12 @@ export const TicketsView: React.FC = () => {
           <button
             type="button"
             className="btn-secondary"
-            style={{ fontSize: '0.78rem', padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', gap: '0.35rem', position: 'relative', color: showAdvanced ? 'var(--accent-primary)' : undefined }}
+            style={{ fontSize: '0.78rem', padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', gap: '0.35rem', position: 'relative', color: showAdvanced ? 'var(--accent-primary-text)' : undefined }}
             onClick={() => setShowAdvanced((v) => !v)}
           >
             <Filter size={13} /> Más filtros
             {activeFilterCount > 0 && !showAdvanced && (
-              <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--accent-primary)', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--accent-primary-text)', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {activeFilterCount}
               </span>
             )}
@@ -599,8 +603,8 @@ export const TicketsView: React.FC = () => {
 
             {/* Channel */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Canal</label>
-              <select value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '130px' }}>
+              <label htmlFor="tickets-filter-canal" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Canal</label>
+              <select id="tickets-filter-canal" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '130px' }}>
                 <option value="all">Todos los Canales</option>
                 <option value="Email">📧 Email</option>
                 <option value="Teléfono">📞 Teléfono</option>
@@ -612,8 +616,8 @@ export const TicketsView: React.FC = () => {
 
             {/* Assigned To */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asignado a</label>
-              <select value={assignedFilter} onChange={(e) => setAssignedFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '150px' }}>
+              <label htmlFor="tickets-filter-asignado" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asignado a</label>
+              <select id="tickets-filter-asignado" value={assignedFilter} onChange={(e) => setAssignedFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '150px' }}>
                 <option value="all">Todos</option>
                 <option value="unassigned">Sin asignar</option>
                 {uniqueAssignees.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -622,26 +626,26 @@ export const TicketsView: React.FC = () => {
 
             {/* SLA Status */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado SLA</label>
-              <select value={slaFilter} onChange={(e) => setSlaFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '150px' }}>
+              <label htmlFor="tickets-filter-sla" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado SLA</label>
+              <select id="tickets-filter-sla" value={slaFilter} onChange={(e) => setSlaFilter(e.target.value)} style={{ fontSize: '0.82rem', minWidth: '150px' }}>
                 <option value="all">Todos los SLA</option>
-                <option value="overdue">🔴 Vencidos</option>
-                <option value="today">🟠 Vence hoy</option>
-                <option value="upcoming">🟢 Por vencer</option>
+                <option value="overdue">Vencidos</option>
+                <option value="today">Vence hoy</option>
+                <option value="upcoming">Por vencer</option>
                 <option value="no_sla">— Sin SLA</option>
               </select>
             </div>
 
             {/* Date From */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Apertura desde</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }} />
+              <label htmlFor="tickets-filter-desde" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Apertura desde</label>
+              <input id="tickets-filter-desde" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }} />
             </div>
 
             {/* Date To */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Apertura hasta</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }} />
+              <label htmlFor="tickets-filter-hasta" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Apertura hasta</label>
+              <input id="tickets-filter-hasta" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }} />
             </div>
           </div>
         )}
@@ -659,7 +663,7 @@ export const TicketsView: React.FC = () => {
           ].map((tab) => {
             const isActive = statusFilter === tab.key;
             return (
-              <button key={tab.key} type="button" className="btn-ghost" style={{ fontSize: '0.74rem', padding: '0.3rem 0.7rem', borderRadius: '6px', fontWeight: isActive ? 800 : 500, backgroundColor: isActive ? 'var(--accent-glow)' : 'transparent', color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }} onClick={() => setStatusFilter(tab.key)}>
+              <button key={tab.key} type="button" className="btn-ghost" style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', borderRadius: '6px', fontWeight: isActive ? 800 : 500, backgroundColor: isActive ? 'var(--accent-glow)' : 'transparent', color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }} onClick={() => setStatusFilter(tab.key)}>
                 {tab.label}
               </button>
             );
@@ -676,21 +680,21 @@ export const TicketsView: React.FC = () => {
       {someSelected && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06))', border: '1px solid rgba(99,102,241,0.3)', flexWrap: 'wrap' }}>
           <CheckSquare size={18} color="var(--accent-primary)" />
-          <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '0.88rem' }}>
+          <span style={{ fontWeight: 700, color: 'var(--accent-primary-text)', fontSize: '0.88rem' }}>
             {selectedIds.size} ticket{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}
           </span>
 
           {selectedIds.size < filteredTickets.length && (
-            <button type="button" className="btn-ghost" style={{ fontSize: '0.77rem', padding: '0.3rem 0.6rem', color: 'var(--accent-primary)' }} onClick={selectAllFiltered}>
+            <button type="button" className="btn-ghost" style={{ fontSize: '0.77rem', padding: '0.3rem 0.6rem', color: 'var(--accent-primary-text)' }} onClick={selectAllFiltered}>
               Seleccionar todos ({filteredTickets.length})
             </button>
           )}
 
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
-            <button type="button" className="btn-secondary" style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
+            <button type="button" className="btn-secondary" style={{ fontSize: '0.8rem', color: 'var(--accent-primary-text)', borderColor: 'var(--accent-primary)' }} onClick={() => setIsBulkEditing(true)}>
               <Edit2 size={14} /> Modificar seleccionados
             </button>
-            <button type="button" className="btn-ghost" style={{ fontSize: '0.8rem', color: 'var(--status-critical)' }} onClick={handleBulkDelete}>
+            <button type="button" className="btn-ghost" style={{ fontSize: '0.8rem', color: 'var(--status-critical-text)' }} onClick={handleBulkDelete}>
               <Trash2 size={14} /> Eliminar seleccionados
             </button>
             <button type="button" className="btn-ghost" style={{ fontSize: '0.8rem' }} onClick={() => setSelectedIds(new Set())}>
@@ -706,11 +710,11 @@ export const TicketsView: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Layers size={18} color="var(--accent-primary)" />
-              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--accent-primary)' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--accent-primary-text)' }}>
                 Modificación Masiva — {selectedIds.size} ticket{selectedIds.size !== 1 ? 's' : ''}
               </span>
             </div>
-            <button type="button" className="btn-ghost" style={{ padding: '0.3rem' }} onClick={() => setIsBulkEditing(false)}>
+            <button type="button" className="btn-ghost" aria-label="Cerrar edición masiva" style={{ padding: '0.3rem' }} onClick={() => setIsBulkEditing(false)}>
               <X size={16} />
             </button>
           </div>
@@ -722,8 +726,8 @@ export const TicketsView: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado</label>
-              <select value={bulkValues.status} onChange={(e) => setBulkValues((p) => ({ ...p, status: e.target.value as TicketStatus | '' }))} style={{ fontSize: '0.85rem' }}>
+              <label htmlFor="tickets-bulk-estado" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado</label>
+              <select id="tickets-bulk-estado" value={bulkValues.status} onChange={(e) => setBulkValues((p) => ({ ...p, status: e.target.value as TicketStatus | '' }))} style={{ fontSize: '0.85rem' }}>
                 <option value="">— Sin cambio —</option>
                 <option value="open">Abierto</option>
                 <option value="in_progress">En Progreso</option>
@@ -734,19 +738,19 @@ export const TicketsView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Prioridad</label>
-              <select value={bulkValues.priority} onChange={(e) => setBulkValues((p) => ({ ...p, priority: e.target.value as TicketPriority | '' }))} style={{ fontSize: '0.85rem' }}>
+              <label htmlFor="tickets-bulk-prioridad" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Prioridad</label>
+              <select id="tickets-bulk-prioridad" value={bulkValues.priority} onChange={(e) => setBulkValues((p) => ({ ...p, priority: e.target.value as TicketPriority | '' }))} style={{ fontSize: '0.85rem' }}>
                 <option value="">— Sin cambio —</option>
-                <option value="critical">🔴 Crítica</option>
-                <option value="high">🟠 Alta</option>
-                <option value="medium">🟡 Media</option>
-                <option value="low">🟢 Baja</option>
+                <option value="critical">Crítica</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
               </select>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</label>
-              <select value={bulkValues.category} onChange={(e) => setBulkValues((p) => ({ ...p, category: e.target.value as TicketCategory | '' }))} style={{ fontSize: '0.85rem' }}>
+              <label htmlFor="tickets-bulk-categoria" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</label>
+              <select id="tickets-bulk-categoria" value={bulkValues.category} onChange={(e) => setBulkValues((p) => ({ ...p, category: e.target.value as TicketCategory | '' }))} style={{ fontSize: '0.85rem' }}>
                 <option value="">— Sin cambio —</option>
                 <option value="Soporte TI">Soporte TI</option>
                 <option value="Incidencia">Incidencia</option>
@@ -760,8 +764,8 @@ export const TicketsView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Canal</label>
-              <select value={bulkValues.channel} onChange={(e) => setBulkValues((p) => ({ ...p, channel: e.target.value as TicketChannel | '' }))} style={{ fontSize: '0.85rem' }}>
+              <label htmlFor="tickets-bulk-canal" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Canal</label>
+              <select id="tickets-bulk-canal" value={bulkValues.channel} onChange={(e) => setBulkValues((p) => ({ ...p, channel: e.target.value as TicketChannel | '' }))} style={{ fontSize: '0.85rem' }}>
                 <option value="">— Sin cambio —</option>
                 <option value="Email">Email</option>
                 <option value="Teléfono">Teléfono</option>
@@ -772,8 +776,9 @@ export const TicketsView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asignado a</label>
+              <label htmlFor="tickets-bulk-asignado" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asignado a</label>
               <input
+                id="tickets-bulk-asignado"
                 type="text"
                 value={bulkValues.assigned_to}
                 onChange={(e) => setBulkValues((p) => ({ ...p, assigned_to: e.target.value }))}
@@ -800,7 +805,9 @@ export const TicketsView: React.FC = () => {
 
       {/* ── Main Table ──────────────────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-        {filteredTickets.length === 0 ? (
+        {isLoadingTickets && tickets.length === 0 ? (
+          <SkeletonRows rows={6} columns={5} />
+        ) : filteredTickets.length === 0 ? (
           <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ padding: '0.75rem', borderRadius: '50%', backgroundColor: 'var(--bg-surface-elevated)', color: 'var(--text-muted)' }}>
               <Tag size={28} />
@@ -833,7 +840,7 @@ export const TicketsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={toggleSelectAll}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.1rem', color: allVisibleSelected ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.1rem', color: allVisibleSelected ? 'var(--accent-primary-text)' : 'var(--text-muted)', display: 'flex' }}
                       title={allVisibleSelected ? 'Deseleccionar página' : 'Seleccionar página'}
                     >
                       {allVisibleSelected ? <CheckSquare size={16} /> : <Square size={16} />}
@@ -867,14 +874,14 @@ export const TicketsView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => toggleSelect(ticket.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.1rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.1rem', color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-muted)', display: 'flex' }}
                         >
                           {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
                         </button>
                       </td>
 
                       {/* Code */}
-                      <td style={{ padding: '0.75rem 0.75rem', fontFamily: 'monospace', fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.78rem' }}>
+                      <td style={{ padding: '0.75rem 0.75rem', fontFamily: 'monospace', fontWeight: 800, color: 'var(--accent-primary-text)', fontSize: '0.78rem' }}>
                         {ticket.ticket_number || '—'}
                       </td>
 
@@ -895,9 +902,9 @@ export const TicketsView: React.FC = () => {
                               {ticket.description}
                             </p>
                           )}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.67rem', color: 'var(--text-secondary)', marginTop: '0.1rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.1rem', flexWrap: 'wrap' }}>
                             <span>👤 {ticket.requester_name}</span>
-                            {ticket.assigned_to && <span style={{ color: 'var(--accent-primary)' }}>• <User size={10} style={{ display: 'inline', marginRight: '0.15rem' }} />{ticket.assigned_to}</span>}
+                            {ticket.assigned_to && <span style={{ color: 'var(--accent-primary-text)' }}>• <User size={10} style={{ display: 'inline', marginRight: '0.15rem' }} />{ticket.assigned_to}</span>}
                             {ticket.channel && <span>• {ticket.channel}</span>}
                             {ticket.case_title && <span>• 💼 {ticket.case_title}</span>}
                           </div>
@@ -932,7 +939,7 @@ export const TicketsView: React.FC = () => {
                           <button type="button" className="btn-ghost" style={{ padding: '0.3rem', color: 'var(--text-secondary)' }} title="Editar" onClick={() => { setTicketToEdit(ticket); setIsCreateModalOpen(true); }}>
                             <Edit2 size={14} />
                           </button>
-                          <button type="button" className="btn-ghost" style={{ padding: '0.3rem', color: 'var(--status-critical)' }} title="Eliminar" onClick={() => handleDeleteTicket(ticket)}>
+                          <button type="button" className="btn-ghost" style={{ padding: '0.3rem', color: 'var(--status-critical-text)' }} title="Eliminar" onClick={() => handleDeleteTicket(ticket)}>
                             <Trash2 size={14} />
                           </button>
                         </div>

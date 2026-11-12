@@ -100,7 +100,7 @@ Component Stack: ${this.state.errorInfo?.componentStack || 'N/A'}`;
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--status-critical, #ef4444)',
+                color: 'var(--status-critical-text)',
               }}
             >
               <AlertOctagon size={32} />
@@ -129,7 +129,7 @@ Component Stack: ${this.state.errorInfo?.componentStack || 'N/A'}`;
                 overflowY: 'auto',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--status-critical, #ef4444)', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--status-critical-text)', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.4rem' }}>
                 <Terminal size={14} /> Detalle Técnico:
               </div>
               <code style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>

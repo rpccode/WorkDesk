@@ -20,6 +20,7 @@ import {
   type ImportValidationResult,
 } from '../utils/excel-importer';
 import { playNotificationSound } from '../utils/live-alerts';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface BulkImportClientsModalProps {
   isOpen: boolean;
@@ -43,6 +44,8 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
   const [isImporting, setIsImporting] = useState(false);
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [downloadFeedback, setDownloadFeedback] = useState<string | null>(null);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -268,6 +271,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
 
   const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -323,13 +330,13 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 Carga Masiva de Clientes & Matriz de Complejidad
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Importa decenas o cientos de clientes con diagnóstico corporativo desde Excel (.xlsx, .xls) o CSV
               </p>
             </div>
           </div>
 
-          <button
+          <button aria-label="Cerrar importación de clientes"
             className="btn-ghost"
             style={{ padding: '0.4rem', color: 'var(--text-muted)' }}
             onClick={onClose}
@@ -359,7 +366,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   height: '56px',
                   borderRadius: '50%',
                   backgroundColor: 'var(--status-low-bg)',
-                  color: 'var(--status-low)',
+                  color: 'var(--status-low-text)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -393,7 +400,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                     borderRadius: 'var(--radius-md)',
                     backgroundColor: 'var(--status-low-bg)',
                     border: '1px solid var(--status-low)',
-                    color: 'var(--status-low)',
+                    color: 'var(--status-low-text)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -408,8 +415,9 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   </div>
                   <button
                     type="button"
+                    aria-label="Cerrar retroalimentación de descarga"
                     onClick={() => setDownloadFeedback(null)}
-                    style={{ background: 'transparent', color: 'var(--status-low)', padding: '0.2rem' }}
+                    style={{ background: 'transparent', color: 'var(--status-low-text)', padding: '0.2rem' }}
                   >
                     <X size={15} />
                   </button>
@@ -436,7 +444,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                     <h5 style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Planilla Modelo & Carga Rápida
                     </h5>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       Descarga el formato con 9 columnas (Complejidad, Sucursales, Empleados, Depto TI, etc.) o carga los 17 clientes de prueba.
                     </p>
                   </div>
@@ -446,7 +454,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   <button
                     type="button"
                     className="btn-primary"
-                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
                     onClick={handleLoadDemoDataset}
                     disabled={isImporting}
                   >
@@ -456,7 +464,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   <button
                     type="button"
                     className="btn-secondary"
-                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
                     onClick={handleDownloadExcelTemplate}
                   >
                     <Download size={13} /> Plantilla Excel (.xlsx)
@@ -465,7 +473,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   <button
                     type="button"
                     className="btn-secondary"
-                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
                     onClick={handleDownloadCsvTemplate}
                   >
                     <Download size={13} /> Plantilla CSV (.csv)
@@ -496,6 +504,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                   <input
                     ref={fileInputRef}
                     type="file"
+                    aria-label="Seleccionar archivo Excel o CSV de clientes"
                     accept=".xlsx,.xls,.csv"
                     style={{ display: 'none' }}
                     onChange={handleFileChange}
@@ -507,7 +516,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                       height: '50px',
                       borderRadius: '50%',
                       backgroundColor: 'var(--accent-glow)',
-                      color: 'var(--accent-primary)',
+                      color: 'var(--accent-primary-text)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -520,7 +529,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                     <p style={{ fontSize: '0.92rem', fontWeight: 700 }}>
                       {isLoading ? 'Leyendo archivo...' : 'Arrastra tu archivo aquí o haz clic para examinar'}
                     </p>
-                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                       Formatos soportados: Microsoft Excel (.xlsx, .xls) o CSV (.csv)
                     </p>
                   </div>
@@ -535,7 +544,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: 'var(--status-critical-bg)',
                     border: '1px solid var(--status-critical-border)',
-                    color: 'var(--status-critical)',
+                    color: 'var(--status-critical-text)',
                     fontSize: '0.8rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -558,18 +567,18 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                     </div>
 
                     <div style={{ padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--status-low-bg)', border: '1px solid var(--status-low-border)' }}>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--status-low)', fontWeight: 600 }}>Válidos</span>
-                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-low)' }}>{parseResult.validCount}</p>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--status-low-text)', fontWeight: 600 }}>Válidos</span>
+                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-low-text)' }}>{parseResult.validCount}</p>
                     </div>
 
                     <div style={{ padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--status-medium-bg)', border: '1px solid var(--status-medium-border)' }}>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--status-medium)', fontWeight: 600 }}>Duplicados</span>
-                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-medium)' }}>{parseResult.duplicateCount}</p>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--status-medium-text)', fontWeight: 600 }}>Duplicados</span>
+                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-medium-text)' }}>{parseResult.duplicateCount}</p>
                     </div>
 
                     <div style={{ padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--status-critical-bg)', border: '1px solid var(--status-critical-border)' }}>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--status-critical)', fontWeight: 600 }}>Inválidos</span>
-                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-critical)' }}>{parseResult.invalidCount}</p>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--status-critical-text)', fontWeight: 600 }}>Inválidos</span>
+                      <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--status-critical-text)' }}>{parseResult.invalidCount}</p>
                     </div>
                   </div>
 
@@ -590,10 +599,10 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                       }}
                     >
                       <div>
-                        <span style={{ color: 'var(--status-critical)', fontWeight: 700, display: 'block' }}>
+                        <span style={{ color: 'var(--status-critical-text)', fontWeight: 700, display: 'block' }}>
                           ¿Deseas reiniciar la base de datos de clientes?
                         </span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                           Existen {clients.length} clientes registrados. Puedes eliminarlos todos para importar este archivo limpio desde cero.
                         </span>
                       </div>
@@ -602,9 +611,9 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                         type="button"
                         className="btn-secondary"
                         style={{
-                          color: 'var(--status-critical)',
+                          color: 'var(--status-critical-text)',
                           borderColor: 'rgba(239, 68, 68, 0.4)',
-                          fontSize: '0.74rem',
+                          fontSize: '0.75rem',
                           padding: '0.35rem 0.75rem',
                         }}
                         onClick={handleDeleteAllClients}
@@ -630,7 +639,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
 
                   {/* Preview Rows Table */}
                   <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                       <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)', zIndex: 2 }}>
                         <tr>
                           <th style={{ padding: '0.5rem 0.6rem', textAlign: 'left', fontWeight: 700 }}>#</th>
@@ -665,7 +674,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                             >
                               <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)' }}>{row.rowNumber}</td>
                               <td style={{ padding: '0.45rem 0.6rem', fontWeight: 700 }}>
-                                {row.name || <span style={{ color: 'var(--status-critical)', fontStyle: 'italic' }}>Sin nombre</span>}
+                                {row.name || <span style={{ color: 'var(--status-critical-text)', fontStyle: 'italic' }}>Sin nombre</span>}
                               </td>
                               <td style={{ padding: '0.45rem 0.6rem' }}>{row.category || '—'}</td>
                               <td style={{ padding: '0.45rem 0.6rem' }}>
@@ -677,7 +686,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                                       fontSize: '0.68rem',
                                       fontWeight: 700,
                                       backgroundColor: compW === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compW === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                                      color: compW === 'Alta' ? 'var(--status-critical)' : compW === 'Media' ? 'var(--status-medium)' : 'var(--status-low)',
+                                      color: compW === 'Alta' ? 'var(--status-critical-text)' : compW === 'Media' ? 'var(--status-medium-text)' : 'var(--status-low-text)',
                                     }}
                                   >
                                     {compW}
@@ -693,7 +702,7 @@ export const BulkImportClientsModal: React.FC<BulkImportClientsModalProps> = ({
                                       fontSize: '0.68rem',
                                       fontWeight: 700,
                                       backgroundColor: compE === 'Alta' ? 'rgba(239, 68, 68, 0.15)' : compE === 'Media' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                                      color: compE === 'Alta' ? 'var(--status-critical)' : compE === 'Media' ? 'var(--status-medium)' : 'var(--status-low)',
+                                      color: compE === 'Alta' ? 'var(--status-critical-text)' : compE === 'Media' ? 'var(--status-medium-text)' : 'var(--status-low-text)',
                                     }}
                                   >
                                     {compE}

@@ -5,12 +5,13 @@ import { CaseDetailsDrawer } from '../components/CaseDetailsDrawer';
 import { CaseModal } from '../components/CaseModal';
 import { CaseBriefModal } from '../components/CaseBriefModal';
 import { Pagination } from '../components/Pagination';
+import { SkeletonRows } from '../components/LoadingSkeletons';
 import { usePagination } from '../hooks/usePagination';
 import { formatDate } from '../utils/date';
 import type { Case } from '../types';
 
 export const CasesView: React.FC = () => {
-  const { cases, caseFilter, setCaseFilter, fetchCases, setCaseForEmail } = useStore();
+  const { cases, caseFilter, setCaseFilter, fetchCases, setCaseForEmail, isLoadingCases } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
@@ -44,7 +45,7 @@ export const CasesView: React.FC = () => {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <span className="badge badge-critical">🚨 Crítica</span>;
+        return <span className="badge badge-critical">Crítica</span>;
       case 'high':
         return <span className="badge badge-high">Alta</span>;
       case 'medium':
@@ -68,7 +69,7 @@ export const CasesView: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Header */}
       <div className="page-header">
         <div className="page-title-group">
@@ -95,7 +96,9 @@ export const CasesView: React.FC = () => {
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
           />
           <input
+            id="cases-search"
             type="text"
+            aria-label="Buscar por caso, cliente o descripción"
             placeholder="Buscar por caso, cliente o descripción..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -105,8 +108,8 @@ export const CasesView: React.FC = () => {
 
         <div className="toolbar-filters">
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>ESTADO:</span>
-            <select value={caseFilter} onChange={(e) => setCaseFilter(e.target.value)} style={{ width: 'auto' }}>
+            <label htmlFor="cases-filter-estado" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>ESTADO:</label>
+            <select id="cases-filter-estado" value={caseFilter} onChange={(e) => setCaseFilter(e.target.value)} style={{ width: 'auto' }}>
               <option value="all">Todos los estados</option>
               <option value="active">Activos únicamente</option>
               <option value="closed">Cerrados</option>
@@ -114,10 +117,10 @@ export const CasesView: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>PRIORIDAD:</span>
-            <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ width: 'auto' }}>
+            <label htmlFor="cases-filter-prioridad" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>PRIORIDAD:</label>
+            <select id="cases-filter-prioridad" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ width: 'auto' }}>
               <option value="all">Todas</option>
-              <option value="critical">🚨 Crítica</option>
+              <option value="critical">Crítica</option>
               <option value="high">Alta</option>
               <option value="medium">Media</option>
               <option value="low">Baja</option>
@@ -132,7 +135,11 @@ export const CasesView: React.FC = () => {
 
       {/* Grid of Cases */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
-        {pagination.paginatedItems.length === 0 ? (
+        {isLoadingCases && cases.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <SkeletonRows rows={4} columns={3} />
+          </div>
+        ) : pagination.paginatedItems.length === 0 ? (
           <div
             className="glass-card"
             style={{
@@ -165,7 +172,7 @@ export const CasesView: React.FC = () => {
               onClick={() => setSelectedCase(c)}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary-text)', fontWeight: 700 }}>
                   {c.client_name || 'Cliente'}
                 </span>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -174,10 +181,7 @@ export const CasesView: React.FC = () => {
                 </div>
               </div>
 
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
-                {c.title}
-              </h3>
-
+              <p style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-primary)' }}>{c.title}</p>
               <p
                 style={{
                   fontSize: '0.83rem',
@@ -211,14 +215,14 @@ export const CasesView: React.FC = () => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' }}>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>➔</span>
+                    <span style={{ color: 'var(--accent-primary-text)', fontWeight: 900 }}>➔</span>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.next_action.description}
                     </span>
                   </div>
                   {c.next_action.due_date && (
-                    <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                      {c.next_action.due_date}
+                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary-text)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {formatDate(c.next_action.due_date)}
                     </span>
                   )}
                 </div>
@@ -230,8 +234,8 @@ export const CasesView: React.FC = () => {
                     borderRadius: '6px',
                     backgroundColor: 'rgba(245,158,11,0.08)',
                     border: '1px dashed rgba(245,158,11,0.4)',
-                    fontSize: '0.72rem',
-                    color: 'var(--status-medium)',
+                    fontSize: '0.75rem',
+                    color: 'var(--status-medium-text)',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -257,7 +261,7 @@ export const CasesView: React.FC = () => {
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   <button
                     className="btn-secondary"
-                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: 'var(--accent-primary)' }}
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: 'var(--accent-primary-text)' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setCaseForBrief(c);

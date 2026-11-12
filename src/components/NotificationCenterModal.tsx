@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatRelativeDate } from '../utils/date';
 import type { AppNotification, NotificationType } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export const NotificationCenterModal: React.FC = () => {
   const {
@@ -30,17 +31,10 @@ export const NotificationCenterModal: React.FC = () => {
 
   const [filterType, setFilterType] = useState<string>('all');
 
-  React.useEffect(() => {
-    if (isNotificationCenterOpen) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setNotificationCenterOpen(false);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isNotificationCenterOpen, setNotificationCenterOpen]);
+  const dialogRef = useFocusTrap<HTMLDivElement>(
+    isNotificationCenterOpen,
+    () => setNotificationCenterOpen(false),
+  );
 
   if (!isNotificationCenterOpen) return null;
 
@@ -99,10 +93,12 @@ export const NotificationCenterModal: React.FC = () => {
 
   const modalContent = (
     <div
+      ref={dialogRef}
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="alert-center-title"
+      tabIndex={-1}
       style={{
         justifyContent: 'flex-end',
         alignItems: 'stretch',
@@ -136,12 +132,12 @@ export const NotificationCenterModal: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Bell size={18} />
             </div>
             <div>
               <h3 id="alert-center-title" style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Centro de Alertas</h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
                 {unreadCount > 0 ? `${unreadCount} alerta(s) sin leer` : 'Todo al día'}
               </p>
             </div>
@@ -173,7 +169,7 @@ export const NotificationCenterModal: React.FC = () => {
             <button
               type="button"
               className={`btn-ghost ${filterType === 'all' ? 'active' : ''}`}
-              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
               onClick={() => setFilterType('all')}
             >
               Todas ({notifications.length})
@@ -181,7 +177,7 @@ export const NotificationCenterModal: React.FC = () => {
             <button
               type="button"
               className={`btn-ghost ${filterType === 'unread' ? 'active' : ''}`}
-              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
               onClick={() => setFilterType('unread')}
             >
               Sin leer ({unreadCount})
@@ -189,7 +185,7 @@ export const NotificationCenterModal: React.FC = () => {
             <button
               type="button"
               className={`btn-ghost ${filterType === 'critical' ? 'active' : ''}`}
-              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
               onClick={() => setFilterType('critical')}
             >
               🚨 Críticas
@@ -197,7 +193,7 @@ export const NotificationCenterModal: React.FC = () => {
             <button
               type="button"
               className={`btn-ghost ${filterType === 'email' ? 'active' : ''}`}
-              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
               onClick={() => setFilterType('email')}
             >
               ✉️ Correos
@@ -209,7 +205,7 @@ export const NotificationCenterModal: React.FC = () => {
               <button
                 type="button"
                 className="btn-ghost"
-                style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--accent-primary)' }}
+                style={{ fontSize: '0.7rem', padding: '0.25rem 0.45rem', color: 'var(--accent-primary-text)' }}
                 onClick={markAllNotificationsRead}
                 title="Marcar todas como leídas"
               >
@@ -245,10 +241,7 @@ export const NotificationCenterModal: React.FC = () => {
                   padding: '0.85rem 1rem',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: n.is_read ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
-                  borderLeft: `4px solid ${getNotificationBorderColor(n.type)}`,
-                  borderTop: '1px solid var(--border-subtle)',
-                  borderRight: '1px solid var(--border-subtle)',
-                  borderBottom: '1px solid var(--border-subtle)',
+                  border: `1px solid ${getNotificationBorderColor(n.type)}`,
                   boxShadow: n.is_read ? 'none' : 'var(--shadow-xs)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -306,7 +299,7 @@ export const NotificationCenterModal: React.FC = () => {
                     {n.action_label && (
                       <button
                         className="btn-primary"
-                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAction(n);

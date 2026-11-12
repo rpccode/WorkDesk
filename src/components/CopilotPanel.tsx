@@ -195,7 +195,7 @@ export const CopilotPanel: React.FC = () => {
               padding: '0.4rem',
               borderRadius: '8px',
               backgroundColor: 'var(--accent-glow)',
-              color: 'var(--accent-primary)',
+              color: 'var(--accent-primary-text)',
               display: 'flex',
             }}
           >
@@ -206,12 +206,12 @@ export const CopilotPanel: React.FC = () => {
               WorkDesk AI Copilot
               <span
                 style={{
-                  fontSize: '0.65rem',
+                  fontSize: '0.7rem',
                   fontWeight: 700,
                   padding: '0.1rem 0.35rem',
                   borderRadius: '4px',
                   backgroundColor: aiConfig.isConfigured ? 'var(--status-low-bg)' : 'var(--status-high-bg)',
-                  color: aiConfig.isConfigured ? 'var(--status-low)' : 'var(--status-high)',
+                  color: aiConfig.isConfigured ? 'var(--status-low-text)' : 'var(--status-high-text)',
                 }}
               >
                 {aiConfig.isConfigured ? aiConfig.provider.toUpperCase() : 'Sin Configurar'}
@@ -243,6 +243,7 @@ export const CopilotPanel: React.FC = () => {
           )}
           <button
             type="button"
+            aria-label="Cerrar panel del Copilot"
             onClick={() => setCopilotOpen(false)}
             style={{
               background: 'none',
@@ -268,7 +269,7 @@ export const CopilotPanel: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: '0.74rem',
+            fontSize: '0.75rem',
             color: 'var(--text-primary)',
           }}
         >
@@ -314,7 +315,7 @@ export const CopilotPanel: React.FC = () => {
           style={{
             padding: '0.35rem 0.65rem',
             borderRadius: '999px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
             border: '1px solid var(--border-subtle)',
             backgroundColor: 'var(--bg-surface-elevated)',
@@ -336,7 +337,7 @@ export const CopilotPanel: React.FC = () => {
           style={{
             padding: '0.35rem 0.65rem',
             borderRadius: '999px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
             border: '1px solid var(--border-subtle)',
             backgroundColor: 'var(--bg-surface-elevated)',
@@ -358,7 +359,7 @@ export const CopilotPanel: React.FC = () => {
           style={{
             padding: '0.35rem 0.65rem',
             borderRadius: '999px',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
             border: '1px solid var(--border-subtle)',
             backgroundColor: 'var(--bg-surface-elevated)',
@@ -405,7 +406,7 @@ export const CopilotPanel: React.FC = () => {
                 height: '48px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -435,7 +436,7 @@ export const CopilotPanel: React.FC = () => {
                   gap: '0.25rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                   {isUser ? (
                     <>
                       <span>Tú</span>
@@ -444,7 +445,7 @@ export const CopilotPanel: React.FC = () => {
                   ) : (
                     <>
                       <Bot size={12} color="var(--accent-primary)" />
-                      <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>AI Copilot</span>
+                      <span style={{ color: 'var(--accent-primary-text)', fontWeight: 700 }}>AI Copilot</span>
                     </>
                   )}
                 </div>
@@ -471,7 +472,7 @@ export const CopilotPanel: React.FC = () => {
         )}
 
         {isThinking && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)', fontSize: '0.78rem', fontStyle: 'italic', padding: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary-text)', fontSize: '0.78rem', fontStyle: 'italic', padding: '0.5rem' }}>
             <Sparkles size={16} className="animate-spin" />
             <span>AI Copilot está analizando tu información...</span>
           </div>
@@ -501,6 +502,8 @@ export const CopilotPanel: React.FC = () => {
         >
           <textarea
             ref={inputRef}
+            id="copilot-prompt"
+            aria-label="Consulta para el Copilot"
             rows={2}
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}

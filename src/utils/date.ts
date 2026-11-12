@@ -44,3 +44,23 @@ export function formatRelativeDate(dueDate?: string | null): string {
   if (diffDays < 0) return `Vencido hace ${Math.abs(diffDays)} días`;
   return `Vence en ${diffDays} días`;
 }
+
+/**
+ * Formatea una fecha ISO para mostrarla al usuario sin la hora ni el sufijo Z.
+ * Sin esto, la UI muestra valores como "2026-11-04T17:47:23.991Z", que el
+ * usuario tiene que traducir mentalmente.
+ */
+export function formatDateTime(isoString?: string | null): string {
+  if (!isoString) return 'Sin fecha';
+  try {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return formatDate(isoString);
+    return date.toLocaleDateString('es-DO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return formatDate(isoString);
+  }
+}

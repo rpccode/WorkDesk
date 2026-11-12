@@ -24,6 +24,7 @@ import { MeetingPrepModal } from './MeetingPrepModal';
 import { EmailImportModal } from './EmailImportModal';
 import { ErrorBoundary } from './ErrorBoundary';
 import { formatDate, isOverdue } from '../utils/date';
+import { toUserMessage } from '../utils/error-messages';
 import { generateCaseSummaryAI, findSimilarCases } from '../services/ai-copilot';
 import {
   generateICS,
@@ -32,6 +33,7 @@ import {
   generateOutlookCalendarUrl,
 } from '../utils/calendar-sync';
 import type { Case, NextAction } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CaseDetailsDrawerProps {
   c?: Case | null;
@@ -99,15 +101,10 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       setNextActionOwner(activeCase.next_action?.owner_type || 'me');
       setIsEditingNextAction(false);
 
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [activeCase, onClose]);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen || !activeCase) return null;
   const c = activeCase;
@@ -163,7 +160,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
       addNotification({
         type: 'critical',
         title: 'Error Generando Resumen IA',
-        message: err.message || 'No se pudo generar el resumen del caso.',
+        message: toUserMessage(err, 'No se pudo generar el resumen del caso con la IA.', 'Verifica la clave del modelo en Configuración.'),
         show_toast: true,
       });
     } finally {
@@ -188,7 +185,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <span className="badge badge-critical">🚨 Crítica</span>;
+        return <span className="badge badge-critical">Crítica</span>;
       case 'high':
         return <span className="badge badge-high">Alta</span>;
       case 'medium':
@@ -201,6 +198,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
   const drawerContent = (
     <>
       <div
+      ref={dialogRef}
+      tabIndex={-1}
         className="modal-overlay"
         role="dialog"
         aria-modal="true"
@@ -240,9 +239,9 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             <div>
               <span
                 style={{
-                  fontSize: '0.72rem',
+                  fontSize: '0.75rem',
                   fontWeight: 700,
-                  color: 'var(--accent-primary)',
+                  color: 'var(--accent-primary-text)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
                 }}
@@ -252,7 +251,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               <h2 id="case-drawer-title" style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.2rem' }}>{c.title}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
                 {getPriorityBadge(c.priority)}
-                <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>
+                <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
                   Estado: {c.status}
                 </span>
               </div>
@@ -283,7 +282,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <Target size={16} color="var(--accent-primary)" />
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-primary)', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-primary-text)', letterSpacing: '0.05em' }}>
                   Próxima Acción (Next Action)
                 </span>
               </div>
@@ -292,7 +291,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 <button
                   type="button"
                   className="btn-ghost"
-                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', color: 'var(--accent-primary)' }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: 'var(--accent-primary-text)' }}
                   onClick={() => setIsEditingNextAction(true)}
                 >
                   <Edit3 size={12} /> {c.next_action?.description ? 'Editar' : 'Definir'}
@@ -303,6 +302,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             {isEditingNextAction ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.25rem' }}>
                 <input
+                  id="drawer-next-action-desc"
+                  aria-label="Siguiente acción"
                   type="text"
                   placeholder="¿Qué tiene que suceder ahora para que esto avance?..."
                   value={nextActionDesc}
@@ -312,8 +313,9 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Fecha límite:</label>
+                    <label htmlFor="drawer-next-action-date" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Fecha límite:</label>
                     <input
+                      id="drawer-next-action-date"
                       type="date"
                       value={nextActionDueDate}
                       onChange={(e) => setNextActionDueDate(e.target.value)}
@@ -321,8 +323,9 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Responsable:</label>
+                    <label htmlFor="drawer-next-action-owner" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Responsable:</label>
                     <select
+                      id="drawer-next-action-owner"
                       value={nextActionOwner}
                       onChange={(e) => setNextActionOwner(e.target.value as any)}
                       style={{ fontSize: '0.78rem', padding: '0.35rem 0.5rem' }}
@@ -335,10 +338,10 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                  <button type="button" className="btn-secondary" style={{ fontSize: '0.74rem', padding: '0.25rem 0.6rem' }} onClick={() => setIsEditingNextAction(false)}>
+                  <button type="button" className="btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} onClick={() => setIsEditingNextAction(false)}>
                     Cancelar
                   </button>
-                  <button type="button" className="btn-primary" style={{ fontSize: '0.74rem', padding: '0.25rem 0.8rem' }} onClick={handleSaveNextAction}>
+                  <button type="button" className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.8rem' }} onClick={handleSaveNextAction}>
                     Guardar
                   </button>
                 </div>
@@ -347,14 +350,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>➔</span>
+                    <span style={{ color: 'var(--accent-primary-text)', fontWeight: 900 }}>➔</span>
                     <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       {c.next_action.description}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '1.2rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '1.2rem' }}>
                     Responsable: <strong>{c.next_action.owner_type === 'me' ? 'Yo' : c.next_action.owner_type === 'client' ? 'Cliente' : 'Terceros'}</strong>
-                    {c.next_action.due_date && <span> • Plazo: <strong>{c.next_action.due_date}</strong></span>}
+                    {c.next_action.due_date && <span> • Plazo: <strong>{formatDate(c.next_action.due_date)}</strong></span>}
                   </span>
                 </div>
 
@@ -362,7 +365,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                   <button
                     type="button"
                     className="btn-secondary"
-                    style={{ fontSize: '0.72rem', padding: '0.3rem 0.65rem', color: 'var(--status-low)', borderColor: 'var(--status-low)', whiteSpace: 'nowrap' }}
+                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem', color: 'var(--status-low-text)', borderColor: 'var(--status-low)', whiteSpace: 'nowrap' }}
                     onClick={handleCompleteNextAction}
                   >
                     <CheckCircle2 size={13} /> Hecho
@@ -371,13 +374,13 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               </div>
             ) : (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--status-medium)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--status-medium-text)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <AlertTriangle size={14} /> Sin próxima acción definida
                 </span>
                 <button
                   type="button"
                   className="btn-secondary"
-                  style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
                   onClick={() => setIsEditingNextAction(true)}
                 >
                   + Definir ahora
@@ -417,8 +420,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 fontSize: '0.76rem',
                 padding: '0.35rem 0.65rem',
                 border: '1px solid var(--accent-border, rgba(59,130,246,0.3))',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(147,51,234,0.12) 100%)',
-                color: 'var(--accent-primary)',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37, 99, 235, 0.12) 100%)',
+                color: 'var(--accent-primary-text)',
                 fontWeight: 700,
               }}
               onClick={handleGenerateAISummary}
@@ -432,7 +435,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               style={{
                 fontSize: '0.76rem',
                 padding: '0.35rem 0.65rem',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
               }}
               onClick={() => setIsMeetingPrepOpen(true)}
             >
@@ -465,7 +468,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             {c.status !== 'closed' && (
               <button
                 className="btn-secondary"
-                style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-low)', marginLeft: 'auto' }}
+                style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', color: 'var(--status-low-text)', marginLeft: 'auto' }}
                 onClick={handleCloseCase}
               >
                 <CheckCircle2 size={13} /> Cerrar
@@ -484,7 +487,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary)', fontWeight: 800, fontSize: '0.82rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-primary-text)', fontWeight: 800, fontSize: '0.82rem' }}>
                   <Sparkles size={15} /> Resumen Ejecutivo del Caso (IA)
                 </div>
                 <button
@@ -527,7 +530,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'commitments' ? 700 : 500,
-                color: activeTab === 'commitments' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'commitments' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('commitments')}
             >
@@ -542,7 +545,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'followups' ? 700 : 500,
-                color: activeTab === 'followups' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'followups' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('followups')}
             >
@@ -557,7 +560,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'emails' ? 700 : 500,
-                color: activeTab === 'emails' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'emails' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('emails')}
             >
@@ -572,7 +575,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'notes' ? 700 : 500,
-                color: activeTab === 'notes' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'notes' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('notes')}
             >
@@ -587,7 +590,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'timeline' ? 700 : 500,
-                color: activeTab === 'timeline' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'timeline' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('timeline')}
             >
@@ -602,7 +605,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                 padding: '0.75rem 0.85rem',
                 fontSize: '0.8rem',
                 fontWeight: activeTab === 'similares' ? 700 : 500,
-                color: activeTab === 'similares' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                color: activeTab === 'similares' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               }}
               onClick={() => setActiveTab('similares')}
             >
@@ -641,7 +644,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.25rem' }}>
                     <button
                       className="btn-secondary"
-                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem', gap: '0.35rem' }}
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', gap: '0.35rem' }}
                       onClick={() => {
                         const events = caseCommitments
                           .filter((cm) => cm.due_date)
@@ -710,8 +713,8 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                           {comm.due_date && (
                             <span
                               style={{
-                                fontSize: '0.72rem',
-                                color: isOverdue(comm.due_date) && comm.status !== 'done' ? 'var(--status-critical)' : 'var(--text-muted)',
+                                fontSize: '0.75rem',
+                                color: isOverdue(comm.due_date) && comm.status !== 'done' ? 'var(--status-critical-text)' : 'var(--text-muted)',
                                 fontWeight: isOverdue(comm.due_date) && comm.status !== 'done' ? 700 : 400,
                               }}
                             >
@@ -729,7 +732,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                             <button
                               type="button"
                               className="btn-ghost"
-                              style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', color: 'var(--accent-primary)' }}
+                              style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', color: 'var(--accent-primary-text)' }}
                               onClick={() => {
                                 const ics = generateICS([
                                   {
@@ -810,7 +813,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                           <span className="badge badge-neutral" style={{ fontSize: '0.7rem' }}>
                             {f.type.toUpperCase()}
                           </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                             {formatDate(f.date)}
                           </span>
                         </div>
@@ -831,14 +834,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       className="btn-secondary"
-                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                       onClick={() => setIsEmailImportOpen(true)}
                     >
                       <Mail size={13} /> 📎 Adjuntar / Importar Correo
                     </button>
                     <button
                       className="btn-secondary"
-                      style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
                       onClick={() => setCaseForEmail(c)}
                     >
                       <Mail size={13} /> Redactar
@@ -877,14 +880,15 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                       className="glass-card"
                       style={{
                         padding: '1rem 1.2rem',
-                        borderLeft: email.direction === 'inbound' ? '3px solid var(--accent-primary)' : '3px solid var(--status-low)',
+                        border: `1px solid ${email.direction === 'inbound' ? 'var(--accent-border)' : 'var(--status-low-border)'}`,
+                        backgroundColor: email.direction === 'inbound' ? 'var(--accent-glow)' : 'var(--status-low-bg)',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <span className="badge" style={{ backgroundColor: email.direction === 'inbound' ? 'var(--accent-glow)' : 'var(--status-low-bg)', color: email.direction === 'inbound' ? 'var(--accent-primary)' : 'var(--status-low)', fontSize: '0.68rem' }}>
+                        <span className="badge" style={{ backgroundColor: email.direction === 'inbound' ? 'var(--accent-glow)' : 'var(--status-low-bg)', color: email.direction === 'inbound' ? 'var(--accent-primary-text)' : 'var(--status-low-text)', fontSize: '0.68rem' }}>
                           {email.direction === 'inbound' ? 'Entrante (Cliente)' : 'Enviado (Saliente)'}
                         </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           {formatDate(email.date)}
                         </span>
                       </div>
@@ -915,7 +919,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                   caseNotes.map((n) => (
                     <div key={n.id} className="glass-card" style={{ padding: '1rem 1.2rem' }}>
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-line' }}>{n.content}</p>
-                      <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                         {formatDate(n.created_at)}
                       </span>
                     </div>
@@ -940,7 +944,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                         padding: '0.85rem 1rem',
                         borderRadius: 'var(--radius-md)',
                         backgroundColor: 'var(--bg-surface-elevated)',
-                        borderLeft: '3px solid var(--accent-primary)',
+                        border: '1px solid var(--accent-border)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '0.25rem',
@@ -974,7 +978,7 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
             {/* TAB: SIMILARES IA */}
             {activeTab === 'similares' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ padding: '0.6rem 0.8rem', backgroundColor: 'var(--accent-glow)', borderRadius: 'var(--radius-md)', fontSize: '0.76rem', color: 'var(--accent-primary)', border: '1px solid var(--accent-border)' }}>
+                <div style={{ padding: '0.6rem 0.8rem', backgroundColor: 'var(--accent-glow)', borderRadius: 'var(--radius-md)', fontSize: '0.76rem', color: 'var(--accent-primary-text)', border: '1px solid var(--accent-border)' }}>
                   💡 <strong>Casos Similares:</strong> Analiza casos abiertos y cerrados con problemáticas, clientes o patrones parecidos para reutilizar soluciones previas.
                 </div>
 
@@ -996,14 +1000,14 @@ export const CaseDetailsDrawer: React.FC<CaseDetailsDrawerProps> = ({ c: propC, 
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           {sim.caseItem.client_name || 'Sin cliente'}
                         </span>
                         <span
                           className="badge"
                           style={{
                             backgroundColor: 'var(--accent-glow)',
-                            color: 'var(--accent-primary)',
+                            color: 'var(--accent-primary-text)',
                             fontSize: '0.7rem',
                             fontWeight: 700,
                           }}

@@ -4,6 +4,8 @@ import { useStore } from '../store';
 import { Users, X, Check, AlertCircle } from 'lucide-react';
 import type { Client, ClientComplexity } from '../types';
 import { playNotificationSound } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -50,18 +52,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  React.useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -191,7 +182,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
       playNotificationSound('success');
       onClose();
     } catch (err: any) {
-      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar los datos del cliente en la base de datos.';
+      const errMsg = toUserMessage(err, 'No se pudo guardar el cliente.', 'Revisa los campos e intenta de nuevo.');
       setError(errMsg);
       playNotificationSound('critical');
       addNotification({
@@ -214,7 +205,9 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
       aria-labelledby="client-modal-title"
     >
       <div
+        ref={dialogRef}
         className="glass-card animate-fade-in"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: '580px',
@@ -232,7 +225,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
         {/* Modal Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <Users size={20} />
             </div>
             <h3 id="client-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
@@ -260,7 +253,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
               borderRadius: 0,
               fontSize: '0.8rem',
               fontWeight: activeSection === 'general' ? 700 : 500,
-              color: activeSection === 'general' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeSection === 'general' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderBottom: activeSection === 'general' ? '2px solid var(--accent-primary)' : '2px solid transparent',
             }}
             onClick={() => setActiveSection('general')}
@@ -276,7 +269,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
               borderRadius: 0,
               fontSize: '0.8rem',
               fontWeight: activeSection === 'profile' ? 700 : 500,
-              color: activeSection === 'profile' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              color: activeSection === 'profile' ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
               borderBottom: activeSection === 'profile' ? '2px solid var(--accent-primary)' : '2px solid transparent',
             }}
             onClick={() => setActiveSection('profile')}
@@ -298,7 +291,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 borderRadius: 'var(--radius-sm)',
                 background: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: 'var(--status-critical)',
+                color: 'var(--status-critical-text)',
                 fontSize: '0.84rem',
                 fontWeight: 600,
               }}
@@ -312,11 +305,15 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
             {activeSection === 'general' ? (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                    Nombre del Cliente / Contacto <span style={{ color: 'var(--status-critical)' }}>*</span>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f1">
+                    Nombre del Cliente / Contacto <span style={{ color: 'var(--status-critical-text)' }}>*</span>
                   </label>
-                  <input
+                  <input id="client-modal-f1"
                     type="text"
+                    required
+                    aria-required="true"
+                    aria-invalid={!!fieldErrors.name}
+                    aria-describedby={fieldErrors.name ? 'client-error-name' : undefined}
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
@@ -330,17 +327,17 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                     }}
                   />
                   {fieldErrors.name && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span id="client-error-name" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <AlertCircle size={12} /> {fieldErrors.name}
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f2">
                     Empresa / Razón Social
                   </label>
-                  <input
+                  <input id="client-modal-f2"
                     type="text"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
@@ -351,11 +348,13 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f3">
                       Correo Electrónico
                     </label>
-                    <input
+                    <input id="client-modal-f3"
                       type="email"
+                      aria-invalid={!!fieldErrors.email}
+                      aria-describedby={fieldErrors.email ? 'client-error-email' : undefined}
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -369,16 +368,16 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                       }}
                     />
                     {fieldErrors.email && (
-                      <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <span id="client-error-email" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <AlertCircle size={12} /> {fieldErrors.email}
                       </span>
                     )}
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f4">
                       Teléfono / WhatsApp
                     </label>
-                    <input
+                    <input id="client-modal-f4"
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -390,10 +389,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
 
                 {clientToEdit && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f5">
                       Estado Operativo
                     </label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value as any)} style={{ width: '100%' }}>
+                    <select id="client-modal-f5" value={status} onChange={(e) => setStatus(e.target.value as any)} style={{ width: '100%' }}>
                       <option value="active">Activo</option>
                       <option value="inactive">Inactivo</option>
                     </select>
@@ -405,10 +404,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 {/* Categoría & Ticket Promedio */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f6">
                       Categoría / Rubro
                     </label>
-                    <input
+                    <input id="client-modal-f6"
                       type="text"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
@@ -428,10 +427,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f7">
                       Ticket Promedio (Casos/Mes)
                     </label>
-                    <input
+                    <input id="client-modal-f7"
                       type="number"
                       min="0"
                       value={ticketAvg}
@@ -445,34 +444,34 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 {/* Complejidad Ponderada & Complejidad Evaluada */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f8">
                       Complejidad Ponderada
                     </label>
-                    <select
+                    <select id="client-modal-f8"
                       value={complexityWeighted}
                       onChange={(e) => setComplexityWeighted(e.target.value as ClientComplexity | '')}
                       style={{ width: '100%' }}
                     >
                       <option value="">(Sin definir)</option>
-                      <option value="Alta">🔴 Alta</option>
-                      <option value="Media">🟡 Media</option>
-                      <option value="Baja">🟢 Baja</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Media">Media</option>
+                      <option value="Baja">Baja</option>
                     </select>
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f9">
                       Complejidad Evaluada
                     </label>
-                    <select
+                    <select id="client-modal-f9"
                       value={complexityEvaluated}
                       onChange={(e) => setComplexityEvaluated(e.target.value as ClientComplexity | '')}
                       style={{ width: '100%' }}
                     >
                       <option value="">(Sin definir)</option>
-                      <option value="Alta">🔴 Alta</option>
-                      <option value="Media">🟡 Media</option>
-                      <option value="Baja">🟢 Baja</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Media">Media</option>
+                      <option value="Baja">Baja</option>
                     </select>
                   </div>
                 </div>
@@ -480,45 +479,66 @@ export const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, clien
                 {/* Sucursales, Empleados, Sistemas */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f10">
                       Cant. Sucursales
                     </label>
-                    <input
+                    <input id="client-modal-f10"
                       type="number"
                       min="0"
+                      aria-invalid={!!fieldErrors.branchesCount}
+                      aria-describedby={fieldErrors.branchesCount ? 'client-error-branches' : undefined}
                       value={branchesCount}
                       onChange={(e) => setBranchesCount(e.target.value === '' ? '' : Number(e.target.value))}
                       placeholder="0"
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', border: fieldErrors.branchesCount ? '1.5px solid var(--status-critical)' : undefined }}
                     />
+                    {fieldErrors.branchesCount && (
+                      <span id="client-error-branches" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'block' }}>
+                        {fieldErrors.branchesCount}
+                      </span>
+                    )}
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f11">
                       Cant. Empleados
                     </label>
-                    <input
+                    <input id="client-modal-f11"
                       type="number"
                       min="0"
+                      aria-invalid={!!fieldErrors.employeesCount}
+                      aria-describedby={fieldErrors.employeesCount ? 'client-error-employees' : undefined}
                       value={employeesCount}
                       onChange={(e) => setEmployeesCount(e.target.value === '' ? '' : Number(e.target.value))}
                       placeholder="0"
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', border: fieldErrors.employeesCount ? '1.5px solid var(--status-critical)' : undefined }}
                     />
+                    {fieldErrors.employeesCount && (
+                      <span id="client-error-employees" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'block' }}>
+                        {fieldErrors.employeesCount}
+                      </span>
+                    )}
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="client-modal-f12">
                       Cant. Sistemas
                     </label>
-                    <input
+                    <input id="client-modal-f12"
                       type="number"
                       min="0"
+                      aria-invalid={!!fieldErrors.systemsCount}
+                      aria-describedby={fieldErrors.systemsCount ? 'client-error-systems' : undefined}
                       value={systemsCount}
                       onChange={(e) => setSystemsCount(e.target.value === '' ? '' : Number(e.target.value))}
                       placeholder="0"
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', border: fieldErrors.systemsCount ? '1.5px solid var(--status-critical)' : undefined }}
                     />
+                    {fieldErrors.systemsCount && (
+                      <span id="client-error-systems" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'block' }}>
+                        {fieldErrors.systemsCount}
+                      </span>
+                    )}
                   </div>
                 </div>
 

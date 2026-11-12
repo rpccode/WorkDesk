@@ -12,6 +12,9 @@ interface SearchableCaseSelectProps {
   label?: string;
   disabled?: boolean;
   dropDirection?: 'auto' | 'down' | 'up';
+  inputId?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
 }
 
 export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
@@ -24,6 +27,9 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
   label,
   disabled = false,
   dropDirection = 'auto',
+  inputId,
+  ariaInvalid = false,
+  ariaDescribedBy,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,6 +131,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       {label && (
         <label
+          htmlFor={inputId}
           style={{
             display: 'block',
             fontSize: '0.75rem',
@@ -135,12 +142,20 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
             letterSpacing: '0.02em',
           }}
         >
-          {label} {required && <span style={{ color: 'var(--status-critical)' }}>*</span>}
+          {label} {required && <span style={{ color: 'var(--status-critical-text)' }}>*</span>}
         </label>
       )}
 
       {/* Main Select Button Trigger */}
       <div
+        id={inputId}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-required={required || undefined}
+        aria-invalid={ariaInvalid || undefined}
+        aria-describedby={ariaDescribedBy}
+        aria-label={label && !inputId ? label : undefined}
         tabIndex={disabled ? -1 : 0}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
@@ -153,7 +168,9 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
           backgroundColor: 'var(--bg-surface-elevated)',
           border: isOpen
             ? '1.5px solid var(--accent-primary)'
-            : '1px solid var(--border-medium)',
+            : ariaInvalid
+              ? '1.5px solid var(--status-critical)'
+              : '1px solid var(--border-medium)',
           boxShadow: isOpen ? '0 0 0 3px var(--accent-glow)' : 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
@@ -163,7 +180,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
-          <Briefcase size={16} style={{ color: selectedCase ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+          <Briefcase size={16} style={{ color: selectedCase ? 'var(--accent-primary-text)' : 'var(--text-muted)', flexShrink: 0 }} />
           {selectedCase ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -172,12 +189,12 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
               {selectedCase.client_name && (
                 <span
                   style={{
-                    fontSize: '0.68rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
                     padding: '0.1rem 0.4rem',
                     borderRadius: '4px',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    color: 'var(--accent-primary)',
+                    color: 'var(--accent-primary-text)',
                     border: '1px solid rgba(37, 99, 235, 0.2)',
                   }}
                 >
@@ -258,6 +275,8 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
             <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input
               ref={searchInputRef}
+              id={inputId ? `${inputId}-search` : undefined}
+              aria-label={label ? `${label}: buscar` : 'Buscar caso o cliente'}
               type="text"
               value={searchTerm}
               onChange={(e) => {
@@ -280,6 +299,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
             {searchTerm && (
               <button
                 type="button"
+                aria-label="Limpiar búsqueda de caso"
                 onClick={() => setSearchTerm('')}
                 style={{
                   background: 'transparent',
@@ -347,7 +367,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                         style={{
                           fontSize: '0.84rem',
                           fontWeight: isSelected ? 800 : 600,
-                          color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+                          color: isSelected ? 'var(--accent-primary-text)' : 'var(--text-primary)',
                         }}
                       >
                         {cs.title}
@@ -359,7 +379,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
                         </div>
                       )}
                     </div>
-                    {isSelected && <Check size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginLeft: '0.5rem' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--accent-primary-text)', flexShrink: 0, marginLeft: '0.5rem' }} />}
                   </div>
                 );
               })
@@ -372,7 +392,7 @@ export const SearchableCaseSelect: React.FC<SearchableCaseSelectProps> = ({
               padding: '0.35rem 0.75rem',
               backgroundColor: 'var(--bg-surface-elevated)',
               borderTop: '1px solid var(--border-subtle)',
-              fontSize: '0.68rem',
+              fontSize: '0.7rem',
               color: 'var(--text-muted)',
               display: 'flex',
               justifyContent: 'space-between',

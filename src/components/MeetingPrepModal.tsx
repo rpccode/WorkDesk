@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { generateMeetingPrepAI } from '../services/ai-copilot';
 import type { Case } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { toUserMessage } from '../utils/error-messages';
 
 interface MeetingPrepModalProps {
   isOpen: boolean;
@@ -34,6 +36,8 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
     }
   }, [isOpen, caseItem?.id]);
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen || !caseItem) return null;
 
   const client = clients.find((c) => c.id === caseItem.client_id);
@@ -54,7 +58,7 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
       addNotification({
         type: 'critical',
         title: 'Error Preparando Reunión',
-        message: err.message || 'No se pudo generar la guía.',
+        message: toUserMessage(err, 'No se pudo generar la guía de reunión con la IA.'),
         show_toast: true,
       });
     } finally {
@@ -77,6 +81,10 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      ref={dialogRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -121,7 +129,7 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
                 padding: '0.4rem',
                 borderRadius: '8px',
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
               }}
             >
               <Sparkles size={18} />
@@ -130,13 +138,13 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
                 Preparación Estratégica de Reunión (IA Briefing)
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '0.1rem 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.1rem 0 0' }}>
                 {caseItem.title} • {client?.name || caseItem.client_name || 'Sin cliente'}
               </p>
             </div>
           </div>
 
-          <button
+          <button aria-label="Cerrar preparación de reunión"
             type="button"
             onClick={onClose}
             style={{
@@ -161,7 +169,7 @@ export const MeetingPrepModal: React.FC<MeetingPrepModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '3rem 1rem',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
                 gap: '1rem',
               }}
             >

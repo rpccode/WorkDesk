@@ -17,6 +17,7 @@ import type {
   TicketCategory,
   TicketChannel,
 } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface TicketModalProps {
   isOpen: boolean;
@@ -55,19 +56,6 @@ export const TicketModal: React.FC<TicketModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  useEffect(() => {
     if (ticketToEdit) {
       setTicketNumber(ticketToEdit.ticket_number || '');
       setClientId(ticketToEdit.client_id);
@@ -104,6 +92,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({
     setError(null);
     setFieldErrors({});
   }, [ticketToEdit, defaultClientId, defaultCaseId, isOpen, clients, consultantProfile]);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -224,6 +214,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
   const modalContent = (
     <div
+    ref={dialogRef}
+    tabIndex={-1}
       className="modal-overlay"
       onClick={onClose}
       role="dialog"
@@ -263,7 +255,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 padding: '0.45rem',
                 borderRadius: '8px',
                 backgroundColor: 'var(--accent-glow)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-primary-text)',
               }}
             >
               <Tag size={20} />
@@ -272,7 +264,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               <h3 id="ticket-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
                 {ticketToEdit ? `Editar Ticket: ${ticketToEdit.ticket_number}` : 'Nuevo Ticket de Servicio & Soporte'}
               </h3>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
                 Registra incidentes, requerimientos o solicitudes con trazabilidad SLA y cliente asignado
               </p>
             </div>
@@ -299,7 +291,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 borderRadius: 'var(--radius-sm)',
                 background: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: 'var(--status-critical)',
+                color: 'var(--status-critical-text)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
               }}
@@ -315,6 +307,9 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               <div>
                 <SearchableClientSelect
                   label="Cliente Asignado"
+                  inputId="ticket-modal-client"
+                  ariaInvalid={!!fieldErrors.client}
+                  ariaDescribedBy={fieldErrors.client ? 'ticket-error-client' : undefined}
                   clients={clients}
                   selectedClientId={clientId}
                   onChange={(id) => {
@@ -325,7 +320,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   required
                 />
                 {fieldErrors.client && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span id="ticket-error-client" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.client}
                   </span>
                 )}
@@ -334,6 +329,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               <div>
                 <SearchableCaseSelect
                   label="Vincular a Caso / Proyecto (Opcional)"
+                  inputId="ticket-modal-case"
                   cases={availableCases}
                   selectedCaseId={caseId}
                   onChange={(id) => setCaseId(id)}
@@ -346,11 +342,15 @@ export const TicketModal: React.FC<TicketModalProps> = ({
             {/* Title & Ticket Number */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                  Título / Asunto del Ticket <span style={{ color: 'var(--status-critical)' }}>*</span>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f1">
+                  Título / Asunto del Ticket <span style={{ color: 'var(--status-critical-text)' }}>*</span>
                 </label>
-                <input
+                <input id="ticket-modal-f1"
                   type="text"
+                  required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.title}
+                  aria-describedby={fieldErrors.title ? 'ticket-error-title' : undefined}
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
@@ -364,17 +364,17 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   }}
                 />
                 {fieldErrors.title && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span id="ticket-error-title" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.title}
                   </span>
                 )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f2">
                   Código / Folio
                 </label>
-                <input
+                <input id="ticket-modal-f2"
                   type="text"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
@@ -387,10 +387,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
             {/* Status, Priority, Category, Channel Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f3">
                   Estado
                 </label>
-                <select
+                <select id="ticket-modal-f3"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as TicketStatus)}
                   style={{ width: '100%' }}
@@ -404,26 +404,26 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f4">
                   Prioridad
                 </label>
-                <select
+                <select id="ticket-modal-f4"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as TicketPriority)}
                   style={{ width: '100%' }}
                 >
-                  <option value="critical">🔴 Crítica</option>
-                  <option value="high">🟠 Alta</option>
-                  <option value="medium">🟡 Media</option>
-                  <option value="low">🟢 Baja</option>
+                  <option value="critical">Crítica</option>
+                  <option value="high">Alta</option>
+                  <option value="medium">Media</option>
+                  <option value="low">Baja</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f5">
                   Categoría
                 </label>
-                <select
+                <select id="ticket-modal-f5"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as TicketCategory)}
                   style={{ width: '100%' }}
@@ -440,10 +440,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f6">
                   Canal Origen
                 </label>
-                <select
+                <select id="ticket-modal-f6"
                   value={channel}
                   onChange={(e) => setChannel(e.target.value as TicketChannel)}
                   style={{ width: '100%' }}
@@ -461,11 +461,15 @@ export const TicketModal: React.FC<TicketModalProps> = ({
             {/* Requester Info & SLA Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
-                  Solicitante / Contacto <span style={{ color: 'var(--status-critical)' }}>*</span>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f7">
+                  Solicitante / Contacto <span style={{ color: 'var(--status-critical-text)' }}>*</span>
                 </label>
-                <input
+                <input id="ticket-modal-f7"
                   type="text"
+                  required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.requester_name}
+                  aria-describedby={fieldErrors.requester_name ? 'ticket-error-requester-name' : undefined}
                   value={requesterName}
                   onChange={(e) => {
                     setRequesterName(e.target.value);
@@ -478,18 +482,20 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   }}
                 />
                 {fieldErrors.requester_name && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span id="ticket-error-requester-name" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.requester_name}
                   </span>
                 )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f8">
                   Email Solicitante
                 </label>
-                <input
+                <input id="ticket-modal-f8"
                   type="email"
+                  aria-invalid={!!fieldErrors.requester_email}
+                  aria-describedby={fieldErrors.requester_email ? 'ticket-error-requester-email' : undefined}
                   value={requesterEmail}
                   onChange={(e) => {
                     setRequesterEmail(e.target.value);
@@ -502,17 +508,17 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   }}
                 />
                 {fieldErrors.requester_email && (
-                  <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span id="ticket-error-requester-email" style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <AlertCircle size={12} /> {fieldErrors.requester_email}
                   </span>
                 )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f9">
                   Fecha Límite SLA
                 </label>
-                <input
+                <input id="ticket-modal-f9"
                   type="date"
                   value={slaDueDate}
                   onChange={(e) => setSlaDueDate(e.target.value)}
@@ -523,10 +529,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
             {/* Description Textarea */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f10">
                 Detalle del Requerimiento / Problema
               </label>
-              <textarea
+              <textarea id="ticket-modal-f10"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -538,10 +544,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
             {/* Resolution (Especially for resolved/closed status) */}
             {(status === 'resolved' || status === 'closed' || resolution) && (
               <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--status-low)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--status-low-text)', marginBottom: '0.35rem', textTransform: 'uppercase' }} htmlFor="ticket-modal-f11">
                   Notas de Solución / Cierre
                 </label>
-                <textarea
+                <textarea id="ticket-modal-f11"
                   rows={2}
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}

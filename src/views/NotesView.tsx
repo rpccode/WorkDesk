@@ -5,9 +5,10 @@ import { SearchableCaseSelect } from '../components/SearchableCaseSelect';
 import { Pagination } from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import { formatDate } from '../utils/date';
+import { SkeletonRows } from '../components/LoadingSkeletons';
 
 export const NotesView: React.FC = () => {
-  const { notes, cases, fetchNotes, fetchCases, createNote, deleteNote } = useStore();
+  const { notes, cases, fetchNotes, fetchCases, createNote, deleteNote, isLoadingNotes } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCaseFilter, setSelectedCaseFilter] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -54,7 +55,7 @@ export const NotesView: React.FC = () => {
   React.useEffect(() => { pagination.resetPage(); }, [searchTerm, selectedCaseFilter]);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container animate-fade-in">
       {/* Header */}
       <div className="page-header">
         <div>
@@ -71,6 +72,8 @@ export const NotesView: React.FC = () => {
       <div className="glass-card" style={{ padding: '1.25rem', border: '1px solid var(--border-focus)' }}>
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <textarea
+            id="notes-new-content"
+            aria-label="Contenido de la nota"
             rows={3}
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
@@ -105,7 +108,9 @@ export const NotesView: React.FC = () => {
             style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
           />
           <input
+            id="notes-search"
             type="text"
+            aria-label="Buscar en notas"
             placeholder="Buscar en notas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -114,10 +119,11 @@ export const NotesView: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 1 auto' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <label htmlFor="notes-filter-caso" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
             FILTRAR POR CASO:
-          </span>
+          </label>
           <select
+            id="notes-filter-caso"
             value={selectedCaseFilter}
             onChange={(e) => setSelectedCaseFilter(e.target.value)}
             style={{ minWidth: '220px', maxWidth: '320px' }}
@@ -134,7 +140,11 @@ export const NotesView: React.FC = () => {
 
       {/* Notes Feed */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-        {pagination.paginatedItems.length === 0 ? (
+        {isLoadingNotes && notes.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <SkeletonRows rows={4} columns={2} />
+          </div>
+        ) : pagination.paginatedItems.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
             <div className="empty-state-icon">
               <FileText size={32} />
@@ -156,7 +166,7 @@ export const NotesView: React.FC = () => {
             >
               {n.case_title && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
+                  <span style={{ color: 'var(--accent-primary-text)', fontWeight: 700 }}>
                     {n.client_name || 'Cliente'}
                   </span>
                   <span style={{ color: 'var(--text-muted)' }}>• {n.case_title}</span>
@@ -174,7 +184,7 @@ export const NotesView: React.FC = () => {
                   alignItems: 'center',
                   paddingTop: '0.6rem',
                   borderTop: '1px solid var(--border-subtle)',
-                  fontSize: '0.72rem',
+                  fontSize: '0.75rem',
                   color: 'var(--text-muted)',
                 }}
               >

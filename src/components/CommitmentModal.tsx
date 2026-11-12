@@ -5,6 +5,8 @@ import { CheckSquare, X, Check, AlertCircle } from 'lucide-react';
 import { SearchableCaseSelect } from './SearchableCaseSelect';
 import type { CommitmentOwner } from '../types';
 import { playNotificationSound } from '../utils/live-alerts';
+import { toUserMessage } from '../utils/error-messages';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface CommitmentModalProps {
   isOpen: boolean;
@@ -28,18 +30,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  React.useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -104,7 +95,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
       });
       onClose();
     } catch (err: any) {
-      const errMsg = typeof err === 'string' ? err : err?.message || 'Error al guardar el compromiso.';
+      const errMsg = toUserMessage(err, 'No se pudo guardar el compromiso.', 'Revisa los campos e intenta de nuevo.');
       setError(errMsg);
       playNotificationSound('critical');
       addNotification({
@@ -127,7 +118,9 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
       aria-labelledby="commitment-modal-title"
     >
       <div
+        ref={dialogRef}
         className="glass-card animate-fade-in"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: '540px',
@@ -141,7 +134,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'var(--accent-glow)', color: 'var(--accent-primary-text)' }}>
               <CheckSquare size={20} />
             </div>
             <h3 id="commitment-modal-title" style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
@@ -169,7 +162,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
               borderRadius: 'var(--radius-sm)',
               background: 'rgba(239, 68, 68, 0.12)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: 'var(--status-critical)',
+              color: 'var(--status-critical-text)',
               fontSize: '0.84rem',
               fontWeight: 600,
             }}
@@ -193,17 +186,17 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
               required
             />
             {fieldErrors.caseId && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <AlertCircle size={12} /> {fieldErrors.caseId}
               </span>
             )}
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              Descripción del Compromiso / Entregable <span style={{ color: 'var(--status-critical)' }}>*</span>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="commitment-modal-f1">
+              Descripción del Compromiso / Entregable <span style={{ color: 'var(--status-critical-text)' }}>*</span>
             </label>
-            <input
+            <input id="commitment-modal-f1"
               type="text"
               value={description}
               onChange={(e) => {
@@ -218,7 +211,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
               }}
             />
             {fieldErrors.description && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--status-critical)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--status-critical-text)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <AlertCircle size={12} /> {fieldErrors.description}
               </span>
             )}
@@ -226,25 +219,25 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="commitment-modal-f2">
                 Responsable del Acuerdo
               </label>
-              <select
+              <select id="commitment-modal-f2"
                 value={owner}
                 onChange={(e) => setOwner(e.target.value as CommitmentOwner)}
                 style={{ width: '100%' }}
               >
-                <option value="me">🙋‍♂️ Mío (Consultor)</option>
+                <option value="me">🙋‍♂ Mío (Consultor)</option>
                 <option value="client">🏢 Cliente</option>
                 <option value="third_party">👥 Tercero / Proveedor</option>
               </select>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }} htmlFor="commitment-modal-f3">
                 Fecha Límite / Vencimiento
               </label>
-              <input
+              <input id="commitment-modal-f3"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
