@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Local analysis artifacts from design-audit tooling
+.impeccable/
+
 # Tauri updater keys & releases
 *.key
 *.key.pub
